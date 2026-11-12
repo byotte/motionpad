@@ -1,0 +1,60 @@
+/* ── 10. 화면 크기별 ────────────────────────────────────── */
+/* 폰형: 세로 화면이거나 폭 779px 이하 → 캔버스 위·옵션 아래, 옵션 패널만 스크롤 */
+@media (orientation:portrait),(max-width:779px){
+  .header{gap:5px}
+  .logo{width:23px;height:23px}
+  .brand h1{font-size:12px}
+  .brand h1 span{display:none}
+  .toolbar{gap:4px}
+  .toolbar .btn{font-size:10px}
+  .workspace{grid-template-columns:minmax(0,1fr);height:auto}
+  .stagebar{flex-direction:row}
+  .stagebar .mode{min-height:40px;min-width:max-content;font-size:11px}
+  .stage{height:43dvh;min-height:210px}
+  .stagebottom{align-self:stretch}
+  .quick{width:100%}
+  .quick .btn{font-size:10px}
+  .toggle{font-size:11px}
+  .status{text-align:left}
+  .side{max-height:var(--panel-height,36dvh)}
+  .side>.maskDisplay{display:none}
+  .viewerAudio{right:8px;bottom:calc(8px + env(safe-area-inset-bottom))}
+  .playerSfx{flex:1 1 100px}
+}
+/* 좁은 폰: 폭 520px 이하 → 상단바·도구 줄을 촘촘하게 */
+@media (max-width:520px){
+  .header{gap:4px}
+  .toolbar{flex:0 1 auto;justify-content:flex-start;margin-left:auto}
+  .topMenu>summary{padding-inline:6px}
+  .stagebar{padding-inline:2px}
+  .modegroup{display:grid;gap:0;grid-template-columns:minmax(0,.58fr) repeat(2,minmax(0,.92fr)) repeat(2,minmax(0,.82fr)) repeat(2,minmax(0,1.3fr))}
+  .stagebar .mode{flex-direction:column;justify-content:center;gap:2px;min-width:0;padding-inline:1px;font-size:10px;text-align:center}
+  .stage{height:42dvh;min-height:195px}
+  .quick{flex:1 1 100%;gap:0 1px}
+  .quick .btn{min-width:22px}
+  .quick .precisionSwitch{padding:0 2px;border:0;background:transparent;font-size:10px}
+  .status{flex:1 1 0;font-size:10px}
+  .loupe{top:6px;right:6px;width:104px;height:104px}
+  .engineBadge{padding:4px 5px;font-size:9px}
+  .viewerAudio .btn{font-size:10px}
+  #lassobar{gap:4px;padding-inline:4px}
+  #blinkPreview{max-height:41dvh}
+  .blinkSettings .blinkControl{flex-basis:100%}
+  .blinkFooter{flex-wrap:nowrap}
+  #blinkHint,#blinkApply{min-width:0}
+}
+
+/* ── 11. 터치 기기·좁은 화면: 손가락으로 누르기 쉬운 높이 ── */
+@media (pointer:coarse),(max-width:779px){
+  .stageOptions{grid-template-rows:42px;height:43px}
+  #outlineControls{grid-column:1/-1;gap:4px;padding-inline:4px}
+  #outlineControls label{font-size:0}
+  #outlineControls input[type=range]{width:90px}
+  #wandbar.hasPreview{grid-column:1/-1}
+  .stageOptions:has(#wandbar.hasPreview,#outlineControls:not([hidden])) #brushbar{display:none}
+}
+@media (pointer:coarse){
+  :is(dialog,.side,.topMenuItems,.viewerAudio,.brushbar) button:not(.btn,.chip,.playerHandle){min-height:40px}
+  :is(dialog,.side,.viewerAudio) select,:is(dialog,.side) .btn,.topMenuItems>.btn{min-height:36px}
+  input[type=range]{height:36px}
+}

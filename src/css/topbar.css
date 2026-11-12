@@ -1,0 +1,23 @@
+/* ── 4. 상단바 ──────────────────────────────────────────── */
+.app{padding:0}
+.header{position:relative;display:flex;align-items:center;justify-content:space-between;flex-wrap:nowrap;gap:12px;min-height:34px;padding:2px 8px;border-bottom:1px solid var(--line)}
+.brand{display:flex;flex:none;align-items:center;gap:7px;min-width:0}
+.logo{display:grid;place-items:center;width:25px;height:25px;border-radius:2px;font-size:17px;font-weight:900;color:var(--accentInk);
+  background:linear-gradient(140deg,var(--accent),color-mix(in srgb,var(--accent) 48%,var(--bg)));box-shadow:0 1px 10px color-mix(in srgb,var(--accent) 18%,transparent)}
+.brand h1{margin:0;font-family:system-ui,sans-serif;font-size:13px;font-weight:750;letter-spacing:-.35px;white-space:nowrap}
+.brand h1 span{color:var(--sub);font-size:10px;font-weight:550}
+.toolbar{display:flex;flex:1;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:5px;min-width:0}
+.starting .toolbar{visibility:hidden}
+.toolbar .btn{font-size:11px}
+#viewerBtn{flex:0 0 auto;margin-left:4px;background:var(--accent);border-color:var(--accent);color:var(--onAccent);font-weight:750}
+#viewerBtn:hover{filter:brightness(.92)}
+.topMenu{position:relative}
+.topMenu>summary{list-style:none;padding:5px 9px;cursor:pointer}
+.topMenu>summary::-webkit-details-marker{display:none}
+.topMenu>summary:is(:hover,:focus-visible),.topMenu[open]>summary{background:color-mix(in srgb,var(--ink) 13%,var(--panel))}
+.topMenuItems{position:absolute;top:100%;left:0;z-index:20;display:grid;min-width:200px;padding:4px 0;background:var(--panel);border:1px solid var(--line);border-radius:0 0 4px 4px;box-shadow:0 8px 22px #0006}
+.topMenu:last-of-type .topMenuItems{left:auto;right:0}
+.topMenuItems>.btn{min-height:28px;padding:4px 24px 4px 14px;text-align:left;font-weight:500;background:transparent;border:0 none transparent;border-radius:0}
+.topMenuItems>.btn:is(:hover,:focus-visible){background:color-mix(in srgb,var(--accent) 24%,var(--panel))}
+.menuSep{height:1px;margin:4px 8px;border:0;background:var(--line)}
+

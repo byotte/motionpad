@@ -1,0 +1,4 @@
+/* ── 5. 시작 화면 ───────────────────────────────────────── */
+.welcome{padding:12dvh 10px;text-align:center}
+.welcomeActions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+

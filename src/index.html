@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#17171b">
+<meta name="description" content="로컬 이미지에 터치 반응과 반복 애니메이션을 적용하는 모바일 우선 모션 편집기">
+<link rel="manifest" href="./manifest.webmanifest">
+<title>MotionPad 0.5 RC 23</title>
+<style>
+@@include css/tokens.css
+@@include css/base.css
+@@include css/controls.css
+@@include css/topbar.css
+@@include css/welcome.css
+@@include css/editor.css
+@@include css/panel.css
+@@include css/dialogs.css
+@@include css/viewer.css
+@@include css/responsive.css
+</style>
+</head>
+<body>
+@@include html/icons.html
+@@include html/app.html
+@@include html/dialogs.html
+<script>
+(()=>{'use strict';
+@@include js/core.js
+@@include js/zone-schema.js
+@@include js/zones.js
+@@include js/selection.js
+@@include js/pointer.js
+@@include js/masks.js
+@@include js/overlay.js
+@@include js/shaders.js
+@@include js/image-viewer.js
+@@include js/audio.js
+@@include js/storage.js
+@@include js/video.js
+@@include js/project-file.js
+@@include js/theme.js
+@@include js/render.js
+@@include js/physics.js
+@@include js/controls.js
+@@include js/blink.js
+@@include js/dialogs.js
+@@include js/boot.js
+})();
+</script>
+</body>
+</html>

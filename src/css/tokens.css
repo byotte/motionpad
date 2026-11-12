@@ -1,0 +1,33 @@
+/* MotionPad 화면 스타일 (0-4a 재작성)
+   구성: 1 색 토큰(테마 3종) · 2 기본 · 3 공용 컨트롤 · 4 상단바 · 5 시작 화면 · 6 편집 화면(캔버스 영역)
+         7 옵션 패널 · 8 대화창 · 9 감상 화면 · 10 화면 크기별(폰형, 좁은 폰) · 11 터치 기기
+   화면 크기 구분점은 두 개다.
+     폰형  : 세로 화면이거나 폭 779px 이하  → 캔버스 위, 옵션 아래
+     좁은 폰: 폭 520px 이하                  → 상단바·도구 줄을 촘촘하게
+   그 사이 값(옵션 패널 폭, 도구 글자 크기)은 clamp()로 화면 폭에 맞춰 부드럽게 바뀐다. */
+
+/* ── 1. 색 토큰 ─────────────────────────────────────────── */
+:root{
+  color-scheme:dark;
+  --bg:#17171b; --card:#222229; --panel:#222229; --button:#2d2c36;
+  --ink:#f1eff6; --sub:#aaa6b7; --line:#ffffff24;
+  --accent:#bba7ff; --accentSoft:#393249; --accentInk:#dbceff; --onAccent:#211633;
+  --warning:#f2a2b9; --stageInk:#19191c; --glass:rgba(25,22,45,.95);
+  --sideW:clamp(250px,calc(15.625vw + 90px),315px);
+  --toolFont:clamp(10px,calc(.625vw + 3px),12px);
+}
+:root[data-theme="light"],.themeSample[data-theme="light"]{
+  --bg:#e9eaee; --card:#f7f7f9; --panel:#f7f7f9; --button:#e4e5ea;
+  --ink:#1d2129; --sub:#5e6470; --line:#0000001f;
+  --accent:#2f6fdb; --accentSoft:#dce7fb; --accentInk:#1d4fa8; --onAccent:#fff;
+  --warning:#c23a3a; --stageInk:#dcdee4; --glass:rgba(247,247,249,.95);
+}
+:root[data-theme="light"]{color-scheme:light}
+:root[data-theme="mono"],.themeSample[data-theme="mono"]{
+  --bg:#3a3a3a; --card:#454545; --panel:#424242; --button:#555;
+  --ink:#eee; --sub:#bdbdbd; --line:#ffffff22;
+  --accent:#e8e8e8; --accentSoft:#5e5e5e; --accentInk:#fff; --onAccent:#222;
+  --warning:#ffb0b0; --stageInk:#303030; --glass:rgba(66,66,66,.95);
+}
+.themeSample[data-theme="violet"]{--bg:#17171b;--panel:#222229;--accent:#bba7ff;--line:#ffffff24}
+

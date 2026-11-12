@@ -1,0 +1,47 @@
+/* ── 8. 대화창 ──────────────────────────────────────────── */
+.saveDialog{width:min(360px,calc(100% - 24px));max-height:calc(100dvh - 24px);padding:0;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:4px;box-shadow:0 12px 40px #0007}
+.saveDialog[open]{display:flex;flex-direction:column}
+.saveDialog>form{display:flex;flex-direction:column;min-height:0}
+.saveDialog::backdrop{background:#0008}
+/* 모든 대화창 공통 틀: 제목줄 · 내용 · 버튼줄 */
+.dlgHead,.blinkHead{display:flex;align-items:center;gap:8px;min-height:34px;padding:0 4px 0 12px;background:color-mix(in srgb,var(--ink) 7%,var(--panel));border-bottom:1px solid var(--line)}
+.dlgHead h2,.blinkHead h2{flex:1;margin:0;font-size:13px;font-weight:700;letter-spacing:-.1px}
+.dlgX{display:grid;place-items:center;width:30px;height:30px;padding:0;border:0;border-radius:3px;background:transparent;color:var(--sub);font-size:18px;line-height:1}
+.dlgX:hover{color:var(--ink)}
+.dlgBody{min-height:0;padding:12px 14px;overflow:auto}
+.dlgBody>:first-child{margin-top:0}
+:is(.dlgBody,.blinkStage)[tabindex]:focus{outline:none}
+.dlgFoot{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;padding:8px 12px;background:color-mix(in srgb,var(--ink) 4%,var(--panel));border-top:1px solid var(--line)}
+.dlgFoot .btn{min-width:72px}
+.saveDialog :is(.dlgBody,.field)>label:not(.toggle){display:block;margin-bottom:5px}
+.saveDialog input[type=text]{width:100%;padding:8px;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:3px}
+.saveDialog .field input[type=range]{width:100%}
+.saveDialog .settingActions .btn{flex:0 1 auto}
+.layoutDialog{width:min(500px,94vw);max-height:85dvh;overflow:auto}
+.themeOptions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.themeOptions label{display:grid;justify-items:center;gap:5px}
+.themeSample{display:grid;place-items:center;width:min(100%,76px);aspect-ratio:1;background:var(--bg);border:1px solid var(--line);box-shadow:inset 0 13px var(--panel)}
+.themeSample i{width:35%;height:12%;background:var(--accent)}
+.qualityOptions{display:flex;flex-wrap:wrap;gap:5px 12px;margin:8px 0;padding:6px 9px;border:1px solid var(--line)}
+.qualityOptions label{display:inline-flex;align-items:center;gap:4px}
+.qualityOptions input{width:auto;padding:0;accent-color:var(--accent)}
+.qualityOptions p{flex-basis:100%;margin:2px 0;color:var(--sub)}
+.saveDialog .maskDisplay label{display:inline-flex;margin:0}
+
+#blinkDialog{width:min(96vw,860px);max-height:94dvh;padding:0;overflow:auto;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:3px}
+#blinkDialog::backdrop{background:#000a}
+#blinkDialog h2{margin:0;font-size:16px}
+#blinkDialog .settingActions{display:flex;gap:4px;width:auto;margin:0}
+.blinkToolbar,.blinkFooter,.blinkSettings{display:flex;flex-wrap:wrap;align-items:center;gap:5px 9px;padding:7px 10px}
+.blinkHead{flex-wrap:wrap;padding-block:2px}
+.blinkToolbar,.blinkSettings{background:var(--panel);border-bottom:1px solid var(--line)}
+.blinkToolbar label{display:inline-flex;align-items:center;gap:5px}
+.blinkControl{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:8px;color:var(--ink)}
+.blinkControl input{flex:1;min-width:80px}
+.blinkSettings .blinkControl{flex:1 1 160px;margin:0}
+.blinkStage{display:grid;place-items:center;min-height:100px;overflow:hidden;background:repeating-conic-gradient(var(--panel) 0 25%,var(--stageInk) 0 50%) 0/16px 16px}
+#blinkPreview{display:block;width:auto;height:auto;max-width:100%;max-height:54dvh;margin:auto;cursor:crosshair}
+.blinkFooter{position:sticky;bottom:0;justify-content:space-between;background:var(--panel);border-top:1px solid var(--line)}
+#blinkHint{flex:1 1 210px;margin:0;padding:6px;border:1px solid var(--line);font-size:12px;color:var(--sub)}
+#blinkApply{flex:none;min-width:110px}
+
