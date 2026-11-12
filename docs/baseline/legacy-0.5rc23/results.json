@@ -1,6 +1,6 @@
 {
   "target": "legacy-0.5rc23.html",
-  "when": "2026-11-12T12:59:23.672Z",
+  "when": "2026-11-12T13:19:56.778Z",
   "errors": [],
   "notes": [],
   "screens": [
@@ -8,44 +8,299 @@
       "viewport": "pc",
       "horizontalOverflow": false,
       "scrollW": 1440,
-      "clientW": 1440
+      "clientW": 1440,
+      "layout": {
+        ".header": [
+          0,
+          0,
+          1440,
+          35
+        ],
+        ".stagebar": [
+          1,
+          36,
+          1123,
+          31
+        ],
+        ".stageOptions": null,
+        ".stage": [
+          1,
+          67,
+          1123,
+          793
+        ],
+        "#view": [
+          251,
+          73,
+          624,
+          780
+        ],
+        ".stagebottom": [
+          1,
+          860,
+          1123,
+          38
+        ],
+        ".side": [
+          1125,
+          35,
+          315,
+          864
+        ],
+        ".maskDisplay": [
+          1126,
+          861,
+          313,
+          37
+        ]
+      }
     },
     {
       "viewport": "laptop",
       "horizontalOverflow": false,
       "scrollW": 1280,
-      "clientW": 1280
+      "clientW": 1280,
+      "layout": {
+        ".header": [
+          0,
+          0,
+          1280,
+          35
+        ],
+        ".stagebar": [
+          1,
+          36,
+          988,
+          31
+        ],
+        ".stageOptions": null,
+        ".stage": [
+          1,
+          67,
+          988,
+          613
+        ],
+        "#view": [
+          255,
+          73,
+          480,
+          600
+        ],
+        ".stagebottom": [
+          1,
+          680,
+          988,
+          38
+        ],
+        ".side": [
+          990,
+          35,
+          290,
+          684
+        ],
+        ".maskDisplay": [
+          991,
+          655,
+          288,
+          63
+        ]
+      }
     },
     {
       "viewport": "mobile",
       "horizontalOverflow": false,
       "scrollW": 390,
-      "clientW": 390
+      "clientW": 390,
+      "layout": {
+        ".header": [
+          0,
+          0,
+          390,
+          35
+        ],
+        ".stagebar": [
+          1,
+          36,
+          388,
+          45
+        ],
+        ".stageOptions": null,
+        ".stage": [
+          1,
+          81,
+          388,
+          354
+        ],
+        "#view": [
+          59,
+          87,
+          273,
+          341
+        ],
+        ".stagebottom": [
+          1,
+          435,
+          388,
+          61
+        ],
+        ".side": [
+          0,
+          497,
+          390,
+          304
+        ],
+        ".maskDisplay": null
+      }
     },
     {
       "viewport": "phone-land",
       "horizontalOverflow": false,
       "scrollW": 844,
-      "clientW": 844
+      "clientW": 844,
+      "layout": {
+        ".header": [
+          0,
+          0,
+          844,
+          35
+        ],
+        ".stagebar": [
+          1,
+          36,
+          592,
+          31
+        ],
+        ".stageOptions": null,
+        ".stage": [
+          1,
+          67,
+          592,
+          264
+        ],
+        "#view": [
+          197,
+          73,
+          201,
+          251
+        ],
+        ".stagebottom": [
+          1,
+          330,
+          592,
+          57
+        ],
+        ".side": [
+          594,
+          35,
+          250,
+          354
+        ],
+        ".maskDisplay": [
+          595,
+          443,
+          248,
+          79
+        ]
+      }
     },
     {
       "viewport": "fold-cover",
       "horizontalOverflow": false,
       "scrollW": 344,
-      "clientW": 344
+      "clientW": 344,
+      "layout": {
+        ".header": [
+          0,
+          0,
+          344,
+          35
+        ],
+        ".stagebar": [
+          1,
+          36,
+          342,
+          45
+        ],
+        ".stageOptions": null,
+        ".stage": [
+          1,
+          81,
+          342,
+          370
+        ],
+        "#view": [
+          29,
+          87,
+          286,
+          357
+        ],
+        ".stagebottom": [
+          1,
+          451,
+          342,
+          92
+        ],
+        ".side": [
+          0,
+          544,
+          344,
+          318
+        ],
+        ".maskDisplay": null
+      }
     },
     {
       "viewport": "fold-open",
       "horizontalOverflow": false,
       "scrollW": 884,
-      "clientW": 884
+      "clientW": 884,
+      "layout": {
+        ".header": [
+          0,
+          0,
+          884,
+          35
+        ],
+        ".stagebar": [
+          1,
+          36,
+          882,
+          45
+        ],
+        ".stageOptions": null,
+        ".stage": [
+          1,
+          81,
+          882,
+          430
+        ],
+        "#view": [
+          275,
+          87,
+          334,
+          417
+        ],
+        ".stagebottom": [
+          1,
+          511,
+          882,
+          61
+        ],
+        ".side": [
+          0,
+          573,
+          884,
+          360
+        ],
+        ".maskDisplay": null
+      }
     }
   ],
-  "openImageMs": 717,
+  "openImageMs": 816,
   "selection": {
-    "wandMs": 518,
+    "wandMs": 637,
     "wandTolerance": "30",
-    "outlineMs": 8632
+    "outlineMs": 9548
   },
   "roundtrip": {
     "version": 2,
@@ -94,85 +349,243 @@
     "differences": [],
     "fileBytes": 98383
   },
+  "previewKeep": {
+    "before": {
+      "tool": "wand",
+      "wandDraftAlive": true
+    },
+    "after": {
+      "tool": "",
+      "wandDraftAlive": false
+    },
+    "kept": false
+  },
   "perf": {
     "note": "헤드리스 Chromium(소프트웨어 WebGL) 기준, 3회 중앙값. 절대값보다 같은 기계에서의 전후 비교용.",
-    "editFps": 14.23,
-    "playFps": 10.81,
+    "editFps": 13.44,
+    "playFps": 9.1,
     "featherDragFrameMs": {
-      "avg": 116.88,
-      "p95": 135.5,
-      "max": 140.5
+      "avg": 130.29,
+      "p95": 153.5,
+      "max": 157.3
     },
     "spreadDragFrameMs": {
-      "avg": 115.51,
-      "p95": 133.5,
-      "max": 140
+      "avg": 129.71,
+      "p95": 155.8,
+      "max": 164.6
     },
+    "tailFeatherDragFrameMs": {
+      "avg": 221.32,
+      "p95": 280.3,
+      "max": 290.8
+    },
+    "activeToolAfterSlider": "(없음)",
     "profile": {
-      "note": "슬라이더 드래그 120프레임 동안 함수별 자체 시간(ms)",
-      "totalMs": 14657.75,
-      "top": [
-        [
-          "(program)",
-          10017.69
-        ],
-        [
-          "dilateMask",
-          1480.27
-        ],
-        [
-          "texImage2D",
-          1420.44
-        ],
-        [
-          "drawImage",
-          797.76
-        ],
-        [
-          "getImageData",
-          295.4
-        ],
-        [
-          "putImageData",
-          195.62
-        ],
-        [
-          "(garbage collector)",
-          119.31
-        ],
-        [
-          "rawMaskCanvas",
-          45.83
-        ],
-        [
-          "getContext",
-          45.1
-        ],
-        [
-          "save",
-          44.45
-        ],
-        [
-          "fill",
-          33.11
-        ],
-        [
-          "createMask",
-          23.23
-        ],
-        [
-          "runsToBits",
-          19.28
-        ],
-        [
-          "(anon)",
-          13.99
-        ],
-        [
-          "updateValues",
-          13.17
+      "note": "첫 회차 CPU 프로파일. inclusiveMs = 그 함수와 그 아래 호출까지 포함한 시간",
+      "sliderNormal": {
+        "totalMs": 15927.32,
+        "inclusiveMs": {
+          "updateMasks": 4869.93,
+          "updateBaseTextures": 0,
+          "updateTailCutout": 0,
+          "buildBackgroundPlate": 0,
+          "createMask": 2138.36,
+          "dilateMask": 1960.71,
+          "rawMaskCanvas": 241.63,
+          "render": 7.46,
+          "drawOverlay": 2.04,
+          "maskPreview": 0,
+          "updateBlinkScene": 0.27,
+          "tick": 4898.41,
+          "setMode": 0
+        },
+        "selfTop": [
+          [
+            "(program)",
+            10854.12
+          ],
+          [
+            "dilateMask",
+            1665.91
+          ],
+          [
+            "texImage2D",
+            1530.02
+          ],
+          [
+            "drawImage",
+            891.68
+          ],
+          [
+            "getImageData",
+            324.55
+          ],
+          [
+            "putImageData",
+            189.79
+          ],
+          [
+            "(garbage collector)",
+            123.8
+          ],
+          [
+            "getContext",
+            61.21
+          ],
+          [
+            "save",
+            51.02
+          ],
+          [
+            "rawMaskCanvas",
+            48.49
+          ],
+          [
+            "fill",
+            35.6
+          ],
+          [
+            "createMask",
+            16.17
+          ]
         ]
-      ]
+      },
+      "sliderTail": {
+        "totalMs": 13459.92,
+        "inclusiveMs": {
+          "updateMasks": 7742.28,
+          "updateBaseTextures": 0.28,
+          "updateTailCutout": 5146.05,
+          "buildBackgroundPlate": 4940.82,
+          "createMask": 1028.07,
+          "dilateMask": 1610.63,
+          "rawMaskCanvas": 101.09,
+          "render": 4.84,
+          "drawOverlay": 0.74,
+          "maskPreview": 0,
+          "updateBlinkScene": 0.24,
+          "tick": 7756.35,
+          "setMode": 0
+        },
+        "selfTop": [
+          [
+            "(program)",
+            5571.63
+          ],
+          [
+            "buildBackgroundPlate",
+            2238.59
+          ],
+          [
+            "dilateMask",
+            1354.62
+          ],
+          [
+            "getImageData",
+            1053.4
+          ],
+          [
+            "texImage2D",
+            1028
+          ],
+          [
+            "accumulateBackgroundLine",
+            891.78
+          ],
+          [
+            "drawImage",
+            631.22
+          ],
+          [
+            "putImageData",
+            207.92
+          ],
+          [
+            "updateTailCutout",
+            204.64
+          ],
+          [
+            "(garbage collector)",
+            107.44
+          ],
+          [
+            "getContext",
+            30.47
+          ],
+          [
+            "fill",
+            22.71
+          ]
+        ]
+      },
+      "play2s": {
+        "totalMs": 2284.19,
+        "inclusiveMs": {
+          "updateMasks": 130.4,
+          "updateBaseTextures": 0,
+          "updateTailCutout": 90.83,
+          "buildBackgroundPlate": 88.2,
+          "createMask": 15.88,
+          "dilateMask": 27.46,
+          "rawMaskCanvas": 0.6,
+          "render": 3.8,
+          "drawOverlay": 0,
+          "maskPreview": 0,
+          "updateBlinkScene": 0,
+          "tick": 134.75,
+          "setMode": 0
+        },
+        "selfTop": [
+          [
+            "(program)",
+            2149.17
+          ],
+          [
+            "buildBackgroundPlate",
+            41.14
+          ],
+          [
+            "dilateMask",
+            23.86
+          ],
+          [
+            "getImageData",
+            20.54
+          ],
+          [
+            "texImage2D",
+            16.13
+          ],
+          [
+            "accumulateBackgroundLine",
+            13.16
+          ],
+          [
+            "drawImage",
+            8.96
+          ],
+          [
+            "render",
+            3.34
+          ],
+          [
+            "putImageData",
+            3.07
+          ],
+          [
+            "updateTailCutout",
+            2.63
+          ],
+          [
+            "getContext",
+            0.91
+          ],
+          [
+            "uniform4fv",
+            0.46
+          ]
+        ]
+      }
     }
   },
   "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"

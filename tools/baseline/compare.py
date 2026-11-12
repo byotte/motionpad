@@ -50,9 +50,22 @@ row('플레이 FPS', pa['playFps'], pb2['playFps'])
 for k in ('featherDragFrameMs', 'spreadDragFrameMs'):
     row(k + ' 평균', pa[k]['avg'], pb2[k]['avg'])
     row(k + ' p95', pa[k]['p95'], pb2[k]['p95'])
+if 'tailFeatherDragFrameMs' in pa and 'tailFeatherDragFrameMs' in pb2:
+    row('외곽흔들기 켠 드래그 평균', pa['tailFeatherDragFrameMs']['avg'], pb2['tailFeatherDragFrameMs']['avg'])
+for scen in ('sliderNormal', 'sliderTail', 'play2s'):
+    fa = pa.get('profile', {}).get(scen, {}).get('inclusiveMs', {})
+    fb = pb2.get('profile', {}).get(scen, {}).get('inclusiveMs', {})
+    if fa or fb:
+        print(f'  [{scen}] 함수 누적 ms')
+        for k in sorted(set(fa) | set(fb)):
+            if fa.get(k) or fb.get(k):
+                row('   ' + k, fa.get(k), fb.get(k))
 row('그림 열기 ms', ra.get('openImageMs'), rb.get('openImageMs'))
 row('마술봉 ms', ra['selection'].get('wandMs'), rb['selection'].get('wandMs'))
 row('간략 올가미 ms', ra['selection'].get('outlineMs'), rb['selection'].get('outlineMs'))
+print('\n## 동작 확인')
+row('슬라이더 뒤 활성 도구', pa.get('activeToolAfterSlider'), pb2.get('activeToolAfterSlider'))
+row('옵션 조작 뒤 미리보기 유지', ra.get('previewKeep', {}).get('kept'), rb.get('previewKeep', {}).get('kept'))
 print('\n## 오류')
 row('페이지 오류 수', len(ra['errors']), len(rb['errors']))
 for e in rb['errors'][:10]:

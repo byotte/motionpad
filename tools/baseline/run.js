@@ -24,6 +24,40 @@ const VIEWPORTS = {
   'fold-open': { width: 884, height: 1000, isMobile: true, hasTouch: true },
 };
 const THEMES = ['violet', 'light', 'basic'];
+// 레이아웃 치수 기록 대상 [x, y, 너비, 높이]
+const LAYOUT_PARTS = ['.header', '.stagebar', '.stageOptions', '.stage', '#view', '.stagebottom', '.side', '.maskDisplay'];
+// 시간 계측 대상 함수 (호출 아래 시간까지 포함한 누적 시간)
+const KEY_FUNCS = ['updateMasks', 'updateBaseTextures', 'updateTailCutout', 'buildBackgroundPlate', 'createMask', 'dilateMask', 'rawMaskCanvas', 'render', 'drawOverlay', 'maskPreview', 'updateBlinkScene', 'tick', 'setMode'];
+
+// CPU 프로파일 → 함수별 자체 시간 상위 + 핵심 함수 누적 시간(ms)
+function summarizeProfile(profile) {
+  const byId = new Map(profile.nodes.map(n => [n.id, n]));
+  const parent = new Map();
+  for (const n of profile.nodes) for (const c of n.children || []) parent.set(c, n.id);
+  const self = {}, incl = Object.fromEntries(KEY_FUNCS.map(k => [k, 0]));
+  let total = 0;
+  profile.samples.forEach((id, i) => {
+    const us = profile.timeDeltas[i] || 0; total += us;
+    const name = byId.get(id).callFrame.functionName || '(anon)';
+    self[name] = (self[name] || 0) + us;
+    const seen = new Set();
+    for (let cur = id; cur != null; cur = parent.get(cur)) {
+      const f = byId.get(cur).callFrame.functionName;
+      if (f in incl && !seen.has(f)) { seen.add(f); incl[f] += us; }
+    }
+  });
+  const ms = v => Math.round(v / 10) / 100;
+  return { totalMs: ms(total), inclusiveMs: Object.fromEntries(Object.entries(incl).map(([k, v]) => [k, ms(v)])),
+    selfTop: Object.entries(self).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k, v]) => [k, ms(v)]) };
+}
+async function profileDuring(page, fn) {
+  const client = await page.context().newCDPSession(page);
+  await client.send('Profiler.enable'); await client.send('Profiler.setSamplingInterval', { interval: 200 }); await client.send('Profiler.start');
+  const value = await fn();
+  const { profile } = await client.send('Profiler.stop');
+  await client.detach();
+  return { value, profile: summarizeProfile(profile) };
+}
 
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(OUT, { recursive: true });
@@ -106,7 +140,11 @@ function zoneSummary(z) {
     await page.screenshot({ path: path.join(OUT, `shot-${vpName}-editor.png`) });
     await page.screenshot({ path: path.join(OUT, `shot-${vpName}-editor-full.png`), fullPage: true });
     const overflow = await page.evaluate(() => ({ scrollW: document.documentElement.scrollWidth, clientW: document.documentElement.clientWidth }));
-    shots.push({ viewport: vpName, horizontalOverflow: overflow.scrollW > overflow.clientW, ...overflow });
+    const layout = await page.evaluate(sels => Object.fromEntries(sels.map(q => {
+      const e = document.querySelector(q); if (!e || !e.getClientRects().length) return [q, null];
+      const r = e.getBoundingClientRect(); return [q, [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)]];
+    })), LAYOUT_PARTS);
+    shots.push({ viewport: vpName, horizontalOverflow: overflow.scrollW > overflow.clientW, ...overflow, layout });
     await context.close();
   }
   for (const theme of THEMES) {
@@ -183,8 +221,31 @@ function zoneSummary(z) {
     };
   }
 
+  // ── 2.5 미리보기 보존: 마술봉 미리보기 중 움직임 옵션을 만지면 미리보기가 남는가 ──
+  {
+    const { context, page } = await newPage(browser, VIEWPORTS.pc, 'violet');
+    await openImage(page);
+    await clickMode(page, 'ellipseMode'); await drag(page, [[0.36, 0.25], [0.64, 0.52]]);
+    await clickMode(page, 'wandMode'); await newZoneNext(page);
+    const pw = await toScreen(page, 0.42, 0.75); await page.mouse.click(pw.x, pw.y);
+    await page.waitForFunction(() => !document.getElementById('wandApply').disabled, null, { timeout: 30000 });
+    const state = () => page.evaluate(() => ({
+      tool: [...document.querySelectorAll('.mode.active')].map(e => e.dataset.mode).join(','),
+      wandDraftAlive: !document.getElementById('wandbar').hidden && !document.getElementById('wandApply').disabled,
+    }));
+    const before = await state();
+    // 영역 1(타원)의 움직임 세기 슬라이더를 조작 — 사용자는 옵션 패널을 연 상태
+    await page.evaluate(() => { for (const id of ['partsPanel', 'advanced']) { const d = document.getElementById(id); if (d) d.open = true; }
+      const e = document.getElementById('strengthInput'); e.value = String(Number(e.value) + 5); e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); });
+    await rafs(page, 5);
+    const after = await state();
+    await page.screenshot({ path: path.join(OUT, 'preview-after-option.png') });
+    results.previewKeep = { before, after, kept: before.wandDraftAlive && after.wandDraftAlive && before.tool === after.tool };
+    await context.close();
+  }
+
   // ── 3. 성능 ─────────────────────────────────────────────────────
-  const perf = { featherDrag: [], spreadDrag: [], playFps: [], editFps: [], profile: null };
+  const perf = { featherDrag: [], spreadDrag: [], tailFeatherDrag: [], modeAfterSlider: [], playFps: [], editFps: [], profile: null };
   for (let rep = 0; rep < REPEAT; rep++) {
     const { context, page } = await newPage(browser, VIEWPORTS.pc, 'violet');
     await openImage(page);
@@ -216,23 +277,23 @@ function zoneSummary(z) {
     // 마술봉 영역(마지막)이 선택된 상태 — 세부 패널을 열어 입력을 가능하게 함
     await page.evaluate(() => { for (const id of ['partsPanel', 'effects']) { const d = document.getElementById(id); if (d) d.open = true; } });
 
-    let client = null;
-    if (rep === 0) { client = await context.newCDPSession(page); await client.send('Profiler.enable'); await client.send('Profiler.setSamplingInterval', { interval: 200 }); await client.send('Profiler.start'); }
-    perf.featherDrag.push(await sliderDrag('featherInput', 0, 45));
-    perf.spreadDrag.push(await sliderDrag('spreadInput', 0, 26));
-    if (client) {
-      const { profile } = await client.send('Profiler.stop');
-      const self = {}; const byId = new Map(profile.nodes.map(n => [n.id, n]));
-      const dt = profile.timeDeltas; let total = 0;
-      profile.samples.forEach((id, i) => { const n = byId.get(id); const name = n.callFrame.functionName || '(anon)'; const us = dt[i] || 0; total += us; self[name] = (self[name] || 0) + us; });
-      perf.profile = { note: '슬라이더 드래그 120프레임 동안 함수별 자체 시간(ms)', totalMs: round(total / 1000),
-        top: Object.entries(self).sort((a, b) => b[1] - a[1]).slice(0, 15).map(([k, v]) => [k, round(v / 1000)]) };
-    }
+    // (가) 일반 영역: 경계 부드러움·바깥 확장 드래그
+    const drag1 = await profileDuring(page, async () => [await sliderDrag('featherInput', 0, 45), await sliderDrag('spreadInput', 0, 26)]);
+    perf.featherDrag.push(drag1.value[0]); perf.spreadDrag.push(drag1.value[1]);
+    // (나) '외곽까지 흔들기'를 켠 영역: 경계 부드러움 드래그 (배경 재계산 낭비 확인용)
+    await page.evaluate(() => { const e = document.getElementById('tailCutoutInput'); e.checked = true; e.dispatchEvent(new Event('change', { bubbles: true })); });
+    await rafs(page, 5);
+    const drag2 = await profileDuring(page, () => sliderDrag('featherInput', 0, 45));
+    perf.tailFeatherDrag.push(drag2.value);
+    perf.modeAfterSlider.push(await page.evaluate(() => [...document.querySelectorAll('.mode.active')].map(e => e.dataset.mode).join(',') || '(없음)'));
+    if (rep === 0) perf.profile = { sliderNormal: drag1.profile, sliderTail: drag2.profile };
 
     // 플레이 모드 FPS (2초)
     await page.locator('#viewerBtn').click();
     await rafs(page, 10);
-    perf.playFps.push(await fps());
+    const play = await profileDuring(page, fps);
+    perf.playFps.push(play.value);
+    if (rep === 0) perf.profile.play2s = play.profile;
     if (rep === 0) await page.screenshot({ path: path.join(OUT, 'play-pc.png') });
     await context.close();
   }
@@ -240,7 +301,9 @@ function zoneSummary(z) {
   results.perf = {
     note: `헤드리스 Chromium(소프트웨어 WebGL) 기준, ${REPEAT}회 중앙값. 절대값보다 같은 기계에서의 전후 비교용.`,
     editFps: round(median(perf.editFps)), playFps: round(median(perf.playFps)),
-    featherDragFrameMs: agg(perf.featherDrag), spreadDragFrameMs: agg(perf.spreadDrag), profile: perf.profile,
+    featherDragFrameMs: agg(perf.featherDrag), spreadDragFrameMs: agg(perf.spreadDrag), tailFeatherDragFrameMs: agg(perf.tailFeatherDrag),
+    activeToolAfterSlider: perf.modeAfterSlider[0],
+    profile: { note: '첫 회차 CPU 프로파일. inclusiveMs = 그 함수와 그 아래 호출까지 포함한 시간', ...perf.profile },
   };
 
   // 렌더러 정보
