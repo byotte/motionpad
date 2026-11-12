@@ -103,10 +103,11 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--acce
 .topMenu>summary{list-style:none;padding:5px 9px;cursor:pointer}
 .topMenu>summary::-webkit-details-marker{display:none}
 .topMenu>summary:is(:hover,:focus-visible),.topMenu[open]>summary{background:color-mix(in srgb,var(--ink) 13%,var(--panel))}
-.topMenuItems{position:absolute;top:100%;left:0;z-index:20;display:grid;min-width:160px;padding:3px;background:var(--panel);border:1px solid var(--line);box-shadow:0 4px 14px #0004}
+.topMenuItems{position:absolute;top:100%;left:0;z-index:20;display:grid;min-width:200px;padding:4px 0;background:var(--panel);border:1px solid var(--line);border-radius:0 0 4px 4px;box-shadow:0 8px 22px #0006}
 .topMenu:last-of-type .topMenuItems{left:auto;right:0}
-.topMenuItems>.btn{text-align:left;background:transparent;border:0 none transparent}
-.topMenuItems>.btn:is(:hover,:focus-visible){background:color-mix(in srgb,var(--ink) 13%,var(--panel))}
+.topMenuItems>.btn{min-height:28px;padding:4px 24px 4px 14px;text-align:left;font-weight:500;background:transparent;border:0 none transparent;border-radius:0}
+.topMenuItems>.btn:is(:hover,:focus-visible){background:color-mix(in srgb,var(--accent) 24%,var(--panel))}
+.menuSep{height:1px;margin:4px 8px;border:0;background:var(--line)}
 
 /* ── 5. 시작 화면 ───────────────────────────────────────── */
 .welcome{padding:12dvh 10px;text-align:center}
@@ -190,17 +191,23 @@ button[data-help]:hover::before{color:var(--ink)}
 /* ── 7. 옵션 패널 ───────────────────────────────────────── */
 .side{display:flex;flex-direction:column;min-width:0;padding:0;overflow:auto;background:var(--card);border:1px solid var(--line);scrollbar-color:var(--line) transparent}
 .side>*{flex-shrink:0}
-.side details{margin:0;padding:0 9px 5px;border:0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+.side details{margin:0;padding:0 10px 8px;border:0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
 .side details[open]{scroll-margin:10px}
+.side summary{display:flex;align-items:center;gap:7px;list-style:none;font-size:12px;font-weight:700;line-height:1.45;color:var(--ink);cursor:pointer}
+.side summary::-webkit-details-marker{display:none}
+/* 접힘 표시: 작은 꺾쇠(▸ 닫힘, ▾ 열림) */
+.side summary::before{content:"";flex:none;width:5px;height:5px;margin:0 2px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:rotate(-45deg);opacity:.7;transition:transform .12s}
+.side details[open]>summary::before{transform:rotate(45deg)}
+/* 패널 머리줄 */
+.side>details>summary{margin:0 -10px;padding:6px 10px;background:color-mix(in srgb,var(--ink) 7%,var(--panel));border-bottom:1px solid transparent}
+.side>details[open]>summary{margin-bottom:6px;border-bottom-color:var(--line)}
 #ambientPanel{background:var(--panel)}
-.side summary{font-size:12px;font-weight:700;line-height:1.45;color:var(--ink);cursor:pointer}
-.side details[open]>summary{color:var(--accent);font-weight:750}
-.side>details>summary{display:block;margin:0 -9px;padding:5px 9px;background:color-mix(in srgb,var(--ink) 6%,var(--panel));text-align:left;color:var(--ink)}
-.side>details>summary::before{content:"▸ "}
-.side>details[open]>summary::before{content:"▾ "}
-#ambientPanel>summary{font-size:11px;font-weight:750;color:var(--ink);background:color-mix(in srgb,var(--accent) 15%,var(--panel))}
+#ambientPanel>summary{background:color-mix(in srgb,var(--accent) 15%,var(--panel))}
 #ambientPanel>summary:hover{background:color-mix(in srgb,var(--accent) 23%,var(--panel))}
-#basePanel>summary{color:var(--ink)}
+/* 패널 안쪽 묶음: 테두리 상자 + 작은 제목 */
+.side details details{margin:10px 0 4px;padding:0 9px 6px;border:1px solid var(--line);border-radius:4px}
+.side details details>summary{margin:0 -9px;padding:5px 9px;font-size:11px;color:var(--sub)}
+.side details details[open]>summary{margin-bottom:4px;border-bottom:1px solid var(--line);color:var(--ink)}
 .side :is(summary,button):not(:disabled):is(:hover,:focus-visible){background:color-mix(in srgb,var(--ink) 13%,var(--panel))}
 .side>.eyeEntry{display:block;align-self:stretch;width:100%;margin:0;border:0 none transparent;border-bottom:1px solid transparent;background:color-mix(in srgb,var(--ink) 6%,var(--panel));text-align:left}
 .side .mini{overflow-wrap:anywhere}
@@ -230,7 +237,6 @@ button[data-help]:hover::before{color:var(--ink)}
 .chip.active{background:var(--accentSoft);border-color:var(--accent);font-weight:750}
 .chip.baseChip{border-style:dashed}
 .chip.baseChip{order:-1000}
-.regionActions.regionActions{margin:0 0 5px;padding:0}
 .regionActionRow{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:3px 0}
 .settingActions{display:flex;gap:6px;margin-top:12px}
 .settingActions .btn{flex:1;font-size:12px}
@@ -385,7 +391,7 @@ button[data-help]:hover::before{color:var(--ink)}
 <body>
 <div class="app">
 <header class="header starting"><div class="brand"><div class="logo" aria-hidden="true">∿</div><h1>MotionPad <span>0.5 RC 23</span></h1></div>
-<nav class="toolbar"><details class="topMenu"><summary>파일</summary><div class="topMenuItems"><button class="btn" id="menuNew">새 그림 열기</button><button class="btn" id="menuOpen">프로젝트 열기</button><button class="btn" id="backupBtn" type="button" title="다시 열어 편집할 프로젝트 저장">프로젝트 저장</button><button class="btn" id="saveAsBtn" type="button" aria-haspopup="dialog" >다른 이름으로 저장</button><button class="btn" data-dialog="videoDialog">영상으로 내보내기</button><button class="btn" id="legacyMenu" data-dialog="filesDialog" hidden>기기에 보관한 프로젝트</button></div></details><details class="topMenu"><summary>소리</summary><div class="topMenuItems"><button class="btn" id="openMusic" data-dialog="soundDialog">배경음악</button><button class="btn" id="openEffects" data-dialog="soundDialog">터치 효과음</button></div></details><details class="topMenu"><summary>설정</summary><div class="topMenuItems"><button class="btn" data-dialog="layoutSettings">색상 테마 · 화면 표시 품질</button><button class="btn" id="maskMenu">선택 영역 표시</button></div></details><button class="btn primary" id="viewerBtn">플레이</button></nav></header>
+<nav class="toolbar"><details class="topMenu"><summary>파일</summary><div class="topMenuItems"><button class="btn" id="menuNew">새 그림 열기…</button><button class="btn" id="menuOpen">프로젝트 열기…</button><hr class="menuSep"><button class="btn" id="backupBtn" type="button" title="다시 열어 편집할 프로젝트 저장">프로젝트 저장</button><button class="btn" id="saveAsBtn" type="button" aria-haspopup="dialog" >다른 이름으로 저장…</button><hr class="menuSep"><button class="btn" data-dialog="videoDialog">영상으로 내보내기…</button><button class="btn" id="legacyMenu" data-dialog="filesDialog" hidden>기기에 보관한 프로젝트…</button></div></details><details class="topMenu"><summary>소리</summary><div class="topMenuItems"><button class="btn" id="openMusic" data-dialog="soundDialog">배경음악…</button><button class="btn" id="openEffects" data-dialog="soundDialog">터치 효과음…</button></div></details><details class="topMenu"><summary>설정</summary><div class="topMenuItems"><button class="btn" data-dialog="layoutSettings">색상 테마 · 화면 표시 품질…</button><hr class="menuSep"><button class="btn" id="maskMenu">선택 영역 표시…</button></div></details><button class="btn primary" id="viewerBtn">플레이</button></nav></header>
 <section class="welcome" id="welcome"><h2>MotionPad</h2><div class="welcomeActions"><button class="btn primary" id="startImage">새 그림 열기</button><button class="btn" id="startProject">프로젝트 열기</button><button class="btn" id="resumeProject" hidden>이전 작업 이어하기</button><button class="btn" id="sampleBtn">샘플 그림으로 체험하기</button></div></section><main class="workspace" hidden>
 <section class="stagebox" aria-label="이미지 영역 편집"><div class="stagebar"><div class="modegroup"><button class="mode active" id="brushMode" data-mode="brush">붓</button><button class="mode" id="eraseMode" data-mode="erase">지우개</button><button class="mode" id="wandMode" data-mode="wand">마술봉</button><button class="mode" id="lassoMode" data-mode="lasso">올가미</button><button class="mode" id="ellipseMode" data-mode="ellipse">타원</button><button class="mode" id="editMode" data-mode="edit">이동·변형</button><button hidden class="mode" id="branchMode" data-mode="branch">가지 선</button><button class="mode" id="panMode" data-mode="pan">화면 이동</button></div></div>
 <div class="stageOptions"><div class="brushbar" id="editGuide" hidden><span id="editInstruction"></span><button class="btn" id="leaveEdit">그만두기</button><button class="btn" id="finishEdit">선택 완료</button></div><div class="brushbar" id="brushbar"><label for="brushInput" id="brushLabel">붓 굵기</label><input type="range" min="2" max="32" step="1" value="10" id="brushInput"><output id="brushValue">10%</output><label class="check"><input type="checkbox" id="appendInput" checked aria-label="선택 영역에 더하기">선택에 더하기</label></div>
