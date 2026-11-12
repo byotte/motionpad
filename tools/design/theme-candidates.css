@@ -1,0 +1,16 @@
+/* 테마 후보 미리보기용 (배포본에 넣지 않음). 사용: tools/design/theme_preview.js */
+/* A-2 라이트·검은 포인트 = 현재 'light'. A-1 다크 = 현재 'violet'. */
+:root[data-theme="paper"]{ /* A-3 따뜻한 종이 감성 */
+  color-scheme:light;--bg:#efe8dc;--card:#f8f3ea;--panel:#f8f3ea;--button:#ece3d4;--ink:#3a3128;--sub:#7a6c5c;--line:#5a463024;
+  --accent:#9b5435;--accentSoft:#efdccb;--accentInk:#6b3520;--onAccent:#fff;--warning:#a33a2c;--stageInk:#e4dccd;--glass:#f8f3ea}
+:root[data-theme="paper"] body{background-image:radial-gradient(ellipse at 20% 0%,#fffaf2 0,transparent 55%),radial-gradient(ellipse at 100% 100%,#e6dccb 0,transparent 60%)}
+:root[data-theme="darkbasic"]{ /* B-1 다크 베이직 */
+  color-scheme:dark;--bg:#1e1e1e;--card:#262626;--panel:#262626;--button:#333;--ink:#ececec;--sub:#a8a8a8;--line:#ffffff1f;
+  --accent:#4a90f0;--accentSoft:#24384f;--accentInk:#9cc4ff;--onAccent:#fff;--warning:#ff8f8f;--stageInk:#1b1b1b;--glass:rgba(38,38,38,.95)}
+:root[data-theme="darkbasic"] body,:root[data-theme="lightbasic"] body,:root[data-theme="mono"] body{background-image:none}
+:root[data-theme="lightbasic"]{ /* B-2 라이트 베이직 */
+  color-scheme:light;--bg:#e9eaee;--card:#f7f7f9;--panel:#f7f7f9;--button:#e4e5ea;--ink:#1d2129;--sub:#5e6470;--line:#0000001f;
+  --accent:#2f6fdb;--accentSoft:#dce7fb;--accentInk:#1d4fa8;--onAccent:#fff;--warning:#c23a3a;--stageInk:#dcdee4;--glass:rgba(247,247,249,.95)}
+:root[data-theme="mono"]{ /* B-3 모노(중간 회색) */
+  color-scheme:dark;--bg:#3a3a3a;--card:#454545;--panel:#424242;--button:#555;--ink:#eeeeee;--sub:#bdbdbd;--line:#ffffff22;
+  --accent:#e8e8e8;--accentSoft:#5e5e5e;--accentInk:#ffffff;--onAccent:#222;--warning:#ffb0b0;--stageInk:#303030;--glass:rgba(66,66,66,.95)}
