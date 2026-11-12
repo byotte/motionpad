@@ -22,8 +22,21 @@ const VIEWPORTS = {
   'phone-land': { width: 844, height: 390, isMobile: true, hasTouch: true },
   'fold-cover': { width: 344, height: 882, isMobile: true, hasTouch: true },
   'fold-open': { width: 884, height: 1000, isMobile: true, hasTouch: true },
+  'fold-open-land': { width: 1000, height: 884, isMobile: true, hasTouch: true },
 };
 const THEMES = ['violet', 'light', 'basic'];
+// 대화창·메뉴 장면: [이름, 여는 함수(페이지 안에서 실행)]. 진입 버튼을 누르는 실제 경로를 쓴다.
+const UI_SCENES = [
+  ['menu-file', () => { document.querySelectorAll('details.topMenu')[0].open = true; }],
+  ['menu-settings', () => { document.querySelectorAll('details.topMenu')[2].open = true; }],
+  ['dlg-settings', () => document.querySelector('[data-dialog="layoutSettings"]').click()],
+  ['dlg-sound', () => document.getElementById('openMusic').click()],
+  ['dlg-video', () => document.querySelector('[data-dialog="videoDialog"]').click()],
+  ['dlg-mask', () => document.getElementById('maskMenu').click()],
+  ['dlg-saveas', () => document.getElementById('saveAsBtn').click()],
+  ['dlg-blink', () => document.getElementById('eyeEntry').click()],
+  ['panel-parts', () => { const z = document.getElementById('ellipseMode'); for (const id of ['partsPanel', 'basePanel', 'advanced', 'effects', 'anchorPanel']) { const d = document.getElementById(id); if (d) d.open = true; } }],
+];
 // 레이아웃 치수 기록 대상 [x, y, 너비, 높이]
 const LAYOUT_PARTS = ['.header', '.stagebar', '.stageOptions', '.stage', '#view', '.stagebottom', '.side', '.maskDisplay'];
 // 시간 계측 대상 함수 (호출 아래 시간까지 포함한 누적 시간)
@@ -153,6 +166,19 @@ function zoneSummary(z) {
     const { context, page } = await newPage(browser, VIEWPORTS.pc, theme, true);
     await openImage(page, true);
     await page.screenshot({ path: path.join(OUT, `theme-${theme}-pc.png`) });
+    await context.close();
+  }
+  // 대화창·메뉴 (0-4 CSS 비교용): PC와 폰, 시계 고정
+  for (const vpName of ['pc', 'mobile']) {
+    const { context, page } = await newPage(browser, VIEWPORTS[vpName], 'violet', true);
+    await openImage(page, true);
+    for (const [name, open] of UI_SCENES) {
+      await page.evaluate(open);
+      await settle(page);
+      await page.screenshot({ path: path.join(OUT, `ui-${vpName}-${name}.png`) });
+      await page.evaluate(() => { for (const d of document.querySelectorAll('dialog[open]')) d.close(); for (const m of document.querySelectorAll('details.topMenu[open]')) m.open = false; });
+      await settle(page);
+    }
     await context.close();
   }
   results.screens = shots;

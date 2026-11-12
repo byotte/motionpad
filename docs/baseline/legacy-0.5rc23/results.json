@@ -1,6 +1,6 @@
 {
   "target": "legacy-0.5rc23.html",
-  "when": "2026-11-12T13:44:23.867Z",
+  "when": "2026-11-12T14:50:10.469Z",
   "errors": [],
   "notes": [
     "dialog: ‘영역 1’ 영역 메뉴입니다.\n1: 복제\n2: 삭제\n3: 잠금/잠금 해제",
@@ -297,13 +297,64 @@
         ],
         ".maskDisplay": null
       }
+    },
+    {
+      "viewport": "fold-open-land",
+      "horizontalOverflow": false,
+      "scrollW": 1000,
+      "clientW": 1000,
+      "layout": {
+        ".header": [
+          0,
+          0,
+          1000,
+          35
+        ],
+        ".stagebar": [
+          1,
+          36,
+          748,
+          31
+        ],
+        ".stageOptions": null,
+        ".stage": [
+          1,
+          67,
+          748,
+          777
+        ],
+        "#view": [
+          69,
+          73,
+          612,
+          765
+        ],
+        ".stagebottom": [
+          1,
+          844,
+          748,
+          38
+        ],
+        ".side": [
+          750,
+          35,
+          250,
+          848
+        ],
+        ".maskDisplay": [
+          751,
+          803,
+          248,
+          79
+        ]
+      }
     }
   ],
-  "openImageMs": 762,
+  "openImageMs": 723,
   "selection": {
-    "wandMs": 590,
+    "wandMs": 602,
     "wandTolerance": "30",
-    "outlineMs": 9532
+    "outlineMs": 9232
   },
   "roundtrip": {
     "version": 2,
@@ -391,227 +442,227 @@
   },
   "perf": {
     "note": "헤드리스 Chromium(소프트웨어 WebGL) 기준, 3회 중앙값. 절대값보다 같은 기계에서의 전후 비교용.",
-    "editFps": 13.1,
-    "playFps": 9.57,
+    "editFps": 14.14,
+    "playFps": 9.72,
     "featherDragFrameMs": {
-      "avg": 133.7,
-      "p95": 157.4,
-      "max": 168.4
+      "avg": 124.66,
+      "p95": 143.8,
+      "max": 152.3
     },
     "spreadDragFrameMs": {
-      "avg": 131.04,
-      "p95": 153.1,
-      "max": 170.7
+      "avg": 121.68,
+      "p95": 138.1,
+      "max": 140.2
     },
     "tailFeatherDragFrameMs": {
-      "avg": 220.61,
-      "p95": 279.9,
-      "max": 284.3
+      "avg": 211.4,
+      "p95": 261.8,
+      "max": 303
     },
     "activeToolAfterSlider": "(없음)",
     "profile": {
       "note": "첫 회차 CPU 프로파일. inclusiveMs = 그 함수와 그 아래 호출까지 포함한 시간",
       "sliderNormal": {
-        "totalMs": 16199.79,
+        "totalMs": 14783.39,
         "inclusiveMs": {
-          "updateMasks": 4915.25,
-          "updateBaseTextures": 0.27,
+          "updateMasks": 4401.38,
+          "updateBaseTextures": 0.43,
           "updateTailCutout": 0,
           "buildBackgroundPlate": 0,
-          "createMask": 2162.06,
-          "dilateMask": 1974.63,
-          "rawMaskCanvas": 229.54,
-          "render": 6.72,
-          "drawOverlay": 1.4,
-          "maskPreview": 0.59,
-          "updateBlinkScene": 1.12,
-          "tick": 4948.08,
-          "setMode": 0
+          "createMask": 1877.27,
+          "dilateMask": 1720.39,
+          "rawMaskCanvas": 226.04,
+          "render": 6.86,
+          "drawOverlay": 2.42,
+          "maskPreview": 0,
+          "updateBlinkScene": 0,
+          "tick": 4430.84,
+          "setMode": 0.28
         },
         "selfTop": [
           [
             "(program)",
-            11069.48
+            10168.19
           ],
           [
             "dilateMask",
-            1665.95
+            1432.19
           ],
           [
             "texImage2D",
-            1538.04
+            1422.69
           ],
           [
             "drawImage",
-            871.22
+            813
           ],
           [
             "getImageData",
-            374.25
+            308.06
           ],
           [
             "putImageData",
-            188.48
+            182.89
           ],
           [
             "(garbage collector)",
-            131.31
+            135.03
           ],
           [
             "getContext",
-            77.61
+            60.86
           ],
           [
             "save",
-            50.43
+            44.52
           ],
           [
             "rawMaskCanvas",
-            44.86
+            43.04
           ],
           [
             "fill",
-            32.3
+            35.5
           ],
           [
             "createMask",
-            21.31
+            15.44
           ]
         ]
       },
       "sliderTail": {
-        "totalMs": 13419.26,
+        "totalMs": 12627.07,
         "inclusiveMs": {
-          "updateMasks": 7690.25,
-          "updateBaseTextures": 1.79,
-          "updateTailCutout": 5036.33,
-          "buildBackgroundPlate": 4829.17,
-          "createMask": 1034.9,
-          "dilateMask": 1597.05,
-          "rawMaskCanvas": 114.92,
-          "render": 4.72,
-          "drawOverlay": 0.29,
+          "updateMasks": 7216.91,
+          "updateBaseTextures": 0,
+          "updateTailCutout": 4721.03,
+          "buildBackgroundPlate": 4532.58,
+          "createMask": 965.83,
+          "dilateMask": 1479.82,
+          "rawMaskCanvas": 90.09,
+          "render": 5.75,
+          "drawOverlay": 0.58,
           "maskPreview": 0,
-          "updateBlinkScene": 0.29,
-          "tick": 7707.19,
+          "updateBlinkScene": 0.55,
+          "tick": 7232.16,
           "setMode": 0
         },
         "selfTop": [
           [
             "(program)",
-            5588.75
+            5255.56
           ],
           [
             "buildBackgroundPlate",
-            2189.62
+            2061.91
           ],
           [
             "dilateMask",
-            1338.6
-          ],
-          [
-            "getImageData",
-            1065.24
+            1247.41
           ],
           [
             "texImage2D",
-            1059.89
+            1030.21
+          ],
+          [
+            "getImageData",
+            1001.16
           ],
           [
             "accumulateBackgroundLine",
-            837.43
+            784.95
           ],
           [
             "drawImage",
-            627.13
+            596.15
           ],
           [
             "putImageData",
-            208.56
+            192.11
           ],
           [
             "updateTailCutout",
-            207.16
+            188.45
           ],
           [
             "(garbage collector)",
-            95.82
+            115.87
           ],
           [
             "getContext",
-            47.67
+            34.56
           ],
           [
             "fill",
-            32.89
+            19.64
           ]
         ]
       },
       "play2s": {
-        "totalMs": 2269.86,
+        "totalMs": 2282.4,
         "inclusiveMs": {
-          "updateMasks": 135.44,
+          "updateMasks": 103.02,
           "updateBaseTextures": 0,
-          "updateTailCutout": 94.3,
-          "buildBackgroundPlate": 91.42,
-          "createMask": 16.04,
-          "dilateMask": 30.33,
-          "rawMaskCanvas": 0,
-          "render": 0.57,
+          "updateTailCutout": 66.13,
+          "buildBackgroundPlate": 63,
+          "createMask": 13.35,
+          "dilateMask": 20.43,
+          "rawMaskCanvas": 2.89,
+          "render": 2.08,
           "drawOverlay": 0,
           "maskPreview": 0,
           "updateBlinkScene": 0,
-          "tick": 136.58,
+          "tick": 105.84,
           "setMode": 0
         },
         "selfTop": [
           [
             "(program)",
-            2130.29
+            2174.79
           ],
           [
             "buildBackgroundPlate",
-            36.44
+            28.47
           ],
           [
             "dilateMask",
-            28.11
-          ],
-          [
-            "getImageData",
-            23.3
+            17.48
           ],
           [
             "texImage2D",
-            18.11
+            14.39
+          ],
+          [
+            "getImageData",
+            14.12
           ],
           [
             "accumulateBackgroundLine",
-            14.67
+            10.67
           ],
           [
             "drawImage",
-            9.11
+            9.26
           ],
           [
             "updateTailCutout",
-            2.87
-          ],
-          [
-            "(idle)",
-            2.71
+            3.13
           ],
           [
             "putImageData",
-            2.2
+            2.62
           ],
           [
-            "getContext",
-            0.32
+            "rawMaskCanvas",
+            2.32
           ],
           [
-            "createMask",
-            0.3
+            "render",
+            1.8
+          ],
+          [
+            "(idle)",
+            1.48
           ]
         ]
       }

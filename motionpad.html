@@ -496,7 +496,7 @@ body select:focus-visible { outline:1px solid var(--accent); outline-offset:0; }
 <button type="button" class="btn" id="outlineApply" disabled>선택 적용</button><button type="button" class="btn" id="outlineCancel">취소</button>
 </div></div>
 <div class="stage" id="stage"><div class="surface" id="surface"><canvas id="view"></canvas><canvas id="overlay"></canvas></div><canvas id="loupe" class="loupe" width="160" height="160" hidden aria-label="확대 미리보기"></canvas></div>
-<div class="stagebottom"><div class="quick"><button class="btn" id="undoBtn" title="실행 취소" disabled>↶</button><button class="btn" id="redoBtn" title="다시 실행" disabled>↷</button><button class="btn" id="newRegionBtn" title="기존 선택 해제 후 별도 영역을 그립니다">새 영역</button><button class="btn" id="zoomOutBtn" title="화면 축소">−</button><button class="btn" id="zoomResetBtn" title="화면 원래 크기">100%</button><button class="btn" id="zoomInBtn" title="화면 확대">＋</button><button class="btn" id="allTestBtn">모두 반응</button><label class="toggle precisionSwitch"><input id="loupeInput" type="checkbox">돋보기</label><label class="toggle precisionSwitch"><input id="offsetInput" type="checkbox" aria-label="손가락 위에 그리기">손가락 보정</label></div><label class="toggle"><input type="checkbox" id="showZones" checked>영역선</label><span class="status" id="status" role="status">준비 중</span></div></section>
+<div class="stagebottom"><div class="quick"><button class="btn" id="undoBtn" title="실행 취소" disabled>↶</button><button class="btn" id="redoBtn" title="다시 실행" disabled>↷</button><button class="btn" id="newRegionBtn" title="기존 선택 해제 후 별도 영역을 그립니다">새 영역</button><button class="btn" id="zoomOutBtn" title="화면 축소">−</button><button class="btn" id="zoomResetBtn" title="화면 원래 크기">100%</button><button class="btn" id="zoomInBtn" title="화면 확대">＋</button><label class="toggle precisionSwitch"><input id="loupeInput" type="checkbox">돋보기</label><label class="toggle precisionSwitch"><input id="offsetInput" type="checkbox" aria-label="손가락 위에 그리기">손가락 보정</label></div><label class="toggle"><input type="checkbox" id="showZones" checked>영역선</label><span class="status" id="status" role="status">준비 중</span></div></section>
 <aside class="side">
 
 <details id="ambientPanel" open><summary>전체 그림 · 호흡과 흔들림</summary>
@@ -517,7 +517,7 @@ body select:focus-visible { outline:1px solid var(--accent); outline-offset:0; }
 <div class="empty" id="noZone">그림에서 영역을 선택하거나 그려 주세요. ‘이동·변형’에서는 영역 크기·각도를, 그 외 모드에서는 두 손가락으로 화면 확대·이동을 할 수 있습니다.</div>
 <div id="editFields" hidden>
 <div class="field"><div class="fieldhead"><label for="nameInput">영역 이름</label></div><input type="text" id="nameInput" maxlength="26" autocomplete="off"></div>
-<details class="regionActions"><summary>영역 관리</summary><div class="regionActionRow"><label class="toggle"><input type="checkbox" id="lockedInput">잠금</label><button class="btn" id="refineRegion" title="붓으로 선택 영역을 다듬습니다">범위 다듬기</button><button class="btn" id="duplicateBtn">복제</button><button class="btn warn" id="quickDeleteBtn">삭제</button></div></details><p class="micro" id="motionChoiceHint" hidden></p><div class="field"><div class="fieldhead"><label for="presetInput">움직임 종류</label></div><select id="presetInput"><option value="custom">직접 설정</option><option value="soft">부드러운 반응</option><option value="breathing">부분 호흡</option><option value="jelly">볼 탄성 · 젤리</option><option value="tail">꼬리 흔들림</option><option value="flow">흐름·물결</option><option value="wind">긴 머리 흔들림</option><option value="scarf">목도리·옷자락</option></select></div>
+<details class="regionActions"><summary>영역 관리</summary><div class="regionActionRow"><label class="toggle"><input type="checkbox" id="lockedInput">잠금</label><button class="btn" id="refineRegion" title="붓으로 선택 영역을 다듬습니다">범위 다듬기</button><button class="btn" id="duplicateBtn">복제</button><button class="btn warn" id="quickDeleteBtn">삭제</button></div></details><div class="field"><div class="fieldhead"><label for="presetInput">움직임 종류</label></div><select id="presetInput"><option value="custom">직접 설정</option><option value="soft">부드러운 반응</option><option value="breathing">부분 호흡</option><option value="jelly">볼 탄성 · 젤리</option><option value="tail">꼬리 흔들림</option><option value="flow">흐름·물결</option><option value="wind">긴 머리 흔들림</option><option value="scarf">목도리·옷자락</option></select></div>
 <div id="quickMotion">
 <div class="field" id="quickDirectionRow"><label for="quickDirection">방향</label><select id="quickDirection"><option value="follow">터치 이동 방향 자동</option><option value="y">고정: 위아래</option><option value="x">고정: 좌우</option><option value="diag">고정: ↘↖ 대각선</option><option value="diagBack">고정: ↙↗ 대각선</option><option value="pulse">고정: 확대·축소</option></select><input id="quickAngle" type="range" min="-180" max="180" step="1" aria-label="방향 각도" hidden><output id="quickAngleValue" hidden></output></div>
 <div class="field"><div class="fieldhead"><label for="quickStrength">세기</label><output id="quickStrengthValue"></output></div><input id="quickStrength" type="range"></div>
@@ -586,8 +586,8 @@ body select:focus-visible { outline:1px solid var(--accent); outline-offset:0; }
 <button class="btn" id="cancelVideoBtn" hidden>녹화 취소</button>
 <p id="videoProgress" class="mini">음성 없이 움직임만 저장합니다. 지원 브라우저에서는 MP4, 그 외에는 WebM으로 저장합니다. 끝부분은 시작 프레임과 부드럽게 연결합니다. 일부 배경화면 앱은 WebM을 지원하지 않습니다.</p>
 </details></dialog><dialog id="soundDialog" class="saveDialog layoutDialog"><form method="dialog"><button class="btn dialogClose" aria-label="닫기">×</button></form><h2>소리</h2><div id="soundPanel"><div class="field"><label for="trackSelect">내장 음악 / 내 음악</label><select id="trackSelect"><option value="lounge">느린 라운지 (합성)</option><option value="dream">몽환적인 앰비언트 (합성)</option><option value="mystery">밤의 신시사이저 (합성)</option><option value="file">불러온 음원</option></select></div><button class="btn" id="musicFileBtn">음악 파일 불러오기</button><div class="field"><div class="fieldhead"><label for="musicVolume">음악 볼륨</label><output id="musicVolumeValue">40%</output></div><input id="musicVolume" type="range" min="0" max="100" value="40"></div><label class="toggle"><input id="playerVisibleInput" type="checkbox" checked>감상 화면에 음악 플레이어 표시</label><p class="mini">표시해도 감상 중 한 번 터치하여 아이콘으로 최소화할 수 있습니다.</p>
-<div class="field"><label for="sfxTypeInput">터치 효과음 종류</label><select id="sfxTypeInput"><option value="soft">부드러운 터치</option><option value="slap">경쾌한 타격</option><option value="jelly">젤리·탄성</option><option value="water">물결·액체</option><option value="wetClip">물기 있는 짧은 터치 · 녹음</option><option value="hardClip">타격음 · 녹음</option><option value="softClip">부드러운 찰싹 · 녹음</option><option value="mudClip">질척한 터치 · 녹음</option><option value="off">끄기</option></select></div>
-<div class="field"><div class="fieldhead"><label for="sfxVolume">터치 효과음 볼륨</label><output id="sfxVolumeValue">25%</output></div><input id="sfxVolume" type="range" min="0" max="100" value="25"></div></div></dialog><dialog id="layoutSettings" class="saveDialog layoutDialog"><form method="dialog"><button class="btn dialogClose" aria-label="닫기">×</button></form><h2>설정</h2><div class="field"><label for="themeToggle">화면 색상</label><select id="themeToggle"><option value="violet">다크</option><option value="light">모노</option><option value="basic">베이직</option></select></div><div class="field"><label for="qualityInput">그래픽 품질</label><select id="qualityInput"><option value="auto">자동 (FPS에 맞춤)</option><option value="high">높음</option><option value="balanced">절전 / 균형</option></select></div><button class="btn" id="fpsToggle" title="성능 측정">FPS</button><span class="engineBadge" id="engineBadge" aria-label="렌더러와 프레임레이트" title="그래픽 렌더러 · 최근 FPS · 그래픽 품질">렌더러 확인 중</span></dialog><dialog id="motionDialog" class="saveDialog layoutDialog"><form method="dialog"><button class="btn dialogClose" aria-label="닫기">×</button></form><h2>움직임 추가</h2><div class="settingActions"><button class="btn" id="addAuto">부드럽게 움직이기</button><button class="btn" id="addTouch">터치에 반응하기</button><button class="btn" id="blinkBtn">눈 깜빡이기</button></div><div class="settingActions" id="targetChoices" hidden><button class="btn" id="wholeTarget">그림 전체</button><button class="btn" id="newTarget">새 부분 선택</button><label for="reuseTarget">기존 부분 사용</label><select id="reuseTarget"></select></div></dialog><dialog id="toolHelp" class="saveDialog layoutDialog"><form method="dialog"><button class="btn" id="toolHelpText"></button></form></dialog><div class="viewer" id="viewer" hidden><div class="viewerStage" id="viewerStage"></div><button class="exitViewer" id="exitViewer" aria-label="편집으로 돌아가기">←</button><div class="viewerAudio compact" id="viewerAudio"><div class="playerHeader"><span class="playerTitle">♪ 음악 플레이어</span><button class="playerHandle" id="playerCollapse" aria-label="음악 플레이어 접기" title="음악 플레이어 접기">⌄</button></div><div class="playerControls"><button id="musicBtn" class="btn" title="음악 재생·정지">▶ 음악</button><select id="viewerTrack" title="음악 선택"><option value="lounge">느린 라운지</option><option value="dream">몽환</option><option value="mystery">밤의 신스</option><option value="file">내 음악</option></select><label title="음악 볼륨">♫ <input id="viewerMusicVolume" type="range" min="0" max="100" value="40"></label><label title="효과음 볼륨" class="playerSfx">효과 <input id="viewerSfxVolume" type="range" min="0" max="100" value="25"></label><button id="muteViewer" class="btn" title="효과음 켜기·끄기">효과음</button></div></div><div class="viewerHint" id="viewerHint">그림을 터치하면 반응합니다.</div></div>
+<div class="field"><label for="sfxTypeInput">터치 효과음 종류</label><select id="sfxTypeInput"><option value="off">끄기</option><option value="soft" selected>부드러운 터치</option><option value="slap">경쾌한 타격</option><option value="jelly">젤리·탄성</option><option value="water">물결·액체</option><option value="wetClip">물기 있는 짧은 터치 · 녹음</option><option value="hardClip">타격음 · 녹음</option><option value="softClip">부드러운 찰싹 · 녹음</option><option value="mudClip">질척한 터치 · 녹음</option></select></div>
+<div class="field"><div class="fieldhead"><label for="sfxVolume">터치 효과음 볼륨</label><output id="sfxVolumeValue">25%</output></div><input id="sfxVolume" type="range" min="0" max="100" value="25"></div></div></dialog><dialog id="layoutSettings" class="saveDialog layoutDialog"><form method="dialog"><button class="btn dialogClose" aria-label="닫기">×</button></form><h2>설정</h2><fieldset class="themeOptions"><legend>색상 테마</legend><label>다크<span class="themeSample" data-theme="violet"><i></i></span><input type="radio" name="appTheme" value="violet"></label><label>모노<span class="themeSample" data-theme="light"><i></i></span><input type="radio" name="appTheme" value="light"></label><label>베이직<span class="themeSample" data-theme="basic"><i></i></span><input type="radio" name="appTheme" value="basic"></label></fieldset><fieldset class="qualityOptions"><legend>화면 표시 품질</legend><label><input type="radio" name="displayQuality" value="auto">자동</label><label><input type="radio" name="displayQuality" value="high">선명하게</label><label><input type="radio" name="displayQuality" value="balanced">절전</label><p>편집과 플레이 중 화면의 선명도와 기기 부담을 조절합니다.</p></fieldset><button class="btn" id="fpsToggle" title="성능 측정">FPS</button><span class="engineBadge" id="engineBadge" aria-label="렌더러와 프레임레이트" title="그래픽 렌더러 · 최근 FPS · 그래픽 품질">렌더러 확인 중</span></dialog><div class="viewer" id="viewer" hidden><div class="viewerStage" id="viewerStage"></div><button class="exitViewer" id="exitViewer" aria-label="편집으로 돌아가기">←</button><div class="viewerAudio compact" id="viewerAudio"><div class="playerHeader"><span class="playerTitle">♪ 음악 플레이어</span><button class="playerHandle" id="playerCollapse" aria-label="음악 플레이어 접기" title="음악 플레이어 접기">⌄</button></div><div class="playerControls"><div class="playerRow"><button id="musicBtn" class="btn" title="음악 재생·정지">▶ 음악</button><select id="viewerTrack" title="음악 선택"><option value="lounge">느린 라운지</option><option value="dream">몽환</option><option value="mystery">밤의 신스</option><option value="file">내 음악</option></select><label title="음악 볼륨">♫ <input id="viewerMusicVolume" type="range" min="0" max="100" value="40"></label></div><div class="playerRow"><button id="muteViewer" class="btn" title="효과음 켜기·끄기">효과음</button><select id="viewerEffects" class="viewerEffects" aria-label="터치 효과음 종류"><option value="off">끄기</option><option value="soft" selected>부드러운 터치</option><option value="slap">경쾌한 타격</option><option value="jelly">젤리·탄성</option><option value="water">물결·액체</option><option value="wetClip">물기 있는 짧은 터치 · 녹음</option><option value="hardClip">타격음 · 녹음</option><option value="softClip">부드러운 찰싹 · 녹음</option><option value="mudClip">질척한 터치 · 녹음</option></select><label title="효과음 볼륨" class="playerSfx">효과 <input id="viewerSfxVolume" type="range" min="0" max="100" value="25"></label></div></div></div><div class="viewerHint" id="viewerHint">그림을 터치하면 반응합니다.</div></div>
 <dialog id="saveAsDialog" class="saveDialog" aria-labelledby="saveAsTitle">
 <form id="saveAsForm">
   <h2 id="saveAsTitle">이름 바꿔 저장</h2>
@@ -637,6 +637,7 @@ body select:focus-visible { outline:1px solid var(--accent); outline-offset:0; }
  </div>
  <div class="blinkFooter"><p id="blinkHint" role="status"></p><button class="btn primary" id="blinkApply" type="button">현재 눈 적용</button></div>
 </dialog>
+<div class="localHelp" id="localHelp" role="tooltip" hidden></div><dialog class="saveDialog layoutDialog" id="maskDialog"><form method="dialog"><button class="btn dialogClose" aria-label="닫기">×</button></form><h2>선택 영역 표시</h2></dialog>
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id);let view=$('view');const overlay=$('overlay'),ctx=overlay.getContext('2d'),surface=$('surface'),stage=$('stage'),loupe=$('loupe'),loupeCtx=loupe.getContext('2d');
@@ -1181,7 +1182,7 @@ function hit(x,y){
  return null;
 }
 
-$('testBtn').onclick=()=>impulse(getSelected());$('allTestBtn').onclick=()=>zones.forEach(z=>impulse(z));
+$('testBtn').onclick=()=>impulse(getSelected());
 function placePivot(z,p,additional){
  if(!z){setStatus('먼저 영역을 선택해 주세요.');return false}
  if(z.locked){setStatus('잠긴 영역은 수정할 수 없습니다.');return false}
@@ -2090,35 +2091,24 @@ let storedLayoutProject=null;async function boot(){try{db=await openDB();await r
 window.addEventListener('visibilitychange',()=>{last=performance.now()});window.addEventListener('pagehide',()=>{if(ready&&db)dbPut({image:imgBlob,zones:zones.map(clean),audio:audioBlob,audioName,extra:extraState(),savedAt:Date.now()}).catch(()=>{})});
 if('serviceWorker'in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
 /* UI skin control: independent from project format and animation state. */
-const themeBtn=$('themeToggle');
-const themeOptions=document.createElement('fieldset');
-themeOptions.className='themeOptions';
-themeOptions.innerHTML='<legend>색상 테마</legend>';
-for(const option of themeBtn.options){
- const label=document.createElement('label');
- const sample=document.createElement('span');
- sample.className='themeSample';sample.dataset.theme=option.value;sample.innerHTML='<i></i>';
- const radio=document.createElement('input');radio.type='radio';radio.name='appTheme';radio.value=option.value;
- radio.onchange=()=>{themeBtn.value=radio.value;themeBtn.onchange();};
- label.append(option.textContent,sample,radio);themeOptions.append(label);
-}
-themeBtn.closest('.field').hidden=true;themeBtn.closest('.field').after(themeOptions);
+const themeRadios=[...document.querySelectorAll('input[name="appTheme"]')];
 try{const stored=localStorage.getItem('motionpad-theme');const theme=stored==='teal'?'basic':stored;if(['violet','light','basic'].includes(theme))document.documentElement.dataset.theme=theme}catch(_){}
 function paintTheme(){
  const theme=document.documentElement.dataset.theme||'violet';
- themeBtn.value=theme;
- for(const radio of themeOptions.querySelectorAll('input'))radio.checked=radio.value===theme;
+ for(const radio of themeRadios)radio.checked=radio.value===theme;
  document.querySelector('meta[name="theme-color"]')?.setAttribute('content',getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());
 }
 paintTheme();
-themeBtn.onchange=()=>{
- document.documentElement.dataset.theme=themeBtn.value;
- try{localStorage.setItem('motionpad-theme',themeBtn.value)}catch(_){}
+for(const radio of themeRadios)radio.onchange=()=>{
+ document.documentElement.dataset.theme=radio.value;
+ try{localStorage.setItem('motionpad-theme',radio.value)}catch(_){}
  paintTheme();
 };
 const playerFrame=$('viewerAudio'),playerCollapse=$('playerCollapse');
 playerCollapse.onclick=()=>{const folded=playerFrame.classList.toggle('compact');playerCollapse.textContent=folded?'♫':'⌄';playerCollapse.title=folded?'음악 플레이어 펼치기':'음악 플레이어 접기';playerCollapse.setAttribute('aria-label',playerCollapse.title)};
-$('qualityInput').onchange=e=>{qualityMode=e.target.value;qualityScale=qualityMode==='balanced'?.7:1;meshSegments=qualityMode==='balanced'?[20,30]:[32,48];if(gl)rebuildMesh();fit();scheduleSave()};
+function setQualityMode(value){qualityMode=value;qualityScale=qualityMode==='balanced'?.7:1;meshSegments=qualityMode==='balanced'?[20,30]:[32,48];if(gl)rebuildMesh();fit();scheduleSave()}
+function paintQuality(){for(const radio of document.querySelectorAll('input[name="displayQuality"]'))radio.checked=radio.value===qualityMode}
+for(const radio of document.querySelectorAll('input[name="displayQuality"]'))radio.onchange=()=>setQualityMode(radio.value);
 /* Rendering adapter. Physics emits UV-displacements independently of GLSL or Canvas. */
 let meshVBO=null,meshIBO=null,meshIndexCount=0;
 function rebuildMesh(){
@@ -2650,7 +2640,7 @@ function restoreExtra(d){
   $('ambientOn').checked=ambient.enabled;
   for(const [k,id] of [['breath','ambientBreath'],['sway','ambientSway'],['light','ambientLight']])$(id).value=ambient[k];
   updateAmbientLabels();applyPlayerVisibility();setTrack(d?.track||'lounge');
-  qualityMode=['auto','high','balanced'].includes(d?.qualityMode)?d.qualityMode:'auto';$('qualityInput').value=qualityMode;
+  qualityMode=['auto','high','balanced'].includes(d?.qualityMode)?d.qualityMode:'auto';paintQuality();
   qualityScale=qualityMode==='balanced'?.7:1;meshSegments=qualityMode==='balanced'?[20,30]:[32,48];if(gl)rebuildMesh();fit();
 }
 // Make all 'change' events, including effect sliders, part of the undo history.
@@ -3048,7 +3038,7 @@ function stopBlinkPreview(){
  cancelAnimationFrame(blinkFrame);
  blinkFrame=0;
 }
-$('blinkBtn').onclick=()=>{
+$('eyeEntry').onclick=()=>{
  if(!ready){setStatus('먼저 그림을 열어 주세요.');return}
  blinkRect=null;blinkCropping=false;$('blinkEye').value='0';$('blinkSpeed').value=blinkSpeed;
  loadBlinkEye();
@@ -3188,11 +3178,7 @@ $('blinkSpeed').onchange=()=>{blinkSpeed=Number($('blinkSpeed').value);scheduleS
 $('blinkClose').onclick=()=>blinkDialog.close();
 blinkDialog.addEventListener('close',stopBlinkPreview);
 
-const localHelp=document.createElement('div');
-localHelp.className='localHelp';
-localHelp.setAttribute('role','tooltip');
-localHelp.hidden=true;
-document.body.append(localHelp);
+const localHelp=$('localHelp');
 function showLocalHelp(button){
  localHelp.textContent=button.dataset.help;
  localHelp.hidden=false;
@@ -3209,7 +3195,6 @@ document.addEventListener('pointerdown',event=>{if(!event.target.closest('[data-
 window.addEventListener('scroll',()=>{localHelp.hidden=true;},true);
 document.querySelectorAll('[data-dialog]').forEach(button=>{
  button.onclick=()=>{
-  if(button.dataset.dialog==='motionDialog')$('targetChoices').hidden=true;
   $(button.dataset.dialog).showModal();
  };
 });
@@ -3221,39 +3206,7 @@ $('resumeProject').onclick=async()=>{
  catch(err){alert('이전 작업을 열지 못했습니다: '+err.message);}
 };
 for(const id of ['imageBtn','restoreBtn'])$(id).addEventListener('click',()=>$('filesDialog').close());
-$('blinkBtn').addEventListener('click',()=>$('motionDialog').close(),{capture:true});
-let motionChoice='';
-function chooseMotionTarget(allowWhole){
- motionChoice=allowWhole?'호흡·흔들림처럼 계속 움직이는 효과를 골라 보세요.':'부드러운 반응이나 볼 탄성을 고른 뒤 그림을 눌러 보세요.';
- $('targetChoices').hidden=false;
- $('wholeTarget').hidden=!allowWhole;
- $('reuseTarget').replaceChildren(new Option('부분을 골라 주세요',''));
- for(const zone of zones)$('reuseTarget').add(new Option(zone.name,zone.id));
- $('reuseTarget').disabled=!zones.length;
-}
-$('addAuto').onclick=()=>chooseMotionTarget(true);
-$('addTouch').onclick=()=>chooseMotionTarget(false);
-$('wholeTarget').onclick=()=>{$('motionDialog').close();$('ambientPanel').open=true;$('ambientPanel').scrollIntoView({block:'nearest'});};
-function showMotionChoice(){
- $('motionChoiceHint').hidden=false;
- $('motionChoiceHint').textContent=motionChoice;
-}
-$('newTarget').onclick=()=>{
- $('motionDialog').close();
- showMotionChoice();
- setMode('brush');
- $('newRegionBtn').click();
- $('stage').scrollIntoView({block:'nearest'});
-};
-$('reuseTarget').onchange=e=>{
- if(!e.target.value)return;
- selected=e.target.value;
- showMotionChoice();
- $('motionDialog').close();
- updateUI();
- setMode('play');
- $('editFields').scrollIntoView({block:'nearest'});
-};
+
 $('refineRegion').onclick=()=>{$('appendInput').checked=true;setMode('brush');$('stage').scrollIntoView({block:'nearest'});};
 $('finishEdit').onclick=()=>{setMode('play');$('editFields').scrollIntoView({block:'nearest'});};
 $('leaveEdit').onclick=()=>{
@@ -3268,49 +3221,14 @@ $('leaveEdit').onclick=()=>{
 };
 $('menuNew').onclick=()=>$('imageBtn').click();
 $('menuOpen').onclick=()=>$('restoreBtn').click();
-$('eyeEntry').onclick=()=>$('blinkBtn').click();
-const qualitySelect=$('qualityInput');
-const qualityChoices=document.createElement('fieldset');
-qualityChoices.className='qualityOptions';
-qualityChoices.innerHTML='<legend>화면 표시 품질</legend>';
-for(const [value,name] of [['auto','자동'],['high','선명하게'],['balanced','절전']]){
- const label=document.createElement('label');
- const radio=document.createElement('input');
- radio.type='radio';radio.name='displayQuality';radio.value=value;
- radio.onchange=()=>{qualitySelect.value=value;qualitySelect.dispatchEvent(new Event('change'));};
- label.append(radio,name);qualityChoices.append(label);
-}
-const qualityDescription=document.createElement('p');
-qualityDescription.textContent='편집과 플레이 중 화면의 선명도와 기기 부담을 조절합니다.';
-qualityChoices.append(qualityDescription);
-qualitySelect.closest('.field').hidden=true;
-qualitySelect.closest('.field').after(qualityChoices);
-$('layoutSettings').addEventListener('focusin',()=>{
- for(const radio of qualityChoices.querySelectorAll('input'))radio.checked=radio.value===qualitySelect.value;
-});
+$('layoutSettings').addEventListener('focusin',paintQuality);
 const namedProjects=$('projectSelect');
 const showNamedProjects=()=>$('legacyMenu').hidden=![...namedProjects.options].some(option=>option.value);
 new MutationObserver(showNamedProjects).observe(namedProjects,{childList:true});
 showNamedProjects();
 $('openMusic').addEventListener('click',()=>$('trackSelect').focus());
 $('openEffects').addEventListener('click',()=>$('sfxVolume').focus());
-const effectSelect=$('sfxTypeInput');
-const viewerEffects=effectSelect.cloneNode(true);
-viewerEffects.id='viewerEffects';
-viewerEffects.className='viewerEffects';
-viewerEffects.setAttribute('aria-label','터치 효과음 종류');
-for(const select of [effectSelect,viewerEffects]){
- const off=select.querySelector('[value="off"]');
- if(off)select.prepend(off);
-}
-const playerControls=document.querySelector('.playerControls');
-for(const controls of [
- [$('musicBtn'),$('viewerTrack'),$('viewerMusicVolume').closest('label')],
- [$('muteViewer'),viewerEffects,$('viewerSfxVolume').closest('label')]
-]){
- const row=document.createElement('div');row.className='playerRow';
- row.append(...controls);playerControls.append(row);
-}
+const effectSelect=$('sfxTypeInput'),viewerEffects=$('viewerEffects');
 viewerEffects.onchange=()=>{
  effectSelect.value=viewerEffects.value;
  effectSelect.dispatchEvent(new Event('change'));
@@ -3318,10 +3236,7 @@ viewerEffects.onchange=()=>{
 effectSelect.addEventListener('change',()=>{viewerEffects.value=effectSelect.value;});
 $('viewerBtn').addEventListener('click',()=>{viewerEffects.value=effectSelect.value;});
 const maskSettings=document.querySelector('.maskDisplay');
-const maskDialog=document.createElement('dialog');
-maskDialog.className='saveDialog layoutDialog';
-maskDialog.innerHTML='<form method="dialog"><button class="btn dialogClose" aria-label="닫기">×</button></form><h2>선택 영역 표시</h2>';
-document.body.append(maskDialog);
+const maskDialog=$('maskDialog');
 $('maskMenu').onclick=()=>{
  maskDialog.append(maskSettings);
  maskDialog.showModal();
