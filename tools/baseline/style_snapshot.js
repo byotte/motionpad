@@ -40,7 +40,7 @@ async function snapshot(browser, file, [vp, theme, state]) {
       const r = el.getBoundingClientRect();
       const rec = { rect: [r.x, r.y, r.width, r.height].map(v => Math.round(v * 2) / 2) };
       for (const p of PROPS) rec[p] = cs[p];
-      for (const pseudo of ['::before', '::after']) { const ps = getComputedStyle(el, pseudo); if (ps.content && ps.content !== 'none' && ps.content !== 'normal') rec[pseudo] = [ps.content, ps.color, ps.fontSize, ps.display, ps.width, ps.height, ps.borderTopWidth, ps.borderTopLeftRadius].join(' | '); }
+      for (const pseudo of ['::before', '::after']) { const ps = getComputedStyle(el, pseudo); if (ps.content && ps.content !== 'none' && ps.content !== 'normal' && ps.display !== 'none') rec[pseudo] = [ps.content, ps.color, ps.fontSize, ps.display, ps.width, ps.height, ps.borderTopWidth, ps.borderTopLeftRadius].join(' | '); }
       out[key(el)] = rec;
     }
     return out;
