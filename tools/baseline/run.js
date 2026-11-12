@@ -70,7 +70,9 @@ async function newPage(browser, vp, theme, frozen = false) {
   const { width, height, ...rest } = vp;
   const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1, acceptDownloads: true, ...rest });
   if (frozen) {
+    // install만 하면 시간이 실제처럼 흘러 위상이 흔들린다 → pauseAt으로 완전히 멈추고 settle()로만 진행
     await context.clock.install({ time: new Date('2026-01-01T00:00:00Z') });
+    await context.clock.pauseAt(new Date('2026-01-01T00:00:01Z'));
     // 난수 고정 (mulberry32)
     await context.addInitScript(() => { let a = 12345; Math.random = () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; });
   }
@@ -240,7 +242,15 @@ function zoneSummary(z) {
     await rafs(page, 5);
     const after = await state();
     await page.screenshot({ path: path.join(OUT, 'preview-after-option.png') });
-    results.previewKeep = { before, after, kept: before.wandDraftAlive && after.wandDraftAlive && before.tool === after.tool };
+    // 미리보기 상태에서 그림 터치 → 도구 다시 누르기 → 선택 적용
+    const pz = await toScreen(page, 0.5, 0.38); await page.mouse.click(pz.x, pz.y); await rafs(page, 3);
+    const afterTouch = await state();
+    await page.locator('#wandMode').click(); await rafs(page, 2);
+    const afterTool = await state();
+    let applied = false;
+    if (afterTool.wandDraftAlive) { await page.locator('#wandApply').click(); await rafs(page, 2); applied = (await page.locator('#zoneCount').textContent()).trim().startsWith('2'); }
+    results.previewKeep = { before, after, afterTouch, afterTool, applied,
+      kept: before.wandDraftAlive && after.wandDraftAlive && before.tool === after.tool && afterTouch.wandDraftAlive && afterTool.wandDraftAlive && applied };
     await context.close();
   }
 

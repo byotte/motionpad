@@ -9,7 +9,7 @@ node tools/baseline/run.js <대상.html> <이름>  # 결과 → tools/baseline/o
 python3 tools/baseline/compare.py docs/baseline/legacy-0.5rc23 tools/baseline/out/<이름>
 ```
 - Playwright(환경에 기본 설치)만 쓴다. 조작은 실제 사용자 경로(파일 선택·클릭·드래그)로만 한다.
-- 스크린샷은 시계·난수를 고정해 찍는다. 같은 코드를 두 번 재면 차이가 0.12% 이하라서, **0.2% 넘게 달라지면 실제 변화**로 본다.
+- 스크린샷은 시계를 완전히 멈추고(pauseAt) 난수를 고정해 찍는다. 같은 코드를 두 번 재면 시계 고정 화면은 0.00%, 조작 화면도 0.1% 이하라서 **0.2% 넘게 달라지면 실제 변화**로 본다.
 - 성능 수치는 헤드리스 Chromium + 소프트웨어 WebGL(SwiftShader) 기준이다. 실기기 수치가 아니며, **같은 기계에서 전후 비교용**이다. 재실행 흔들림 약 ±5%.
 
 ## 측정 항목

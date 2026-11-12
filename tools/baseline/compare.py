@@ -11,7 +11,7 @@ a_dir, b_dir = sys.argv[1], sys.argv[2]
 diff_dir = os.path.join(b_dir, 'diff')
 os.makedirs(diff_dir, exist_ok=True)
 
-print('## 스크린샷 (달라진 픽셀 비율, 채널 차 > 16. 재실행 잡음 ≈ 0.1% 이하)')
+print('## 스크린샷 (달라진 픽셀 비율, 채널 차 > 16. 재실행 잡음 0.1% 이하)')
 for name in sorted(f for f in os.listdir(a_dir) if f.endswith('.png')):
     pb = os.path.join(b_dir, name)
     if not os.path.exists(pb):

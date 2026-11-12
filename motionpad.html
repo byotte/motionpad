@@ -476,6 +476,8 @@ body select:focus-visible { outline:1px solid var(--accent); outline-offset:0; }
 @media(max-width:520px) {
  .stagebox .stagebar .modegroup { grid-template-columns:minmax(0,.58fr) repeat(2,minmax(0,.92fr)) repeat(2,minmax(0,.82fr)) repeat(2,minmax(0,1.3fr)); }
 }
+/* 0-2: 터치 미리보기 중에는 도구 버튼을 흐리게 표시 */
+.workspace.touchPreview .stagebar .modegroup .mode.active{opacity:.5}
 </style>
 </head>
 <body>
@@ -633,6 +635,7 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),newId=()=>Math.random().toString(
 const LIMIT=12,TILE=384,COLS=4,ROWS=3;let zones=[],selected=null,mode='brush',imgBlob=null,bitmap=null,renderWidth=900,renderHeight=1100,ready=false,db=null,saveTimer=null,saveError=false;
 let gl=null,program=null,imageTex=null,maskTex=null,baseMaskTex=null,backgroundTex=null,uni={},draw2d=null,maskAtlas=document.createElement('canvas'),maskReady=false,maskDirty=true;
 maskAtlas.width=TILE*COLS;maskAtlas.height=TILE*ROWS;let masks=[];
+let touchPreview=false;
 let baseClipEnabled=false,baseBackgroundExclude=true,baseEdge=1,baseMaskCanvas=null,backgroundPlate=null,lastBaseSignature='',lastBaseEdge=-1,baseForegroundSource=null;
 let pointers=new Map(),gesture=null,brushSize=10,viewerOpen=false,previousMode='brush',last=performance.now(),elapsed=0;
 let undoStack=[],redoStack=[],lastHistoryJSON='',imagePixels=null,edgeScores=null,audioBlob=null,audioName='',audioURL=null,activeAudio=null,audioCtx=null,audioMaster=null,musicTimer=null,musicPlaying=false,musicTick=0,effectMuted=false;
@@ -1165,7 +1168,7 @@ function stopPlay(z){if(!z)return;z.dragging=false;z.desiredX=z.desiredY=z.desir
 overlay.addEventListener('pointerdown',e=>{
   if(!ready)return;e.preventDefault();try{overlay.setPointerCapture(e.pointerId)}catch(_){}
   const p=pointerPos(e);pointers.set(e.pointerId,p);paintLoupe(p);
-  if(viewerOpen||mode==='play'){
+  if(viewerOpen||mode==='play'||touchPreview){
     if(pointers.size>1)return;
     const z=hit(p.x,p.y);gesture={type:'play',id:z?.id||null,start:p,last:p,time:performance.now(),lastTime:performance.now(),dragged:false};
     if(z){z.dragging=false;z.desiredX=z.desiredY=z.desiredScale=0;z.hitX=p.x;z.hitY=p.y}return;
@@ -2425,8 +2428,16 @@ function readAmbient(){
 }
 for(const id of ['ambientOn','ambientBreath','ambientSway','ambientLight'])$(id).addEventListener('input',()=>{readAmbient();updateAmbientLabels()});
 function updateAmbientLabels(){for(const [k,id] of [['breath','ambientBreathVal'],['sway','ambientSwayVal'],['light','ambientLightVal']])$(id).textContent=ambient[k]+'%'}
+// 0-2: 옵션 조작 시 모드를 바꾸지 않는다. '터치 미리보기'만 켜서 선택 미리보기·복원 지점을 보존한다.
+function setTouchPreview(on){
+ on=!!on&&!viewerOpen&&mode!=='play';
+ if(touchPreview===on)return;
+ touchPreview=on;
+ document.querySelector('.workspace')?.classList.toggle('touchPreview',on);
+ if(on)setStatus('터치 미리보기 중입니다. 그림을 눌러 반응을 확인하세요. 도구를 누르면 하던 작업으로 돌아갑니다.');
+}
 function previewMotion(){
- if(!viewerOpen&&mode!=='play')setMode('play');
+ if(!viewerOpen&&mode!=='play')setTouchPreview(true);
 }
 function motionControls(z){
  if(['tail','wind','scarf'].includes(z.preset))return {
@@ -2582,11 +2593,14 @@ $('imageFile').addEventListener('change',()=>{setZoom(1) });
 let editCheckpoint=null;
 document.querySelector('.stagebar .modegroup').addEventListener('click',event=>{
  const tool=event.target.closest('[data-mode]');
- if(!tool||tool.dataset.mode!==mode)return;
+ if(!tool)return;
+ if(touchPreview){setTouchPreview(false);if(tool.dataset.mode===mode){event.stopImmediatePropagation();setStatus('하던 작업으로 돌아왔습니다.');}return;}
+ if(tool.dataset.mode!==mode)return;
  event.stopImmediatePropagation();
  setMode('play');
 },true);
 function setMode(m){
+  setTouchPreview(false);
   if(mode!==m)clearSelectionDrafts();
   if(m==='play')editCheckpoint=null;
   else if(mode==='play'&&ready&&!viewerOpen){
