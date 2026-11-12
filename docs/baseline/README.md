@@ -8,6 +8,7 @@ python3 tools/baseline/make_fixture.py        # 테스트 그림(이미 커밋�
 node tools/baseline/run.js <대상.html> <이름>  # 결과 → tools/baseline/out/<이름>/
 python3 tools/baseline/compare.py docs/baseline/legacy-0.5rc23 tools/baseline/out/<이름>
 ```
+- 영역 속성을 건드린 변경은 동등성 검사기도 돌린다: `node tools/baseline/schema_check.js legacy-0.5rc23.html motionpad.html` (저장·화면 표시·조작·되돌리기를 원본과 글자 단위 비교)
 - Playwright(환경에 기본 설치)만 쓴다. 조작은 실제 사용자 경로(파일 선택·클릭·드래그)로만 한다.
 - 스크린샷은 두 종류다. `shot-*`·`theme-*`는 시계를 완전히 멈추고(pauseAt) 난수를 고정해 찍는다. 같은 코드를 두 번 재면 0.00%라서 **조금이라도 달라지면 실제 변화**다. `select-*`·`preview-*`·`roundtrip-*`·`play-*`는 조작 중 실시간으로 찍어서 애니메이션 위상·상태 문구 때문에 0.7%까지 흔들린다. 이쪽은 차이 그림(`diff/`)을 눈으로 확인한다.
 - 성능 수치는 헤드리스 Chromium + 소프트웨어 WebGL(SwiftShader) 기준이다. 실기기 수치가 아니며, **같은 기계에서 전후 비교용**이다. 재실행 흔들림 약 ±5%.
