@@ -600,6 +600,15 @@ body select:focus-visible { outline:1px solid var(--accent); outline-offset:0; }
   </div>
 </form>
 </dialog>
+<dialog id="zoneMenuDialog" class="saveDialog" aria-labelledby="zoneMenuTitle">
+  <h2 id="zoneMenuTitle">영역</h2>
+  <div class="settingActions">
+    <button id="zoneMenuDuplicate" class="btn" type="button">복제</button>
+    <button id="zoneMenuDelete" class="btn warn" type="button">삭제</button>
+    <button id="zoneMenuLock" class="btn" type="button">잠금</button>
+    <button id="zoneMenuCancel" class="btn" type="button">닫기</button>
+  </div>
+</dialog>
 <input id="imageFile" class="sr" type="file" accept="image/*"><input id="backupFile" class="sr" type="file" accept="application/json,.json"><input id="musicFile" class="sr" type="file" accept="audio/*">
 <dialog id="blinkDialog" aria-labelledby="blinkTitle">
  <div class="blinkHead"><h2 id="blinkTitle">눈 깜빡임 설정</h2><div class="settingActions">
@@ -684,7 +693,7 @@ $('markBaseBtn').onclick=()=>{
  const z=getSelected();if(!z)return;remember();
  if(z.isBase){z.isBase=false;baseClipEnabled=false;}else{
    for(const v of zones)v.isBase=false;
-   z.isBase=true;z.feather=1;z.spread=0;
+   z.isBase=true;// 0-2: 경계 부드러움·바깥 확장 값을 덮어쓰지 않는다
  }
  normalizeBaseOrder();lastBaseSignature='';markMask();updateUI();scheduleSave();
  setStatus(z.isBase?'베이스 영역을 지정했습니다. 일반 영역은 베이스 위에 유지됩니다.':'베이스 영역을 해제했습니다.');
@@ -693,11 +702,12 @@ $('baseClipInput').onchange=e=>{remember();baseClipEnabled=e.target.checked;mark
 $('baseExcludeInput').onchange=e=>{remember();baseBackgroundExclude=e.target.checked;markMask();scheduleSave();setStatus(baseBackgroundExclude?'베이스 외부 배경은 고정됩니다.':'이미지 전체 기본 움직임이 적용됩니다.')};
 $('baseEdgeInput').oninput=e=>{baseEdge=Number(e.target.value);$('baseEdgeVal').textContent=String(baseEdge);markMask();scheduleSave()};
 function updateValues(){const z=getSelected();if(!z)return;for(const [id,v] of Object.entries({strengthValue:z.strength,springValue:z.spring,dampingValue:`${z.damping}%`,widthValue:`${Math.round(z.rx*200)}%`,heightValue:`${Math.round(z.ry*200)}%`,autoSpeedValue:z.autoSpeed.toFixed(1),rotationValue:`${Math.round(z.rot*180/Math.PI)}°`,featherValue:z.feather,breathValue:z.breath,waveValue:z.wave,twistValue:z.twist,rippleValue:z.ripple,flowValue:z.flow,flowAngleValue:`${Math.round(z.flowAngle)}°`,spreadValue:z.spread,pivotStrengthValue:`${z.pivotStrength}%`,tapGainValue:`${z.tapGain}%`,dragGainValue:`${z.dragGain}%`,holdGainValue:`${z.holdGain}%`,flickGainValue:`${z.flickGain}%`,windStrengthValue:`${z.windStrength}%`,windAngleValue:`${z.windAngle}°`,windSpeedValue:`${z.windSpeed.toFixed(1)}×`,windNoiseValue:`${z.windNoise}%`,windDelayValue:`${z.windDelay}%`}))$(id).textContent=v;updateQuickMotion(z);$('widthRow').hidden=$('heightRow').hidden=$('rotationRow').hidden=z.kind!=='ellipse'}
-function updateUI(){const z=getSelected();$('zoneCount').textContent=`${zones.length}개`;const list=$('zoneList');list.replaceChildren();for(const item of zones){const b=document.createElement('button');b.className='chip'+(item.id===selected?' active':'')+(item.isBase?' baseChip':'');b.textContent=(item.isBase?'몸체 · ':'')+item.name+(item.locked?' (잠금)':'');b.onclick=()=>{selected=item.id;updateUI()};b.oncontextmenu=e=>{e.preventDefault();selected=item.id;updateUI();showZoneMenu(item)};let pressTimer=null;b.addEventListener('pointerdown',()=>{clearTimeout(pressTimer);pressTimer=setTimeout(()=>{selected=item.id;updateUI();showZoneMenu(item)},620)});for(const ev of ['pointerup','pointercancel','pointerleave'])b.addEventListener(ev,()=>clearTimeout(pressTimer));list.append(b)}$('noZone').hidden=!!z;$('editFields').hidden=!z;refreshBaseUI();if(!z)return;for(const [id,val] of Object.entries({nameInput:z.name,axisInput:z.axis,strengthInput:z.strength,springInput:z.spring,dampingInput:z.damping,widthInput:Math.round(z.rx*200),heightInput:Math.round(z.ry*200),rotationInput:Math.round(z.rot*180/Math.PI),autoInput:z.auto,autoSpeedInput:z.autoSpeed,featherInput:z.feather,breathInput:z.breath,waveInput:z.wave,twistInput:z.twist,rippleInput:z.ripple,flowInput:z.flow,flowAngleInput:z.flowAngle,spreadInput:z.spread,pivotEnabledInput:z.pivotEnabled,pivotStrengthInput:z.pivotStrength,tapGainInput:z.tapGain,dragGainInput:z.dragGain,holdGainInput:z.holdGain,flickGainInput:z.flickGain,windStrengthInput:z.windStrength,windAngleInput:z.windAngle,windSpeedInput:z.windSpeed,windNoiseInput:z.windNoise,windDelayInput:z.windDelay,lockedInput:z.locked})){const node=$(id);if(['autoInput','lockedInput','pivotEnabledInput'].includes(id))node.checked=val;else node.value=val}updateValues()}
-function showZoneMenu(z){if(!z)return;const op=prompt(`‘${z.name}’ 영역 메뉴입니다.
-1: 복제
-2: 삭제
-3: 잠금/잠금 해제`, '1');if(op==='1')duplicateZone();else if(op==='2')deleteZone();else if(op==='3'){remember();z.locked=!z.locked;updateUI();scheduleSave()}}
+function updateUI(){const z=getSelected();$('zoneCount').textContent=`${zones.length}개`;const list=$('zoneList');list.replaceChildren();for(const item of zones){const b=document.createElement('button');b.className='chip'+(item.id===selected?' active':'')+(item.isBase?' baseChip':'');b.textContent=(item.isBase?'몸체 · ':'')+item.name+(item.locked?' (잠금)':'');b.onclick=()=>{selected=item.id;updateUI()};b.oncontextmenu=e=>{e.preventDefault();clearTimeout(pressTimer);selected=item.id;updateUI();showZoneMenu(item)};let pressTimer=null;b.addEventListener('pointerdown',()=>{clearTimeout(pressTimer);pressTimer=setTimeout(()=>{selected=item.id;updateUI();showZoneMenu(item)},620)});for(const ev of ['pointerup','pointercancel','pointerleave'])b.addEventListener(ev,()=>clearTimeout(pressTimer));list.append(b)}$('noZone').hidden=!!z;$('editFields').hidden=!z;refreshBaseUI();if(!z)return;for(const [id,val] of Object.entries({nameInput:z.name,axisInput:z.axis,strengthInput:z.strength,springInput:z.spring,dampingInput:z.damping,widthInput:Math.round(z.rx*200),heightInput:Math.round(z.ry*200),rotationInput:Math.round(z.rot*180/Math.PI),autoInput:z.auto,autoSpeedInput:z.autoSpeed,featherInput:z.feather,breathInput:z.breath,waveInput:z.wave,twistInput:z.twist,rippleInput:z.ripple,flowInput:z.flow,flowAngleInput:z.flowAngle,spreadInput:z.spread,pivotEnabledInput:z.pivotEnabled,pivotStrengthInput:z.pivotStrength,tapGainInput:z.tapGain,dragGainInput:z.dragGain,holdGainInput:z.holdGain,flickGainInput:z.flickGain,windStrengthInput:z.windStrength,windAngleInput:z.windAngle,windSpeedInput:z.windSpeed,windNoiseInput:z.windNoise,windDelayInput:z.windDelay,lockedInput:z.locked})){const node=$(id);if(['autoInput','lockedInput','pivotEnabledInput'].includes(id))node.checked=val;else node.value=val}updateValues()}
+// 0-2: prompt() 대신 앱 자체 메뉴
+let zoneMenuTarget=null;
+function showZoneMenu(z){if(!z||$('zoneMenuDialog').open)return;zoneMenuTarget=z.id;$('zoneMenuTitle').textContent=`‘${z.name}’ 영역`;$('zoneMenuLock').textContent=z.locked?'잠금 해제':'잠금';$('zoneMenuDialog').showModal()}
+function zoneMenuAction(action){const z=zones.find(a=>a.id===zoneMenuTarget);$('zoneMenuDialog').close();zoneMenuTarget=null;if(!z)return;selected=z.id;if(action==='duplicate')duplicateZone();else if(action==='delete')deleteZone();else if(action==='lock'){remember();z.locked=!z.locked;updateUI();scheduleSave()}}
+$('zoneMenuDuplicate').onclick=()=>zoneMenuAction('duplicate');$('zoneMenuDelete').onclick=()=>zoneMenuAction('delete');$('zoneMenuLock').onclick=()=>zoneMenuAction('lock');$('zoneMenuCancel').onclick=()=>$('zoneMenuDialog').close();
 for(const activePanel of ['ambientPanel','partsPanel']){
  $(activePanel).addEventListener('toggle',()=>{if(!$(activePanel).open)return;for(const another of ['ambientPanel','partsPanel'])if(another!==activePanel&&matchMedia('(max-width:779px),(orientation:portrait) and (max-width:990px)').matches)$(another).open=false});
 }

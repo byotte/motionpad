@@ -66,6 +66,10 @@ row('간략 올가미 ms', ra['selection'].get('outlineMs'), rb['selection'].get
 print('\n## 동작 확인')
 row('슬라이더 뒤 활성 도구', pa.get('activeToolAfterSlider'), pb2.get('activeToolAfterSlider'))
 row('옵션 조작 뒤 미리보기 유지', ra.get('previewKeep', {}).get('kept'), rb.get('previewKeep', {}).get('kept'))
+mb_a, mb_b = ra.get('menuAndBase', {}), rb.get('menuAndBase', {})
+row('영역 메뉴: 브라우저 기본창', mb_a.get('nativeDialogs'), mb_b.get('nativeDialogs'))
+row('영역 메뉴: 앱 메뉴로 복제', mb_a.get('zonesAfterMenu'), mb_b.get('zonesAfterMenu'))
+row('몸체 지정 뒤 경계값 유지', mb_a.get('baseKeepsValues'), mb_b.get('baseKeepsValues'))
 print('\n## 오류')
 row('페이지 오류 수', len(ra['errors']), len(rb['errors']))
 for e in rb['errors'][:10]:

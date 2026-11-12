@@ -254,6 +254,33 @@ function zoneSummary(z) {
     await context.close();
   }
 
+  // ── 2.6 영역 메뉴(길게 누름/우클릭)와 몸체 지정 ──
+  {
+    const { context, page } = await newPage(browser, VIEWPORTS.pc, 'violet');
+    const nativeDialogs = [];
+    page.on('dialog', d => nativeDialogs.push(d.type()));
+    await openImage(page);
+    await clickMode(page, 'ellipseMode'); await drag(page, [[0.36, 0.25], [0.64, 0.52]]);
+    await page.evaluate(() => { document.getElementById('partsPanel').open = true; });
+    // 메뉴: 영역 칩 우클릭 → 앱 메뉴가 있으면 '복제'
+    await page.locator('#zoneList .chip').first().click({ button: 'right' });
+    await rafs(page, 2);
+    const appMenu = await page.locator('#zoneMenuDialog[open]').count();
+    if (appMenu) { await page.locator('#zoneMenuDuplicate').click(); await rafs(page, 2); }
+    const zonesAfterMenu = (await page.locator('#zoneCount').textContent()).trim();
+    // 몸체 지정: 첫 영역 선택 → 경계값 확인 → 몸체 지정 → 저장 파일에서 값 확인
+    await page.locator('#zoneList .chip').first().click();
+    await page.evaluate(() => { document.getElementById('ambientPanel').open = true; document.getElementById('basePanel').open = true; });
+    const before = await page.evaluate(() => ({ feather: document.getElementById('featherInput').value, spread: document.getElementById('spreadInput').value }));
+    await page.locator('#markBaseBtn').click(); await rafs(page, 2);
+    const saved = await saveProject(page, path.join(OUT, 'base-check.motionpad.json'));
+    const base = saved.zones.find(z => z.isBase) || {};
+    results.menuAndBase = { nativeDialogs, appMenuOpened: !!appMenu, zonesAfterMenu,
+      baseBefore: before, baseAfter: { feather: String(base.feather), spread: String(base.spread) },
+      baseKeepsValues: String(base.feather) === before.feather && String(base.spread) === before.spread };
+    await context.close();
+  }
+
   // ── 3. 성능 ─────────────────────────────────────────────────────
   const perf = { featherDrag: [], spreadDrag: [], tailFeatherDrag: [], modeAfterSlider: [], playFps: [], editFps: [], profile: null };
   for (let rep = 0; rep < REPEAT; rep++) {

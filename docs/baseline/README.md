@@ -9,7 +9,7 @@ node tools/baseline/run.js <대상.html> <이름>  # 결과 → tools/baseline/o
 python3 tools/baseline/compare.py docs/baseline/legacy-0.5rc23 tools/baseline/out/<이름>
 ```
 - Playwright(환경에 기본 설치)만 쓴다. 조작은 실제 사용자 경로(파일 선택·클릭·드래그)로만 한다.
-- 스크린샷은 시계를 완전히 멈추고(pauseAt) 난수를 고정해 찍는다. 같은 코드를 두 번 재면 시계 고정 화면은 0.00%, 조작 화면도 0.1% 이하라서 **0.2% 넘게 달라지면 실제 변화**로 본다.
+- 스크린샷은 두 종류다. `shot-*`·`theme-*`는 시계를 완전히 멈추고(pauseAt) 난수를 고정해 찍는다. 같은 코드를 두 번 재면 0.00%라서 **조금이라도 달라지면 실제 변화**다. `select-*`·`preview-*`·`roundtrip-*`·`play-*`는 조작 중 실시간으로 찍어서 애니메이션 위상·상태 문구 때문에 0.7%까지 흔들린다. 이쪽은 차이 그림(`diff/`)을 눈으로 확인한다.
 - 성능 수치는 헤드리스 Chromium + 소프트웨어 WebGL(SwiftShader) 기준이다. 실기기 수치가 아니며, **같은 기계에서 전후 비교용**이다. 재실행 흔들림 약 ±5%.
 
 ## 측정 항목
@@ -20,7 +20,8 @@ python3 tools/baseline/compare.py docs/baseline/legacy-0.5rc23 tools/baseline/ou
 | 선택 | 테스트 그림(`tools/baseline/fixtures/character.png`)에서 타원(얼굴) · 마술봉(옷 왼쪽) · 간략 범위지정 올가미(꼬리 둘러싸기) |
 | 저장 왕복 | 저장 → 새 창에서 열기 → 다시 저장 → 두 파일 비교 |
 | 성능 | 편집/플레이 FPS, 경계 부드러움·바깥 확장 슬라이더를 60프레임 끄는 동안 프레임 시간, '외곽까지 흔들기'를 켠 상태의 같은 드래그, 함수별 누적 CPU 시간(updateMasks·buildBackgroundPlate·render 등) |
-| 미리보기 보존 | 마술봉 미리보기 중 움직임 세기 슬라이더를 만졌을 때 미리보기·도구가 남는지 |
+| 미리보기 보존 | 마술봉 미리보기 중 움직임 세기 슬라이더를 만졌을 때 미리보기·도구가 남는지, 그 상태에서 그림 터치 → 도구 복귀 → 선택 적용이 되는지 |
+| 영역 메뉴·몸체 지정 | 영역 칩 우클릭 시 브라우저 기본창이 뜨는지, 몸체 지정 뒤 경계 부드러움·바깥 확장 값이 남는지 |
 | 레이아웃 치수 | 화면 크기별 주요 영역의 위치·크기 (`results.json`의 `screens[].layout`) |
 
 ## 결과 요약
@@ -40,6 +41,8 @@ python3 tools/baseline/compare.py docs/baseline/legacy-0.5rc23 tools/baseline/ou
 | 드래그 중 누적 CPU (외곽 흔들기, 60프레임) | updateMasks 7.7초 ← **updateTailCutout 5.1초 (buildBackgroundPlate 4.9초)** |
 | 플레이 2초 | render 자체는 4ms 수준. 화면 갱신이 느린 주원인은 그래픽 처리(소프트웨어 WebGL) 쪽 |
 | 옵션 조작 뒤 미리보기 | **사라짐**. 마술봉 미리보기가 풀리고 도구 선택도 해제됨 |
+| 영역 메뉴 | 브라우저 기본창(prompt)이 **두 번** 뜸 (우클릭 + 길게 누름 타이머가 함께 작동) |
+| 몸체 지정 | 경계 부드러움 8·바깥 확장 9가 **1·0으로 덮어써짐**, 해제해도 돌아오지 않음 |
 
 ## 확인된 것 (CLAUDE.md 결함 목록과 대조)
 - **간략 범위지정 실패 재현**: `select-outline-draft.png`. 꼬리를 넉넉히 둘러쌌는데 꼬리 위쪽 배경에 가는 띠만 잡힌다. outlineCosts 동점·탈락 문제와 맞아떨어진다. 처리 시간도 8초대로 길다.
