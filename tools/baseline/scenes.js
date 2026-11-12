@@ -19,7 +19,7 @@ async function prep(page, state) {
   await page.waitForSelector('.workspace:not([hidden])');
   const view = async (x, y) => { const b = await page.locator('#view').boundingBox(); return [b.x + b.width * x, b.y + b.height * y]; };
   if (state === 'editor') return;
-  if (['rich', 'wand', 'lasso', 'outline', 'pivot', 'viewer', 'viewer-compact', 'help', 'touchprev'].includes(state)) {
+  if (['rich', 'wand', 'lasso', 'outline', 'pivot', 'viewer', 'viewer-compact', 'help', 'touchprev', 'dlg-zonemenu'].includes(state)) {
     // 몸체 영역(큰 타원) + 일반 영역(얼굴 타원), 일반 영역 선택 상태
     for (const box of [[.25, .2, .75, .9], [.36, .25, .64, .52]]) {
       await page.locator('#ellipseMode').click();
@@ -44,6 +44,7 @@ async function prep(page, state) {
     await page.evaluate(() => { const e = document.getElementById('strengthInput'); e.value = String(Number(e.value) + 5); e.dispatchEvent(new Event('input', { bubbles: true })); });
   }
   if (state === 'viewer-compact') await page.locator('#viewerBtn').click();
+  if (state === 'dlg-zonemenu') await page.locator('#zoneList .chip').last().click({ button: 'right' });
   if (state === 'wand') {
     await page.locator('#wandMode').click();
     const [x, y] = await view(.42, .75); await page.mouse.click(x, y);
