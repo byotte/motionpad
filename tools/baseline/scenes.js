@@ -68,7 +68,7 @@ async function prep(page, state) {
 
 const SCENES = [];
 for (const vp of Object.keys(VP)) for (const st of ['welcome', 'editor', 'rich', 'wand', 'lasso']) SCENES.push([vp, 'violet', st]);
-for (const th of ['light', 'basic']) for (const st of ['welcome', 'rich', 'wand', 'dlg-settings', 'viewer']) SCENES.push(['pc', th, st]), SCENES.push(['mobile', th, st]);
+for (const th of ['light', 'mono']) for (const st of ['welcome', 'rich', 'wand', 'dlg-settings', 'viewer']) SCENES.push(['pc', th, st]), SCENES.push(['mobile', th, st]);
 for (const vp of ['pc', 'mobile', 'phone-land']) for (const st of ['outline', 'help', 'touchprev', 'viewer-compact', 'pivot', 'viewer', 'dlg-settings', 'dlg-sound', 'dlg-video', 'dlg-mask', 'dlg-saveas', 'dlg-blink', 'menu-file', 'menu-settings']) SCENES.push([vp, 'violet', st]);
 
 

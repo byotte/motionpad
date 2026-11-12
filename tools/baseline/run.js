@@ -24,7 +24,7 @@ const VIEWPORTS = {
   'fold-open': { width: 884, height: 1000, isMobile: true, hasTouch: true },
   'fold-open-land': { width: 1000, height: 884, isMobile: true, hasTouch: true },
 };
-const THEMES = ['violet', 'light', 'basic'];
+const THEMES = ['violet', 'light', 'mono'];
 // 대화창·메뉴 장면: [이름, 여는 함수(페이지 안에서 실행)]. 진입 버튼을 누르는 실제 경로를 쓴다.
 const UI_SCENES = [
   ['menu-file', () => { document.querySelectorAll('details.topMenu')[0].open = true; }],
