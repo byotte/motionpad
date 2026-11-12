@@ -1,0 +1,20 @@
+const $=id=>document.getElementById(id);let view=$('view');const overlay=$('overlay'),ctx=overlay.getContext('2d'),surface=$('surface'),stage=$('stage'),loupe=$('loupe'),loupeCtx=loupe.getContext('2d');
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),newId=()=>Math.random().toString(36).slice(2,10);
+const LIMIT=12,TILE=384,COLS=4,ROWS=3;let zones=[],selected=null,mode='brush',imgBlob=null,bitmap=null,renderWidth=900,renderHeight=1100,ready=false,db=null,saveTimer=null,saveError=false;
+let gl=null,program=null,imageTex=null,maskTex=null,baseMaskTex=null,backgroundTex=null,uni={},draw2d=null,maskAtlas=document.createElement('canvas'),maskReady=false,maskDirty=true;
+maskAtlas.width=TILE*COLS;maskAtlas.height=TILE*ROWS;let masks=[];
+let touchPreview=false;
+let baseClipEnabled=false,baseBackgroundExclude=true,baseEdge=1,baseMaskCanvas=null,backgroundPlate=null,lastBaseSignature='',lastBaseEdge=-1,baseForegroundSource=null;
+let pointers=new Map(),gesture=null,brushSize=10,viewerOpen=false,previousMode='brush',last=performance.now(),elapsed=0;
+let undoStack=[],redoStack=[],lastHistoryJSON='',imagePixels=null,edgeScores=null,audioBlob=null,audioName='',audioURL=null,activeAudio=null,audioCtx=null,audioMaster=null,musicTimer=null,musicPlaying=false,musicTick=0,effectMuted=false;
+const stopEvent=e=>e.preventDefault();
+const MOTION_PRESETS=Object.freeze({
+ soft:{strength:15,spring:11,damping:74,ripple:5,feather:19},
+ breathing:{strength:12,spring:8,damping:88,breath:18,breathSpeed:.85,feather:23,spread:10},
+ jelly:{strength:30,spring:17,damping:55,ripple:13,feather:17,spread:10},
+ tail:{strength:24,spring:9,damping:68,windStrength:38,windSpeed:1.1,windDelay:65,pivotEnabled:true},
+ flow:{strength:9,spring:9,damping:85,wave:4,flow:22,feather:22,spread:13},
+ wind:{strength:21,spring:10,damping:76,windStrength:52,windSpeed:1.3,windNoise:45,windDelay:75,pivotEnabled:true},
+ scarf:{strength:25,spring:8,damping:80,windStrength:65,windAngle:-25,windSpeed:.9,windNoise:25,windDelay:84,pivotEnabled:true}
+});
+function setStatus(s){$('status').textContent=s}

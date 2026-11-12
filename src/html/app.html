@@ -1,0 +1,98 @@
+<div class="app">
+<header class="header starting"><div class="brand"><div class="logo" aria-hidden="true">∿</div><h1>MotionPad <span>0.5 RC 23</span></h1></div>
+<nav class="toolbar"><details class="topMenu"><summary>파일</summary><div class="topMenuItems"><button class="btn" id="menuNew">새 그림 열기…</button><button class="btn" id="menuOpen">프로젝트 열기…</button><hr class="menuSep"><button class="btn" id="backupBtn" type="button" title="다시 열어 편집할 프로젝트 저장">프로젝트 저장</button><button class="btn" id="saveAsBtn" type="button" aria-haspopup="dialog" >다른 이름으로 저장…</button><hr class="menuSep"><button class="btn" data-dialog="videoDialog">영상으로 내보내기…</button><button class="btn" id="legacyMenu" data-dialog="filesDialog" hidden>기기에 보관한 프로젝트…</button></div></details><details class="topMenu"><summary>소리</summary><div class="topMenuItems"><button class="btn" id="openMusic" data-dialog="soundDialog">배경음악…</button><button class="btn" id="openEffects" data-dialog="soundDialog">터치 효과음…</button></div></details><details class="topMenu"><summary>설정</summary><div class="topMenuItems"><button class="btn" data-dialog="layoutSettings">색상 테마 · 화면 표시 품질…</button><hr class="menuSep"><button class="btn" id="maskMenu">선택 영역 표시…</button></div></details><button class="btn primary" id="viewerBtn">플레이</button></nav></header>
+<section class="welcome" id="welcome"><h2>MotionPad</h2><div class="welcomeActions"><button class="btn primary" id="startImage">새 그림 열기</button><button class="btn" id="startProject">프로젝트 열기</button><button class="btn" id="resumeProject" hidden>이전 작업 이어하기</button><button class="btn" id="sampleBtn">샘플 그림으로 체험하기</button></div></section><main class="workspace" hidden>
+<section class="stagebox" aria-label="이미지 영역 편집"><div class="stagebar"><div class="modegroup"><button class="mode active" id="brushMode" data-mode="brush"><svg class="ic" aria-hidden="true"><use href="#i-brush"/></svg><span>붓</span></button><button class="mode" id="eraseMode" data-mode="erase"><svg class="ic" aria-hidden="true"><use href="#i-erase"/></svg><span>지우개</span></button><button class="mode" id="wandMode" data-mode="wand"><svg class="ic" aria-hidden="true"><use href="#i-wand"/></svg><span>마술봉</span></button><button class="mode" id="lassoMode" data-mode="lasso"><svg class="ic" aria-hidden="true"><use href="#i-lasso"/></svg><span>올가미</span></button><button class="mode" id="ellipseMode" data-mode="ellipse"><svg class="ic" aria-hidden="true"><use href="#i-ellipse"/></svg><span>타원</span></button><button class="mode" id="editMode" data-mode="edit"><svg class="ic" aria-hidden="true"><use href="#i-move"/></svg><span>이동·변형</span></button><button hidden class="mode" id="branchMode" data-mode="branch">가지 선</button><button class="mode" id="panMode" data-mode="pan"><svg class="ic" aria-hidden="true"><use href="#i-pan"/></svg><span>화면 이동</span></button></div></div>
+<div class="stageOptions"><div class="brushbar" id="editGuide" hidden><span id="editInstruction"></span><button class="btn" id="leaveEdit">그만두기</button><button class="btn" id="finishEdit">선택 완료</button></div><div class="brushbar" id="brushbar"><label for="brushInput" id="brushLabel">붓 굵기</label><input type="range" min="2" max="32" step="1" value="10" id="brushInput"><output id="brushValue">10%</output><label class="check"><input type="checkbox" id="appendInput" checked aria-label="선택 영역에 더하기">선택에 더하기</label></div>
+<div class="brushbar" id="wandbar" hidden><strong id="wandStep" role="status">1. 그림에서 선택할 부분을 누르세요.</strong><button class="btn" id="wandApply" type="button" disabled>선택 적용</button><button class="btn" id="wandCancel" type="button" disabled>취소</button><label for="toleranceInput">선택 범위</label><input type="range" min="2" max="128" value="30" step="1" id="toleranceInput"><output id="toleranceValue">30</output><button class="btn" type="button" data-help="그림을 누른 뒤 선택 범위를 조절하세요. 색과 경계에 따라 미리보기가 바뀝니다." aria-label="마술봉 도움말">?</button></div>
+<div class="brushbar" id="lassobar" hidden><label class="toggle lassoSegmentsChoice"><input id="lassoSegments" type="checkbox" aria-label="구간 이어 그리기">나눠 그리기</label><button class="btn" id="lassoFinish" type="button" disabled>선택 완료</button><button class="btn" id="lassoUndo" type="button" disabled>마지막 구간 취소</button><label class="toggle lassoOutlineChoice"><input id="encloseInput" checked type="checkbox" aria-label="둘러싸서 외곽 선택">윤곽에 맞추기</label><label for="magnetInput">경계선 자석 강도</label><input type="range" min="0" max="100" value="60" step="1" id="magnetInput"><output id="magnetValue">60%</output><button class="btn" type="button" data-help="그린 선 가까이에 뚜렷한 경계가 있으면 따라갑니다. 흐린 경계는 나눠 그리거나 붓과 지우개로 다듬어 주세요." aria-label="올가미 도움말">?</button></div>
+<div class="brushbar" id="outlineControls" hidden><strong id="outlineStep" role="status">경계를 확인하고 있습니다.</strong>
+<label>선택 범위 <input type="range" id="outlineRange" min="-24" max="24" value="0"></label>
+<label>보정 <select id="outlineAction"><option value="draw">다시 둘러 그리기</option><option value="keep">남길 곳 누르기</option><option value="remove">뺄 곳 누르기</option></select></label>
+<button type="button" class="btn" id="outlineUndo" disabled>마지막 보정 취소</button>
+<button type="button" class="btn" id="outlineApply" disabled>선택 적용</button><button type="button" class="btn" id="outlineCancel">취소</button>
+</div></div>
+<div class="stage" id="stage"><div class="surface" id="surface"><canvas id="view"></canvas><canvas id="overlay"></canvas></div><canvas id="loupe" class="loupe" width="160" height="160" hidden aria-label="확대 미리보기"></canvas></div>
+<div class="stagebottom"><div class="quick"><button class="btn iconBtn" id="undoBtn" title="실행 취소" aria-label="실행 취소" disabled><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button><button class="btn iconBtn" id="redoBtn" title="다시 실행" aria-label="다시 실행" disabled><svg class="ic" aria-hidden="true"><use href="#i-redo"/></svg></button><button class="btn" id="newRegionBtn" title="기존 선택 해제 후 별도 영역을 그립니다">새 영역</button><button class="btn iconBtn" id="zoomOutBtn" title="화면 축소" aria-label="화면 축소"><svg class="ic" aria-hidden="true"><use href="#i-minus"/></svg></button><button class="btn" id="zoomResetBtn" title="화면 원래 크기">100%</button><button class="btn iconBtn" id="zoomInBtn" title="화면 확대" aria-label="화면 확대"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></button><label class="toggle precisionSwitch"><input id="loupeInput" type="checkbox">돋보기</label><label class="toggle precisionSwitch"><input id="offsetInput" type="checkbox" aria-label="손가락 위에 그리기">손가락 보정</label></div><label class="toggle"><input type="checkbox" id="showZones" checked>영역선</label><span class="status" id="status" role="status">준비 중</span></div></section>
+<aside class="side">
+
+<details id="ambientPanel" open><summary>전체 그림 · 호흡과 흔들림</summary>
+ <label class="toggle"><input id="ambientOn" type="checkbox" checked>전체 움직임 켜기</label>
+ <div class="field"><div class="fieldhead"><label for="ambientBreath">부드러운 호흡</label><output id="ambientBreathVal">35%</output></div><input id="ambientBreath" type="range" min="0" max="100" value="35"></div>
+ <div class="field"><div class="fieldhead"><label for="ambientSway">미세 흔들림</label><output id="ambientSwayVal">30%</output></div><input id="ambientSway" type="range" min="0" max="100" value="30"></div>
+ <div class="field"><div class="fieldhead"><label for="ambientLight">조명 숨쉬기</label><output id="ambientLightVal">25%</output></div><input id="ambientLight" type="range" min="0" max="100" value="25"></div>
+ 
+ <p class="mini">베이스 영역을 지정하고 배경 제외를 켜면 배경을 고정한 채 베이스에만 적용됩니다.</p>
+ <details id="basePanel"><summary>움직일 몸체 지정</summary>
+ <div class="baseButtons"><button class="btn" id="markBaseBtn" type="button">선택한 영역을 몸체로 지정</button><span id="baseHint" class="micro">베이스 영역이 없습니다.</span></div>
+ <label class="toggle" style="margin:8px 0"><input id="baseExcludeInput" type="checkbox" checked>배경 제외 (베이스만 기본 움직임)</label>
+ <label class="toggle" style="margin:8px 0"><input id="baseClipInput" type="checkbox">자동 크롭 · 일반 영역을 베이스 안으로 제한</label>
+ <div class="field"><div class="fieldhead"><label for="baseEdgeInput">베이스 경계 흐림</label><output id="baseEdgeVal">1</output></div><input id="baseEdgeInput" type="range" min="0" max="8" value="1" step="1"></div>
+ <p class="mini">베이스는 터치 우선순위 최하위입니다. 자동 크롭은 비파괴 방식이며, 해제하면 원래 마스크가 복원됩니다. 비워진 부분은 가까운 배경을 바탕으로 자동으로 채웁니다. 가려져 있던 무늬는 단순화될 수 있습니다.</p>
+</details></details><details id="partsPanel"><summary>부분 움직임 · 터치 반응 <span class="count" id="zoneCount">0개</span></summary><div class="chips" id="zoneList"></div><div id="settingsPanel">
+
+<div class="empty" id="noZone">그림에서 영역을 선택하거나 그려 주세요. ‘이동·변형’에서는 영역 크기·각도를, 그 외 모드에서는 두 손가락으로 화면 확대·이동을 할 수 있습니다.</div>
+<div id="editFields" hidden>
+<div class="field"><div class="fieldhead"><label for="nameInput">영역 이름</label></div><input type="text" id="nameInput" maxlength="26" autocomplete="off"></div>
+<details class="regionActions"><summary>영역 관리</summary><div class="regionActionRow"><label class="toggle"><input type="checkbox" id="lockedInput">잠금</label><button class="btn" id="refineRegion" title="붓으로 선택 영역을 다듬습니다">범위 다듬기</button><button class="btn" id="duplicateBtn">복제</button><button class="btn warn" id="quickDeleteBtn">삭제</button></div></details><div class="field"><div class="fieldhead"><label for="presetInput">움직임 종류</label></div><select id="presetInput"><option value="custom">직접 설정</option><option value="soft">부드러운 반응</option><option value="breathing">부분 호흡</option><option value="jelly">볼 탄성 · 젤리</option><option value="tail">꼬리 흔들림</option><option value="flow">흐름·물결</option><option value="wind">긴 머리 흔들림</option><option value="scarf">목도리·옷자락</option></select></div>
+<div id="quickMotion">
+<div class="field" id="quickDirectionRow"><label for="quickDirection">방향</label><select id="quickDirection"><option value="follow">터치 이동 방향 자동</option><option value="y">고정: 위아래</option><option value="x">고정: 좌우</option><option value="diag">고정: ↘↖ 대각선</option><option value="diagBack">고정: ↙↗ 대각선</option><option value="pulse">고정: 확대·축소</option></select><input id="quickAngle" type="range" min="-180" max="180" step="1" aria-label="방향 각도" hidden><output id="quickAngleValue" hidden></output></div>
+<div class="field"><div class="fieldhead"><label for="quickStrength">세기</label><output id="quickStrengthValue"></output></div><input id="quickStrength" type="range"></div>
+<div class="field" id="quickSpeedRow"><div class="fieldhead"><label for="quickSpeed">속도</label><output id="quickSpeedValue"></output></div><input id="quickSpeed" type="range"></div>
+<p class="mini" id="quickMotionHint"></p>
+<div id="tailCutoutRow" class="field" hidden>
+ <label class="toggle"><input id="tailCutoutInput" type="checkbox">외곽까지 흔들기</label>
+ <p class="mini">한 프로젝트에서 한 영역에 적용할 수 있습니다. 몸에 붙은 부위라면 연결부에 축을 지정해 보세요.</p>
+</div>
+</div>
+<label class="toggle" style="margin-top:10px"><input type="checkbox" id="autoInput">자동으로 움직이기</label>
+<div class="settingActions" hidden><button id="testBtn" class="btn primary">선택 영역 반응</button><button id="deleteBtn" class="btn warn">삭제</button></div>
+<details id="advanced"><summary>세부 설정 (탄성·각도·크기)</summary>
+<div class="field"><div class="fieldhead"><label for="axisInput">터치 반응 방향</label></div><select id="axisInput"><option value="follow">터치 이동 방향 자동</option><option value="y">고정: 위아래</option><option value="x">고정: 좌우</option><option value="diag">고정: ↘↖ 대각선</option><option value="diagBack">고정: ↙↗ 대각선</option><option value="pulse">고정: 확대·축소</option></select></div>
+<div class="field"><div class="fieldhead"><label for="strengthInput">움직임 강도</label><output id="strengthValue">26</output></div><input id="strengthInput" type="range" min="0" max="80" step="1"></div>
+
+<div class="field"><div class="fieldhead"><label for="springInput">반발 속도</label><output id="springValue">14</output></div><input id="springInput" type="range" min="3" max="30" step="1"></div>
+<div class="field"><div class="fieldhead"><label for="dampingInput">잔진동 길이</label><output id="dampingValue">62%</output></div><input id="dampingInput" type="range" min="0" max="100" step="1"></div>
+<div class="field" id="widthRow"><div class="fieldhead"><label for="widthInput">타원 너비</label><output id="widthValue">20%</output></div><input id="widthInput" type="range" min="4" max="88" step="1"></div>
+<div class="field" id="heightRow"><div class="fieldhead"><label for="heightInput">타원 높이</label><output id="heightValue">20%</output></div><input id="heightInput" type="range" min="4" max="88" step="1"></div>
+<div class="field"><div class="fieldhead"><label for="autoSpeedInput">자동 움직임 속도</label><output id="autoSpeedValue">1.0</output></div><input id="autoSpeedInput" type="range" min="0.2" max="3" step="0.1"></div>
+<div class="field" id="rotationRow"><div class="fieldhead"><label for="rotationInput">타원 각도</label><output id="rotationValue">0°</output></div><input id="rotationInput" type="range" min="-180" max="180" step="1"></div>
+<p class="mini">두 손가락 확대·축소·회전을 지원합니다. 잠근 영역은 이동되지 않습니다.</p></details>
+<details id="effects"><summary>효과 조합 · 마스크 세부 설정</summary>
+<div class="field"><div class="fieldhead"><label for="spreadInput">마스크 바깥 확장</label><output id="spreadValue">9</output></div><input id="spreadInput" type="range" min="0" max="26" step="1" value="9"></div>
+<div class="field"><div class="fieldhead"><label for="featherInput">경계 부드러움 / 선명도</label><output id="featherValue">8</output></div><input id="featherInput" type="range" min="0" max="45" step="1"></div>
+<div class="field"><div class="fieldhead"><label for="breathInput">호흡 (상시)</label><output id="breathValue">0</output></div><input id="breathInput" type="range" min="0" max="40" step="1"></div>
+<div class="field"><div class="fieldhead"><label for="waveInput">물결 흐름</label><output id="waveValue">0</output></div><input id="waveInput" type="range" min="0" max="40" step="1"></div>
+<div class="field"><div class="fieldhead"><label for="twistInput">비틀림</label><output id="twistValue">0</output></div><input id="twistInput" type="range" min="0" max="35" step="1"></div>
+<div class="field"><div class="fieldhead"><label for="flowInput">연속 흐름 (Flow)</label><output id="flowValue">0</output></div><input id="flowInput" type="range" min="0" max="40" step="1"></div>
+<div class="field"><div class="fieldhead"><label for="flowAngleInput">텍스처 흐름 방향</label><output id="flowAngleValue">0°</output></div><input id="flowAngleInput" type="range" min="-180" max="180" step="1" value="0"></div>
+<button class="btn mode" id="flowDirMode" data-mode="flowdir">그림에서 흐름 방향 지정</button><details id="windPanel"><summary>바람 · 머리카락 · 옷자락</summary>
+<div class="field"><div class="fieldhead"><label for="windStrengthInput">바람 강도</label><output id="windStrengthValue">0%</output></div><input id="windStrengthInput" type="range" min="0" max="100" step="1" value="0"></div>
+<div class="field"><div class="fieldhead"><label for="windAngleInput">바람 방향</label><output id="windAngleValue">0°</output></div><input id="windAngleInput" type="range" min="-180" max="180" step="1" value="0"></div>
+<div class="field"><div class="fieldhead"><label for="windSpeedInput">바람 속도</label><output id="windSpeedValue">1.0×</output></div><input id="windSpeedInput" type="range" min="0.2" max="3" step="0.1" value="1"></div>
+<div class="field"><div class="fieldhead"><label for="windNoiseInput">불규칙한 흔들림</label><output id="windNoiseValue">30%</output></div><input id="windNoiseInput" type="range" min="0" max="100" value="30"></div>
+<div class="field"><div class="fieldhead"><label for="windDelayInput">끝부분 지연</label><output id="windDelayValue">50%</output></div><input id="windDelayInput" type="range" min="0" max="100" value="50"></div>
+
+<p class="mini">바람의 방향과 흔들리는 속도를 조절할 수 있습니다.</p>
+</details>
+<div class="field"><div class="fieldhead"><label for="rippleInput">터치 파동</label><output id="rippleValue">0</output></div><input id="rippleInput" type="range" min="0" max="40" step="1"></div>
+
+<p class="mini">강도를 과하게 올리면 그림이 왜곡될 수 있습니다. WebGL이 없는 브라우저에서는 일부 효과가 단순화됩니다.</p></details>
+<details id="anchorPanel"><summary>축·스프링·터치 세부 설정</summary>
+<div class="settingActions"><button class="btn mode" id="pivotMode" data-mode="pivot">축 지정</button><button class="btn mode" id="extraPivotMode" data-mode="extraPivot">축 추가</button><button class="btn mode" id="spineMode" data-mode="spine">스프링 선</button></div>
+<label class="toggle"><input type="checkbox" id="pivotEnabledInput">선택 축 활성화 (캔버스의 '축 지정'으로 이동)</label>
+<div class="field"><div class="fieldhead"><label for="pivotStrengthInput">축으로부터 움직임 증가량</label><output id="pivotStrengthValue">60%</output></div><input id="pivotStrengthInput" type="range" min="0" max="100" value="60"></div>
+<div class="field"><div class="fieldhead"><label for="tapGainInput">짧게 터치 강도</label><output id="tapGainValue">100%</output></div><input id="tapGainInput" type="range" min="0" max="200" value="100"></div>
+<div class="field"><div class="fieldhead"><label for="dragGainInput">드래그 반응</label><output id="dragGainValue">100%</output></div><input id="dragGainInput" type="range" min="0" max="200" value="100"></div>
+<div class="field"><div class="fieldhead"><label for="holdGainInput">길게 누름 압축</label><output id="holdGainValue">60%</output></div><input id="holdGainInput" type="range" min="0" max="200" value="60"></div>
+<div class="field"><div class="fieldhead"><label for="flickGainInput">빠른 튕김 반응</label><output id="flickGainValue">100%</output></div><input id="flickGainInput" type="range" min="0" max="200" value="100"></div>
+<div class="settingActions"><button class="btn" id="clearExtraPivotsBtn" type="button">추가 축 삭제</button><button class="btn" id="clearBranchBtn" type="button" hidden>가지 선 삭제</button></div>
+<p class="mini">축 지정으로 고정점을 옮길 수 있습니다. 축 추가를 누르면 영역 안에 고정점 하나를 더 놓습니다. 스프링 선은 뿌리에서 끝까지 한 획으로 그려 주세요.</p></details>
+</div>
+<p class="mini">붓은 손가락을 뗄 때 한 획이 완료됩니다. 마술봉은 비슷한 색상의 연결된 부분을 선택합니다. 자석 올가미는 뚜렷한 경계를 따라갑니다.</p>
+</div>
+
+
+</details><button type="button" class="btn eyeEntry" id="eyeEntry">▸ 눈 깜빡임 설정</button><div class="maskDisplay"><label>선택 영역 색상 <input id="maskColorInput" type="color" value="#45d8a9"></label><label>투명도 <input id="maskOpacityInput" type="range" min="0" max="85" value="32"><output id="maskOpacityValue">32%</output></label></div></aside></main>
+
+</div>

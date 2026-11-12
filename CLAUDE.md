@@ -1,9 +1,9 @@
 # MotionPad 작업 규칙 (세션 시작 시 이 파일과 docs/BLUEPRINT.md만 먼저 읽는다)
-- **현재 위치: 0-4b까지 완료, 다음은 0-5.** 이어받는 세션은 docs/progress/README.md(진행 현황·0-5 준비·검증 도구)를 함께 읽는다.
+- **현재 위치: 0-5까지 완료, 다음은 1(선택 엔진).** 이어받는 세션은 docs/progress/README.md(진행 현황·개발 방법·검증 도구)를 함께 읽는다.
 - 최우선 기준: docs/BLUEPRINT.md. 우선순위 = 조작 난이도 > 결과물 완성도 > 경량화.
 - 검토 근거·개발안 상세: docs/REVIEW.md (필요할 때만 읽는다).
 - 배포본은 단일 HTML. 서버 전송 금지. 무거운 AI 모델 금지(별도 허락 시 실험만).
-- 작업본은 motionpad.html(0-2부터). 단계별 결과는 docs/progress/, 측정은 tools/baseline (docs/baseline/README.md).
+- 소스는 src/(0-5부터, 구성은 src/README.md). motionpad.html은 `node tools/build.js`로 만드는 결과물 — 직접 고치지 말 것. 단계별 결과는 docs/progress/, 측정은 tools/baseline (docs/baseline/README.md).
 - legacy-0.5rc23.html은 이전 개발자 원본. 통째로 읽지 말 것(효과음 base64 한 줄 ~217KB). grep/sed로 필요한 부분만.
 - 한 번에 한 단계, 변경마다 기준선(스크린샷·저장 왕복·성능 계측)과 비교. 정리 단계에 기능 추가 금지.
 - 사용자 응답 문체: 평서문, 간결, 다정, 비전문가 눈높이.

@@ -1,0 +1,1 @@
+updateRendererBadge();requestAnimationFrame(tick);boot();
