@@ -28,7 +28,7 @@
 }
 :root[data-theme="light"],.themeSample[data-theme="light"]{
   --bg:#f2f2f2; --card:#fff; --panel:#fff; --button:#ececec;
-  --ink:#191919; --sub:#5c5c5c; --line:#00000020; --accent:#252525; --stageInk:#dedede;
+  --ink:#191919; --sub:#5c5c5c; --line:#00000020; --accent:#252525; --stageInk:#e8ebf2;
 }
 :root[data-theme="light"]{color-scheme:light;--accentSoft:#e5e5e5;--accentInk:#181818;--onAccent:#fff;--warning:#b93650;--glass:rgba(255,255,255,.94)}
 :root[data-theme="basic"],.themeSample[data-theme="basic"]{
@@ -59,7 +59,7 @@ select:focus-visible{outline:1px solid var(--accent);outline-offset:0}
   min-height:26px;padding:2px 7px;border:1px solid transparent;border-radius:2px;
   line-height:1.35;box-shadow:none;
 }
-.btn{background:var(--button);color:var(--ink);font-weight:560;white-space:nowrap;transition:background-color .12s,border-color .12s}
+.btn{border-color:var(--line);background:var(--button);color:var(--ink);font-weight:560;white-space:nowrap;transition:background-color .12s,border-color .12s}
 .btn.primary{background:var(--accentSoft)}
 :root[data-theme="light"] .btn{background:var(--button);color:var(--ink)}
 :root[data-theme="light"] .btn.primary{background:var(--accent);color:#fff}
@@ -123,15 +123,13 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--acce
 .stagebar{grid-row:1;display:flex;flex-direction:column;flex-wrap:wrap;gap:5px;min-width:0;padding:2px 5px;background:var(--panel);border-bottom:1px solid var(--line)}
 :root[data-theme="light"] .stagebar{background:var(--card)}
 .modegroup{display:flex;flex-wrap:wrap;gap:1px;width:100%}
-:root[data-theme="light"] .modegroup{background:var(--panel)}
 .mode{border:0;background:transparent;color:var(--sub);font-weight:600;text-align:left;line-height:1.2}
 .stagebar .mode{min-height:26px;padding:3px 7px;font-size:var(--toolFont);white-space:nowrap;transition:background .12s}
 .stagebar .mode:hover{background:var(--button)}
 .stagebar .mode.active{box-shadow:inset 0 -2px var(--accent);color:var(--accentInk)}
 :root[data-theme="light"] .mode{color:var(--sub)}
-:root[data-theme="light"] .stagebar .mode.active{background:var(--accentSoft);color:var(--accentInk)}
+:root[data-theme="light"] .stagebar .mode.active{color:var(--accentInk)}
 .workspace.touchPreview .stagebar .mode.active{opacity:.5}
-.stagebar #panMode{font-size:10px}
 
 /* 도구 옵션 줄 */
 .stageOptions{grid-row:2;display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:34px;height:35px;min-width:0;overflow:hidden;background:var(--panel);border-bottom:1px solid var(--line)}
@@ -170,7 +168,6 @@ button[data-help]:hover::before{color:var(--ink)}
   background-color:var(--stageInk);
   background-image:linear-gradient(45deg,color-mix(in srgb,var(--accent) 4%,transparent) 25%,transparent 25%),linear-gradient(-45deg,color-mix(in srgb,var(--accent) 4%,transparent) 25%,transparent 25%),linear-gradient(45deg,transparent 75%,color-mix(in srgb,var(--accent) 4%,transparent) 75%),linear-gradient(-45deg,transparent 75%,color-mix(in srgb,var(--accent) 4%,transparent) 75%);
   background-size:24px 24px;background-position:0 0,0 12px,12px -12px,-12px 0}
-:root[data-theme="light"] .stage{background-color:#e8ebf2}
 .surface{position:relative;flex:none;overflow:hidden;box-shadow:0 2px 25px #0008}
 .surface canvas{position:absolute;inset:0;display:block;width:100%;height:100%}
 #overlay{touch-action:none}
@@ -181,7 +178,7 @@ button[data-help]:hover::before{color:var(--ink)}
 :root[data-theme="light"] .stagebottom{background:var(--card)}
 .quick{display:flex;flex-wrap:wrap;gap:3px;min-width:0;max-width:100%}
 .quick>*{flex:none}
-.quick .btn{background:transparent;font-size:11px;font-weight:550}
+.quick .btn{border-color:transparent;background:transparent;font-size:11px;font-weight:550}
 .quick .btn:hover{background:var(--button)}
 :root[data-theme="light"] .quick .btn{background:transparent}
 #undoBtn,#redoBtn{min-width:30px}
@@ -212,13 +209,8 @@ button[data-help]:hover::before{color:var(--ink)}
 .side .toggle input{flex:0 0 auto;margin-top:3px}
 #ambientPanel .toggle{margin:8px 0}
 /* 옵션 패널 안의 '그림에서 지정' 버튼들 */
-.side .mode{min-height:clamp(36px,calc(2.5vw + 4px),40px);padding:7px 9px;border-radius:6px;font-size:10px;white-space:normal;transition:background .12s}
-.side .mode.btn{min-height:26px;padding:2px 7px;border:1px solid transparent;border-radius:2px;background:var(--button);line-height:1.35;font-size:12px}
-#pivotMode,#spineMode{font-size:10px}
-.side .mode.active{background:var(--accentSoft);border-left:2px solid var(--accent)}
-.side .mode.btn.active{border-left-color:transparent}
-:root[data-theme="light"] .side .mode.active{color:var(--accentInk)}
-#anchorPanel .mode.active{color:var(--ink)}
+.side .mode{font-size:11px;font-weight:600;color:var(--sub);text-align:left;white-space:normal}
+.side .mode.active{background:var(--accentSoft);color:var(--ink);box-shadow:inset 2px 0 var(--accent)}
 
 .field{margin:10px 0;min-width:0;overflow-wrap:anywhere}
 #ambientPanel .field{margin:8px 0}
@@ -233,10 +225,10 @@ button[data-help]:hover::before{color:var(--ink)}
 .field input[type=text]{width:100%;min-height:25px;padding:3px 6px;border:1px solid var(--line);border-radius:2px;background:var(--panel);color:var(--ink)}
 :root[data-theme="light"] .field input[type=text]{color:#151929}
 .empty{padding:5px 0;font-size:12px;color:var(--sub)}
-:root[data-theme="light"] .empty{background:#f8f8fc}
-#zoneList{display:flex;flex-wrap:wrap;gap:0 6px;margin:0;padding:4px 0}
-.chip{background:transparent;color:var(--ink);font-size:11px;border:0;border-bottom:2px solid transparent;border-radius:0}
-.chip.active{border-bottom-color:var(--accent);font-weight:750}
+#zoneList{display:flex;flex-wrap:wrap;gap:4px;margin:0;padding:6px 0}
+.chip{background:var(--button);color:var(--ink);font-size:11px;border-color:var(--line);border-radius:3px}
+.chip.active{background:var(--accentSoft);border-color:var(--accent);font-weight:750}
+.chip.baseChip{border-style:dashed}
 .chip.baseChip{order:-1000}
 .regionActions.regionActions{margin:0 0 5px;padding:0}
 .regionActionRow{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:3px 0}
@@ -258,9 +250,9 @@ button[data-help]:hover::before{color:var(--ink)}
 .saveDialog{width:min(360px,calc(100% - 24px));max-height:calc(100dvh - 24px);padding:16px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:3px}
 .saveDialog::backdrop{background:#0008}
 .saveDialog h2{margin:0 0 12px;font-size:16px}
-.saveDialog label{display:block;margin-bottom:5px}
-.saveDialog input{width:100%;padding:8px;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px}
-.saveDialog input[type=range]{padding:0;background:transparent;border:0}
+.saveDialog label:not(.toggle){display:block;margin-bottom:5px}
+.saveDialog input[type=text]{width:100%;padding:8px;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:3px}
+.saveDialog .field input[type=range]{width:100%}
 .saveDialog .settingActions{justify-content:flex-end}
 .saveDialog .settingActions .btn{flex:0 1 auto}
 .layoutDialog{width:min(500px,94vw);max-height:85dvh;overflow:auto}
@@ -340,9 +332,6 @@ button[data-help]:hover::before{color:var(--ink)}
   .status{text-align:left}
   .side{max-height:var(--panel-height,36dvh)}
   .side>.maskDisplay{display:none}
-  .settingActions{position:relative}
-  .side .mode{padding:6px 10px;white-space:nowrap;min-width:max-content;font-size:10px}
-  .side .mode.active{border-left:0;border-bottom:2px solid var(--accent)}
   .viewerAudio{right:8px;bottom:calc(8px + env(safe-area-inset-bottom))}
   .playerSfx{flex:1 1 100px}
 }
@@ -380,6 +369,7 @@ button[data-help]:hover::before{color:var(--ink)}
 }
 @media (pointer:coarse){
   :is(dialog,.side,.topMenuItems,.viewerAudio,.brushbar) button:not(.btn,.chip,.playerHandle){min-height:40px}
+  :is(dialog,.side,.viewerAudio) select,:is(dialog,.side) .btn,.topMenuItems>.btn{min-height:36px}
   input[type=range]{height:36px}
 }
 </style>
@@ -453,7 +443,7 @@ button[data-help]:hover::before{color:var(--ink)}
 <div class="field"><div class="fieldhead"><label for="twistInput">비틀림</label><output id="twistValue">0</output></div><input id="twistInput" type="range" min="0" max="35" step="1"></div>
 <div class="field"><div class="fieldhead"><label for="flowInput">연속 흐름 (Flow)</label><output id="flowValue">0</output></div><input id="flowInput" type="range" min="0" max="40" step="1"></div>
 <div class="field"><div class="fieldhead"><label for="flowAngleInput">텍스처 흐름 방향</label><output id="flowAngleValue">0°</output></div><input id="flowAngleInput" type="range" min="-180" max="180" step="1" value="0"></div>
-<button class="mode" id="flowDirMode" data-mode="flowdir">그림에서 흐름 방향 지정</button><details id="windPanel"><summary>바람 · 머리카락 · 옷자락</summary>
+<button class="btn mode" id="flowDirMode" data-mode="flowdir">그림에서 흐름 방향 지정</button><details id="windPanel"><summary>바람 · 머리카락 · 옷자락</summary>
 <div class="field"><div class="fieldhead"><label for="windStrengthInput">바람 강도</label><output id="windStrengthValue">0%</output></div><input id="windStrengthInput" type="range" min="0" max="100" step="1" value="0"></div>
 <div class="field"><div class="fieldhead"><label for="windAngleInput">바람 방향</label><output id="windAngleValue">0°</output></div><input id="windAngleInput" type="range" min="-180" max="180" step="1" value="0"></div>
 <div class="field"><div class="fieldhead"><label for="windSpeedInput">바람 속도</label><output id="windSpeedValue">1.0×</output></div><input id="windSpeedInput" type="range" min="0.2" max="3" step="0.1" value="1"></div>
