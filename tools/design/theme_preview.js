@@ -5,7 +5,7 @@ const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path');
 const { VP, prep } = require('../baseline/scenes');
 const ROOT = path.join(__dirname, '..', '..');
-const CAND = [['A-1 다크', 'violet'], ['A-2 라이트 · 검은 포인트', 'light'], ['A-3 따뜻한 종이 감성', 'paper'], ['B-1 다크 베이직', 'darkbasic'], ['B-2 라이트 베이직', 'lightbasic'], ['B-3 모노(중간 회색)', 'mono']];
+const CAND = [['A-1 다크', 'violet'], ['A-2 라이트 · 검은 포인트', 'blackpoint'], ['A-3 따뜻한 종이 감성', 'paper'], ['B-1 다크 베이직', 'darkbasic'], ['B-2 라이트 베이직', 'lightbasic'], ['B-3 모노(중간 회색)', 'mono']];
 (async () => {
   const out = path.resolve(process.argv[2] || 'theme-preview.png');
   const tmp = path.join(__dirname, '.preview'); fs.mkdirSync(tmp, { recursive: true });

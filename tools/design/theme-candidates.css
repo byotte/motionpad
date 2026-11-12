@@ -1,5 +1,10 @@
 /* 테마 후보 미리보기용 (배포본에 넣지 않음). 사용: tools/design/theme_preview.js */
-/* A-2 라이트·검은 포인트 = 현재 'light'. A-1 다크 = 현재 'violet'. */
+/* 2026-11-12 결정: A-1 다크(violet) · B-2 라이트(light) · B-3 모노(mono)를 채택해 motionpad.html에 넣었다.
+   이 파일은 채택되지 않은 후보와 비교용으로 남긴다. A-1 다크는 motionpad.html의 기본값(violet)을 그대로 쓴다. */
+:root[data-theme="blackpoint"]{ /* A-2 라이트·검은 포인트 (이전 '모노') */
+  color-scheme:light;--bg:#f2f2f2;--card:#fff;--panel:#fff;--button:#ececec;--ink:#191919;--sub:#5c5c5c;--line:#00000020;
+  --accent:#252525;--accentSoft:#e5e5e5;--accentInk:#181818;--onAccent:#fff;--warning:#b93650;--stageInk:#e8ebf2;--glass:rgba(255,255,255,.94)}
+:root[data-theme="blackpoint"] body{background-image:none}
 :root[data-theme="paper"]{ /* A-3 따뜻한 종이 감성 */
   color-scheme:light;--bg:#efe8dc;--card:#f8f3ea;--panel:#f8f3ea;--button:#ece3d4;--ink:#3a3128;--sub:#7a6c5c;--line:#5a463024;
   --accent:#9b5435;--accentSoft:#efdccb;--accentInk:#6b3520;--onAccent:#fff;--warning:#a33a2c;--stageInk:#e4dccd;--glass:#f8f3ea}

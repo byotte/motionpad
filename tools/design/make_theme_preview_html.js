@@ -3,7 +3,7 @@
 'use strict';
 const fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..', '..');
-const OPTIONS = [['violet', 'A-1 다크'], ['light', 'A-2 라이트'], ['paper', 'A-3 종이 감성'], ['darkbasic', 'B-1 다크 베이직'], ['lightbasic', 'B-2 라이트 베이직'], ['mono', 'B-3 모노']];
+const OPTIONS = [['violet', 'A-1 다크'], ['blackpoint', 'A-2 검은 포인트'], ['paper', 'A-3 종이 감성'], ['darkbasic', 'B-1 다크 베이직'], ['lightbasic', 'B-2 라이트 베이직'], ['mono', 'B-3 모노']];
 let html = fs.readFileSync(path.join(ROOT, 'motionpad.html'), 'utf8');
 let css = fs.readFileSync(path.join(__dirname, 'theme-candidates.css'), 'utf8');
 // 설정 창의 견본 칸에도 색이 적용되도록 변수 정의 블록에 .themeSample 선택자를 추가
@@ -12,7 +12,7 @@ const radios = OPTIONS.map(([v, n]) => `<label>${n}<span class="themeSample" dat
 const a = html.match(/<fieldset class="themeOptions">.*?<\/fieldset>/s);
 if (!a) throw new Error('테마 선택 영역을 찾지 못함');
 html = html.replace(a[0], `<fieldset class="themeOptions"><legend>색상 테마 (미리보기 버전: 6종)</legend>${radios}</fieldset>`);
-const list = "['violet','light','basic']";
+const list = "['violet','light','mono']";
 if (!html.includes(list)) throw new Error('테마 허용 목록을 찾지 못함');
 html = html.replace(list, JSON.stringify(OPTIONS.map(o => o[0])).replace(/"/g, "'"));
 html = html.replace('</style>', css + '\n.themeOptions{grid-template-columns:repeat(3,minmax(0,1fr))}\n</style>');
