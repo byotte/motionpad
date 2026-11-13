@@ -1667,12 +1667,10 @@ function updateTailCutout(){
  if(!plate)return;
  tailPlate=plate;
  tailMask=union;
- const packed=document.createElement('canvas');
- packed.width=packed.height=TILE;
- const pg=packed.getContext('2d'),img=pg.createImageData(TILE,TILE);
+ // 캔버스는 투명한 칸의 색을 지우므로(premultiplied) 픽셀 데이터를 그대로 텍스처로 올린다
+ const img=new ImageData(TILE,TILE);
  list.forEach((m,k)=>{const a=m.getContext('2d',{willReadFrequently:true}).getImageData(0,0,TILE,TILE).data;for(let i=0;i<TILE*TILE;i++)img.data[i*4+k]=a[i*4+3]});
- pg.putImageData(img,0,0);
- tailChannels=packed;
+ tailChannels=img;
  const baseIndex=zones.findIndex(z=>z.isBase);
  if(backgroundPlate&&baseIndex>=0&&!baseClipEnabled){
   const both=document.createElement('canvas');
@@ -1858,16 +1856,6 @@ varying vec2 v_uv;
 uniform float u_time;
 uniform vec4 u_ambient;
 uniform float u_baseExclude;
-vec4 tailLayer(vec4 color,vec2 source,int k,float light){
- vec4 foreground=texture2D(u_tailOriginal,source);
- vec4 m=texture2D(u_tailMask,source);
- float ch=k==0?m.r:k==1?m.g:k==2?m.b:m.a;
- float inside=step(0.0,source.x)*step(source.x,1.0)*step(0.0,source.y)*step(source.y,1.0);
- float alpha=inside*ch*foreground.a;
- float outAlpha=alpha+color.a*(1.0-alpha);
- vec3 rgb=(foreground.rgb*light*alpha+color.rgb*color.a*(1.0-alpha))/max(outAlpha,.00001);
- return vec4(rgb,outAlpha);
-}
 void main(){
   v_uv=a_uv;
   float topWeight=pow(clamp(1.0-a_uv.y,0.0,1.0),1.5);
@@ -1900,6 +1888,16 @@ float anchoredDistance(vec2 uv,vec4 piv,vec4 extra){
 float pointToSegment(vec2 uv,vec2 a,vec2 b,out float t){
  vec2 v=b-a;t=clamp(dot(uv-a,v)/max(dot(v,v),0.00001),0.0,1.0);
  return length(uv-(a+t*v));
+}
+vec4 tailLayer(vec4 color,vec2 source,int k,float light){
+ vec4 foreground=texture2D(u_tailOriginal,source);
+ vec4 m=texture2D(u_tailMask,source);
+ float ch=k==0?m.r:k==1?m.g:k==2?m.b:m.a;
+ float inside=step(0.0,source.x)*step(source.x,1.0)*step(0.0,source.y)*step(source.y,1.0);
+ float alpha=inside*ch*foreground.a;
+ float outAlpha=alpha+color.a*(1.0-alpha);
+ vec3 rgb=(foreground.rgb*light*alpha+color.rgb*color.a*(1.0-alpha))/max(outAlpha,.00001);
+ return vec4(rgb,outAlpha);
 }
 void main(){
  vec2 shift=vec2(0.0),flowVector=vec2(0.0);

@@ -165,12 +165,10 @@ function updateTailCutout(){
  if(!plate)return;
  tailPlate=plate;
  tailMask=union;
- const packed=document.createElement('canvas');
- packed.width=packed.height=TILE;
- const pg=packed.getContext('2d'),img=pg.createImageData(TILE,TILE);
+ // 캔버스는 투명한 칸의 색을 지우므로(premultiplied) 픽셀 데이터를 그대로 텍스처로 올린다
+ const img=new ImageData(TILE,TILE);
  list.forEach((m,k)=>{const a=m.getContext('2d',{willReadFrequently:true}).getImageData(0,0,TILE,TILE).data;for(let i=0;i<TILE*TILE;i++)img.data[i*4+k]=a[i*4+3]});
- pg.putImageData(img,0,0);
- tailChannels=packed;
+ tailChannels=img;
  const baseIndex=zones.findIndex(z=>z.isBase);
  if(backgroundPlate&&baseIndex>=0&&!baseClipEnabled){
   const both=document.createElement('canvas');

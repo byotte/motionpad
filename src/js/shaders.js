@@ -4,16 +4,6 @@ varying vec2 v_uv;
 uniform float u_time;
 uniform vec4 u_ambient;
 uniform float u_baseExclude;
-vec4 tailLayer(vec4 color,vec2 source,int k,float light){
- vec4 foreground=texture2D(u_tailOriginal,source);
- vec4 m=texture2D(u_tailMask,source);
- float ch=k==0?m.r:k==1?m.g:k==2?m.b:m.a;
- float inside=step(0.0,source.x)*step(source.x,1.0)*step(0.0,source.y)*step(source.y,1.0);
- float alpha=inside*ch*foreground.a;
- float outAlpha=alpha+color.a*(1.0-alpha);
- vec3 rgb=(foreground.rgb*light*alpha+color.rgb*color.a*(1.0-alpha))/max(outAlpha,.00001);
- return vec4(rgb,outAlpha);
-}
 void main(){
   v_uv=a_uv;
   float topWeight=pow(clamp(1.0-a_uv.y,0.0,1.0),1.5);
@@ -46,6 +36,16 @@ float anchoredDistance(vec2 uv,vec4 piv,vec4 extra){
 float pointToSegment(vec2 uv,vec2 a,vec2 b,out float t){
  vec2 v=b-a;t=clamp(dot(uv-a,v)/max(dot(v,v),0.00001),0.0,1.0);
  return length(uv-(a+t*v));
+}
+vec4 tailLayer(vec4 color,vec2 source,int k,float light){
+ vec4 foreground=texture2D(u_tailOriginal,source);
+ vec4 m=texture2D(u_tailMask,source);
+ float ch=k==0?m.r:k==1?m.g:k==2?m.b:m.a;
+ float inside=step(0.0,source.x)*step(source.x,1.0)*step(0.0,source.y)*step(source.y,1.0);
+ float alpha=inside*ch*foreground.a;
+ float outAlpha=alpha+color.a*(1.0-alpha);
+ vec3 rgb=(foreground.rgb*light*alpha+color.rgb*color.a*(1.0-alpha))/max(outAlpha,.00001);
+ return vec4(rgb,outAlpha);
 }
 void main(){
  vec2 shift=vec2(0.0),flowVector=vec2(0.0);

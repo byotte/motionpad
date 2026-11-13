@@ -92,7 +92,7 @@ async function newPage(browser, vp, theme, frozen = false) {
   if (theme) await context.addInitScript(t => { try { localStorage.setItem('motionpad-theme', t); } catch (_) {} }, theme);
   const page = await context.newPage();
   page.on('pageerror', e => results.errors.push(String(e)));
-  page.on('console', m => { if (m.type() === 'error') results.errors.push('console: ' + m.text()); });
+  page.on('console', m => { if (m.type() === 'error' || /WebGL 실행 실패/.test(m.text())) results.errors.push('console: ' + m.text().slice(0, 300)); });
   page.on('dialog', d => { results.notes.push('dialog: ' + d.message()); d.dismiss(); });
   await page.goto(URL);
   await page.waitForLoadState('load');
