@@ -750,16 +750,17 @@ function selectionCosts(graph,seeds,mask,seedColor=false){
  };
  for(const i of seeds)if(costs[i]&&(!mask||mask[i]))queue(i,0);
  const seed=seeds[0];
- // 마술봉: 누른 곳이 선화가 아니면 선화 픽셀에서는 더 퍼지지 않는다
- const leaf=seedColor&&graph.ridge&&!graph.ridge[seed]?graph.ridge:null;
+ // 마술봉: 누른 곳이 선화가 아니면, 선화 픽셀에서 더 퍼지려면 '선 넘기 비용'(범위 36 이상)이 든다.
+ // 기본 범위에서는 자기 외곽선까지만 잡고, 범위를 넓히면 선 너머의 비슷한 색까지 포함한다(색 차이 기준은 그대로).
+ const leaf=seedColor&&graph.ridge&&!graph.ridge[seed]?graph.ridge:null,CROSS=72;
  for(let c=0;c<256;c++)while(head[c]>=0){
   const i=head[c];head[c]=next[i];if(head[c]>=0)prev[head[c]]=-1;
-  if(leaf&&leaf[i]&&c)continue;
+  const floor=leaf&&leaf[i]&&c?Math.max(c,CROSS):c;
   selectionNeighbors(i,width,size,j=>{
    if(costs[j]<=c||(mask&&!mask[j]))return;
    const edge=j===i+1?right[i]:j===i-1?right[j]:j>i?down[i]:down[j];
    const color=seedColor?Math.min(255,Math.round(1.4*Math.sqrt(colorDistanceSquared(raw,seed,j,.56)))):0;
-   const rank=Math.max(c,edge,color);
+   const rank=Math.max(floor,edge,color);
    if(rank<costs[j])queue(j,rank);
   });
  }
