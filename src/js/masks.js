@@ -1,32 +1,61 @@
 function strokePath(g,s,w,h){const pts=s.points;if(!pts.length)return;const r=s.r*Math.min(renderWidth,renderHeight);g.save();g.scale(w/renderWidth,h/renderHeight);g.lineWidth=Math.max(.1,2*r);g.lineCap='round';g.lineJoin='round';g.beginPath();g.moveTo(pts[0][0]*renderWidth,pts[0][1]*renderHeight);for(let k=1;k<pts.length;k++)g.lineTo(pts[k][0]*renderWidth,pts[k][1]*renderHeight);if(pts.length===1){g.lineTo(pts[0][0]*renderWidth+.01,pts[0][1]*renderHeight+.01)}g.stroke();g.restore()}
-function createMask(z,base=rawMaskCanvas(z)){const softened=document.createElement('canvas');softened.width=softened.height=TILE;const soft=softened.getContext('2d');const blur=Math.round(Math.max(0,z.feather||0)*.63);const spread=Math.round(z.spread||0);if(spread>0)base=dilateMask(base,spread);if(blur){soft.filter=`blur(${blur}px)`;soft.drawImage(base,0,0);soft.filter='none'}else soft.drawImage(base,0,0);return softened}
+// base는 이미 넓힌(spread) 모양이다
+function createMask(z,base){const softened=document.createElement('canvas');softened.width=softened.height=TILE;const soft=softened.getContext('2d');const blur=Math.round(Math.max(0,z.feather||0)*.63);if(blur){soft.filter=`blur(${blur}px)`;soft.drawImage(base,0,0);soft.filter='none'}else soft.drawImage(base,0,0);return softened}
 
 
-// Interpolate between the visible endpoints of each masked run.
-function accumulateBackgroundLine(data,inside,totals,start,stride,length){
- let index=0;
- while(index<length){
-  if(!inside[start+index*stride]){index++;continue}
-  const first=index;
-  while(index<length&&inside[start+index*stride])index++;
-  const before=first>0?(start+(first-1)*stride)*4:-1;
-  const after=index<length?(start+index*stride)*4:-1;
-  if(before<0&&after<0)continue;
-  for(let k=first;k<index;k++){
-   const left=k-first+1,right=index-k;
-   const blend=before<0?1:after<0?0:left/(left+right);
-   const weight=1/(before<0?right:after<0?left:Math.min(left,right));
-   const a=before<0?after:before,b=after<0?before:after;
-   const alphaA=(1-blend)*data[a+3]/255,alphaB=blend*data[b+3]/255;
-   const p=(start+k*stride)*5;
-
-   for(let channel=0;channel<3;channel++){
-    totals[p+channel]+=weight*(alphaA*data[a+channel]+alphaB*data[b+channel]);
-   }
-   totals[p+3]+=weight*(alphaA+alphaB);
-   totals[p+4]+=weight;
+// 2-M: 빈자리는 먼저 부드럽게 채워 바로 보여 주고(smoothFillF), 뒤에서 조각 붙이기(patchFillSteps)로 다듬어 바꿔 넣는다.
+const fillJobs=[];let fillTimer=0;
+function plateInUse(plate){return plate===backgroundPlate||plate===tailPlate||plate===tailBasePlate}
+function writePlate(job){
+ const {work,image,inside,width,height,plate}=job;
+ work.getContext('2d').putImageData(image,0,0);
+ if(plate===work)return;
+ // Keep the unmasked part of the source at its original resolution.
+ const dest=plate.getContext('2d',{willReadFrequently:true});
+ dest.drawImage(bitmap,0,0);
+ const original=dest.getImageData(0,0,plate.width,plate.height),data=image.data;
+ for(let y=0;y<plate.height;y++){
+  const row=Math.min(height-1,Math.floor((y+.5)*height/plate.height))*width;
+  for(let x=0;x<plate.width;x++){
+   const i=row+Math.min(width-1,Math.floor((x+.5)*width/plate.width));
+   if(!inside[i])continue;
+   const p=(y*plate.width+x)*4,q=i*4;
+   for(let channel=0;channel<4;channel++)original.data[p+channel]=data[q+channel];
   }
  }
+ dest.putImageData(original,0,0);
+}
+function queueFill(job){
+ fillJobs.push(job);
+ // 모양을 고치는 동안에는 기다렸다가(마지막 변경 0.25초 뒤) 시작한다
+ clearTimeout(fillTimer);fillTimer=setTimeout(pumpFill,250);
+}
+function pumpFill(){
+ while(fillJobs.length&&(!plateInUse(fillJobs[0].plate)||fillJobs[0].source!==bitmap))fillJobs.shift();
+ const job=fillJobs[0];if(!job)return;
+ if(!job.steps){
+  const {image,inside,width,height}=job,n=width*height,data=image.data,col=new Float32Array(n*3);
+  for(let i=0;i<n;i++){const a=data[i*4+3]/255;col[i*3]=data[i*4]*a;col[i*3+1]=data[i*4+1]*a;col[i*3+2]=data[i*4+2]*a}
+  job.col=col;
+  // 드러나는 띠(이동 상한 5.5% + 전체 움직임)까지만, 큰 그림은 절반 크기에서
+  job.steps=patchFillSteps(col,inside,width,height,{top:Math.max(width,height)>500?1:0,em:3,pm:3,band:Math.ceil(.075*Math.max(width,height))});
+ }
+ const until=performance.now()+10;let done=false;
+ while(!done&&performance.now()<until)done=job.steps.next().done;
+ if(done){
+  fillJobs.shift();
+  const {image,inside,width,height,col}=job,data=image.data;
+  for(let i=0;i<width*height;i++){
+   if(!inside[i])continue;
+   const a=data[i*4+3]/255;
+   for(let c=0;c<3;c++)data[i*4+c]=a?col[i*3+c]/a:0;
+  }
+  writePlate(job);
+  // 같은 캔버스의 내용만 바뀌었으므로 텍스처·깜빡임 합성을 직접 다시 올린다
+  if(gl)syncBaseTexturesGL();
+  if(blinkLastStep>0)blinkLastStep=-1;
+ }
+ if(fillJobs.length)fillTimer=setTimeout(pumpFill,0);
 }
 
 function buildBackgroundPlate(mask){
@@ -66,37 +95,25 @@ function buildBackgroundPlate(mask){
  if(flat){
   for(let i=0;i<size;i++)if(inside[i])data.set(nearbyMean,i*4);
  }else{
-  const totals=new Float32Array(size*5);
-  for(let y=0;y<height;y++)accumulateBackgroundLine(data,inside,totals,y*width,1,width);
-  for(let x=0;x<width;x++)accumulateBackgroundLine(data,inside,totals,x,width,height);
-  const fallback=nearbyMean||visible.map(value=>value/visibleCount);
+  // 투명한 그림도 다루도록 색에 불투명도를 곱해 함께 채운다
+  const col=new Float32Array(size*4),known=new Uint8Array(size);
+  for(let i=0;i<size;i++){
+   const p=i*4,a=data[p+3]/255;
+   col[p]=data[p]*a;col[p+1]=data[p+1]*a;col[p+2]=data[p+2]*a;col[p+3]=data[p+3];known[i]=inside[i]?0:1;
+  }
+  smoothFillF(col,known,width,height,4);
   for(let i=0;i<size;i++){
    if(!inside[i])continue;
-   const p=i*5,k=i*4,weight=totals[p+4],alpha=totals[p+3];
-   if(!weight){data.set(fallback,k);continue}
-   for(let channel=0;channel<3;channel++)data[k+channel]=alpha?totals[p+channel]/alpha:0;
-   data[k+3]=255*alpha/weight;
+   const p=i*4,a=col[p+3]/255;
+   for(let channel=0;channel<3;channel++)data[p+channel]=a>0?col[p+channel]/a:0;
+   data[p+3]=col[p+3];
   }
  }
- g.putImageData(image,0,0);
- if(scale===1)return work;
-
- // Keep the unmasked part of the source at its original resolution.
- const plate=document.createElement('canvas');
- plate.width=renderWidth;plate.height=renderHeight;
- const dest=plate.getContext('2d',{willReadFrequently:true});
- dest.drawImage(bitmap,0,0);
- const original=dest.getImageData(0,0,plate.width,plate.height);
- for(let y=0;y<plate.height;y++){
-  const row=Math.min(height-1,Math.floor((y+.5)*height/plate.height))*width;
-  for(let x=0;x<plate.width;x++){
-   const i=row+Math.min(width-1,Math.floor((x+.5)*width/plate.width));
-   if(!inside[i])continue;
-   const p=(y*plate.width+x)*4,q=i*4;
-   for(let channel=0;channel<4;channel++)original.data[p+channel]=data[q+channel];
-  }
- }
- dest.putImageData(original,0,0);
+ let plate=work;
+ if(scale!==1){plate=document.createElement('canvas');plate.width=renderWidth;plate.height=renderHeight}
+ const job={plate,work,image,inside,width,height,source:bitmap};
+ writePlate(job);
+ if(!flat)queueFill(job);
  return plate;
 }
 
@@ -146,16 +163,17 @@ let rawMaskPixels=[];
 let tailPlate=null,tailSource=null,tailMask=null,tailBasePlate=null,tailOriginalTex=null,tailMaskTex=null;
 
 // 2-D: '외곽까지 흔들기' 영역 최대 4개. 영역 모양은 한 텍스처의 R·G·B·A 채널에 하나씩, 빈자리 배경판은 합친 모양으로 한 장.
-const TAIL_MAX=4;let tailChannels=null,tailSources=new Map();
+const TAIL_MAX=4;let tailChannels=null,tailSources=new Map(),tailLayers=new Map();
 function tailCutoutZones(){
  return zones.filter(z=>z.tailCutout&&!z.isBase).slice(0,TAIL_MAX);
 }
 function tailCutoutZone(){return tailCutoutZones()[0]||null}
 
 function updateTailCutout(){
- tailPlate=tailMask=tailBasePlate=tailChannels=null;tailSource=null;tailSources=new Map();
+ tailPlate=tailMask=tailBasePlate=tailChannels=null;tailSource=null;tailSources=new Map();tailLayers=new Map();
  baseForegroundSource=null;
- const list=tailCutoutZones().map(z=>rawMasks[zones.indexOf(z)]).filter(Boolean);
+ const cut=tailCutoutZones().filter(z=>rawMasks[zones.indexOf(z)]);
+ const list=cut.map(z=>rawMasks[zones.indexOf(z)]);
  if(!list.length)return;
  const union=document.createElement('canvas');
  union.width=union.height=TILE;
@@ -164,10 +182,15 @@ function updateTailCutout(){
  const plate=buildBackgroundPlate(union);
  if(!plate)return;
  tailPlate=plate;
- tailMask=union;
+ // 2-M: 빈자리는 선택보다 2칸 넓게 파므로 얹는 그림은 3칸 넓힌다. 그 사이 테두리가 원본 그대로 보여, 가만히 있을 때 원본과 같다.
+ const layers=list.map(m=>dilateMask(m,3));
+ cut.forEach((z,k)=>tailLayers.set(z.id,layers[k]));
+ const all=document.createElement('canvas');all.width=all.height=TILE;
+ const ag=all.getContext('2d');for(const m of layers)ag.drawImage(m,0,0);
+ tailMask=all;
  // 캔버스는 투명한 칸의 색을 지우므로(premultiplied) 픽셀 데이터를 그대로 텍스처로 올린다
  const img=new ImageData(TILE,TILE);
- list.forEach((m,k)=>{const a=m.getContext('2d',{willReadFrequently:true}).getImageData(0,0,TILE,TILE).data;for(let i=0;i<TILE*TILE;i++)img.data[i*4+k]=a[i*4+3]});
+ layers.forEach((m,k)=>{const a=m.getContext('2d',{willReadFrequently:true}).getImageData(0,0,TILE,TILE).data;for(let i=0;i<TILE*TILE;i++)img.data[i*4+k]=a[i*4+3]});
  tailChannels=img;
  const baseIndex=zones.findIndex(z=>z.isBase);
  if(backgroundPlate&&baseIndex>=0&&!baseClipEnabled){
@@ -184,7 +207,7 @@ function updateTailCutout(){
 function getTailSource(image=bitmap,z=tailCutoutZone()){
  const key=z?.id;
  if(tailSources.has(key))return tailSources.get(key);
- const mask=rawMasks[zones.indexOf(z)]||tailMask;
+ const mask=tailLayers.get(key)||tailMask;
  const c=document.createElement('canvas');
  c.width=renderWidth;c.height=renderHeight;
  const g=c.getContext('2d');
@@ -209,6 +232,46 @@ function clipMask(mask,clip){
 
 // 0-2: 영역별 캐시. 모양이 바뀐 영역만 원본 마스크를, 모양·경계값이 바뀐 영역만 효과 마스크를 다시 만든다.
 const zoneMaskCache=new Map();
+// 2-M 접힘 방지: 영역 바깥 칸마다 '영역까지의 거리'를 담은 지도(영역 지도와 같은 배치). 크게 움직일 때 셰이더가 이 거리로 완충 띠를 넓힌다.
+const DIST_RANGE=.16;let distTex=null,distAtlas=null,lastDistLayout='';
+function zoneDistance(src,clipPixels){
+ const a=src.getContext('2d',{willReadFrequently:true}).getImageData(0,0,TILE,TILE).data;
+ const n=TILE*TILE,d=new Float32Array(n),A=.955,B=1.37;
+ for(let i=0;i<n;i++)d[i]=a[i*4+3]>=128&&(!clipPixels||clipPixels[i*4+3]>=128)?0:1e6;
+ for(let y=0;y<TILE;y++)for(let x=0;x<TILE;x++){
+  const i=y*TILE+x;let v=d[i];if(!v)continue;
+  if(x>0)v=Math.min(v,d[i-1]+A);
+  if(y>0){v=Math.min(v,d[i-TILE]+A);if(x>0)v=Math.min(v,d[i-TILE-1]+B);if(x<TILE-1)v=Math.min(v,d[i-TILE+1]+B)}
+  d[i]=v;
+ }
+ for(let y=TILE-1;y>=0;y--)for(let x=TILE-1;x>=0;x--){
+  const i=y*TILE+x;let v=d[i];if(!v)continue;
+  if(x<TILE-1)v=Math.min(v,d[i+1]+A);
+  if(y<TILE-1){v=Math.min(v,d[i+TILE]+A);if(x<TILE-1)v=Math.min(v,d[i+TILE+1]+B);if(x>0)v=Math.min(v,d[i+TILE-1]+B)}
+  d[i]=v;
+ }
+ const out=new ImageData(TILE,TILE),o=out.data,k=255/(DIST_RANGE*TILE);
+ for(let i=0;i<n;i++){o[i*4]=o[i*4+1]=o[i*4+2]=255-Math.min(255,d[i]*k);o[i*4+3]=255}
+ return out;
+}
+function updateDistances(entries,baseIndex,clipKey){
+ if(!gl||!distTex)return;
+ const clipPixels=clipKey?entries[baseIndex].pixels:null;
+ const layout=entries.map((c,i)=>{
+  const z=zones[i],spread=Math.round(z.spread||0),key=c.shape+'|'+spread+'|'+(i===baseIndex?'':clipKey);
+  if(c.distKey!==key){c.distKey=key;c.dist=zoneDistance(c.wide,i===baseIndex?null:clipPixels)}
+  return z.id+':'+key;
+ }).join('/');
+ if(layout===lastDistLayout)return;
+ lastDistLayout=layout;
+ if(!distAtlas){distAtlas=document.createElement('canvas');distAtlas.width=maskAtlas.width;distAtlas.height=maskAtlas.height}
+ const g=distAtlas.getContext('2d');
+ g.fillStyle='#000';g.fillRect(0,0,distAtlas.width,distAtlas.height);
+ entries.forEach((c,i)=>g.putImageData(c.dist,(i%COLS)*TILE,Math.floor(i/COLS)*TILE));
+ gl.activeTexture(gl.TEXTURE6);gl.bindTexture(gl.TEXTURE_2D,distTex);
+ gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
+ gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,distAtlas);
+}
 let lastTailKey=null,lastTailBitmap=null,lastGLSync=[];
 function zoneShapeKey(z){return JSON.stringify([z.kind,z.x,z.y,z.rx,z.ry,z.rot,z.scale,z.baseX,z.baseY,z.kind==='brush'?z.strokes:0,z.kind==='polygon'?z.polygon:0,z.kind==='raster'?z.runs:0])}
 function updateMasks(){
@@ -242,12 +305,16 @@ function updateMasks(){
  masks=zones.map((z,i)=>{
   const c=entries[i];
   const fx=c.shape+'|'+z.feather+'|'+z.spread;
-  if(c.fx!==fx){c.fx=fx;c.effect=createMask(z,c.raw);c.effectClipKey=undefined}
+  const spread=Math.round(z.spread||0),wideKey=c.shape+'|'+spread;
+  // 넓힌 모양은 효과 마스크와 거리 지도가 함께 쓴다
+  if(c.wideKey!==wideKey){c.wideKey=wideKey;c.wide=spread>0?dilateMask(c.raw,spread):c.raw}
+  if(c.fx!==fx){c.fx=fx;c.effect=createMask(z,c.wide);c.effectClipKey=undefined}
   const key=i===baseIndex?'':clipKey;
   if(c.effectClipKey!==key){c.effectClipKey=key;c.effectClipped=i===baseIndex?c.effect:clipMask(c.effect,clip)}
   atlas.drawImage(c.effectClipped,(i%COLS)*TILE,Math.floor(i/COLS)*TILE);
   return c.effectClipped;
  });
+ updateDistances(entries,baseIndex,clipKey);
  maskDirty=false;
  maskReady=true;
  if(gl){

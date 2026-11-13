@@ -282,7 +282,8 @@ function zoneSummary(z) {
     const afterTool = await state();
     let applied = false;
     if (afterTool.wandDraftAlive) { await page.locator('#wandApply').click(); await rafs(page, 2); applied = await page.evaluate(() => document.getElementById('wandApply').disabled && /적용/.test(document.getElementById('status').textContent)); }
-    results.previewKeep = { before, after, afterTouch, afterTool, applied,
+    const applyState = await page.evaluate(() => ({ status: document.getElementById('status').textContent, applyDisabled: document.getElementById('wandApply').disabled }));   // 실패했을 때 원인 확인용
+    results.previewKeep = { before, after, afterTouch, afterTool, applied, applyState,
       kept: before.wandDraftAlive && after.wandDraftAlive && before.tool === after.tool && afterTouch.wandDraftAlive && afterTool.wandDraftAlive && applied };
     await context.close();
   }

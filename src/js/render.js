@@ -38,6 +38,9 @@ function setupGL(){
     gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,emptyBaseMask);
     gl.uniform1i(gl.getUniformLocation(program,'u_tailOriginal'),4);
     gl.uniform1i(gl.getUniformLocation(program,'u_tailMask'),5);
+    distTex=newTexture(gl.TEXTURE6);lastDistLayout='';
+    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,emptyBaseMask);
+    gl.uniform1i(gl.getUniformLocation(program,'u_dist'),6);
     gl.uniform1i(gl.getUniformLocation(program,'u_tex'),0);gl.uniform1i(gl.getUniformLocation(program,'u_mask'),1);gl.uniform1i(gl.getUniformLocation(program,'u_baseMask'),2);gl.uniform1i(gl.getUniformLocation(program,'u_background'),3);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
     return true;
@@ -130,7 +133,10 @@ function render(){
      fl.set([(z.flow||0)/40*.014*env,Math.cos(dir),Math.sin(dir),z.phase],i*4);
      const a=z.spine?.[0]||[z.x,z.y],b=z.spine?.[z.spine.length-1]||[z.x,z.y];
      sp.set([a[0],a[1],b[0],b[1]],i*4);
-     sm.set([z.spineTip?.[0]||0,z.spineTip?.[1]||0,z.spine?.length>=2?1:0,0],i*4);
+     // 2-M: 경계 띠가 접히지 않고 버티는 이동량(safe)과, 이 영역이 지금 낼 수 있는 이동량의 상한. 상한이 절반을 넘을 때만 셰이더가 거리 지도를 본다.
+     const safe=Math.max(1,Math.round(Math.max(0,z.feather||0)*.63)*2.5)/TILE,reachR=Math.hypot(z.rx,z.ry)+.19;
+     const bound=Math.hypot(z.motionX||0,z.motionY||0)+2*Math.hypot(z.physX||0,z.physY||0)+Math.abs(z.motionScale||0)*reachR+(.0105*z.breath/40+.006*z.wave/40+.023*z.twist/35*reachR)*env+.0036*z.ripple/40*(z.hitPower||0)+Math.hypot(z.spineTip?.[0]||0,z.spineTip?.[1]||0)+Math.hypot(z.spineMid?.[0]||0,z.spineMid?.[1]||0)+Math.hypot(z.branchTip?.[0]||0,z.branchTip?.[1]||0);
+     sm.set([z.spineTip?.[0]||0,z.spineTip?.[1]||0,z.spine?.length>=2?1:0,bound>.5*safe?safe:0],i*4);
      cm.set([z.spineMid?.[0]||0,z.spineMid?.[1]||0,(z.pull??50)/100,0],i*4);
      pu.set([z.grabX??z.x,z.grabY??z.y,z.physX||0,z.physY||0],i*4);
      const ba=z.branch?.[0]||[z.x,z.y],bb=z.branch?.[z.branch.length-1]||[z.x,z.y];
@@ -142,6 +148,7 @@ function render(){
    gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,maskTex);
    gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,baseMaskTex);
    gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,backgroundTex);
+   gl.activeTexture(gl.TEXTURE6);gl.bindTexture(gl.TEXTURE_2D,distTex);
    for(const [name,data] of [['zone',zp],['motion',mo],['fx',fx],['tap',tp],['pivot',pv],['flow',fl],['spine',sp],['spinemotion',sm],['chainMid',cm],['branchLine',bl],['branchMotion',bm],['pivotExtra',pe],['pull',pu]])if(uni[name])gl.uniform4fv(uni[name],data);
    const tl=tailPlate?tailCutoutZones().map(z=>zones.indexOf(z)):[];
    gl.uniform4f(uni.tailCutout,tl[0]??-1,tl[1]??-1,tl[2]??-1,tl[3]??-1);
