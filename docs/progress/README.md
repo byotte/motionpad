@@ -8,7 +8,7 @@
 | 0-4a CSS 재작성(겉모습 유지) | 완료 | `0-4a.md` |
 | 0-4b 디자인 개선 + 테마 확정 | 완료 | `0-4b.md` |
 | 0-5 파일 분리 + 단일 HTML 합치기 | 완료 | `0-5.md` |
-| **1 선택 엔진** | **진행 중**: 1-A 알고리즘 1차 완료, 다음은 새로·더하기·빼기 모드 | `1-A.md` |
+| **1 선택 엔진** | **진행 중**: 1-A 알고리즘 2차 + 새로·더하기·빼기 완료, 다음은 선 그림 판별·끊긴 선 이어 주기 | `1-A.md` |
 | 2 움직임 / 3 완성도 | 대기 | `docs/REVIEW.md` 개발안 v2 |
 
 ## 개발 방법 (0-5부터)
@@ -20,6 +20,8 @@
   - `style_snapshot.js <기준.html> <새.html> [장면]` → 97개 장면, 모든 요소의 위치·최종 스타일 비교.
   - `schema_check.js <기준.html> <새.html>` → 영역 속성 저장·표시·조작·되돌리기 동등성.
   - `shots.js <html> <폴더> <화면-테마-상태>...` → 검토용 스크린샷(장면 이름은 `scenes.js`).
+- 선택 방식 동작 시험: `node tools/baseline/selop_check.js` (새로·더하기·빼기 9단계).
+- 실제 그림 비교: `node tools/select/try.js` (`samples/`, `tools/select/real.json`).
 - 선택 엔진 정확도: `node tools/select/bench.js <이름> [--base 이전이름] [--images]` (테스트 세트·정답 마스크 자동 생성, 결과 `tools/select/out/`). 자세히는 `1-A.md`.
 - 기준 html이 필요하면 `git show <커밋>:motionpad.html > 파일`로 꺼내 쓴다. 0-5 끝 시점 결과물은 0-4b 끝과 바이트까지 같다.
 

@@ -7,7 +7,7 @@ function setZoom(next){zoomLevel=clamp(next,1,4);if(zoomLevel===1){panX=panY=0}a
 $('zoomInBtn').onclick=()=>setZoom(zoomLevel+.25);
 $('zoomOutBtn').onclick=()=>setZoom(zoomLevel-.25);
 $('zoomResetBtn').onclick=()=>setZoom(1);
-$('newRegionBtn').onclick=()=>{selected=null;$('appendInput').checked=false;updateUI();setMode('brush');setStatus('새 영역을 그려 주세요. 기존 영역에 더하려면 영역을 다시 선택하세요.')};
+$('newRegionBtn').onclick=()=>{selected=null;setSelectOp('new');updateUI();setMode('brush');setStatus('새 영역을 그려 주세요. 기존 영역에 더하려면 영역을 다시 선택하세요.')};
 function updateRendererBadge(){
   const badge=$('engineBadge');if(!badge)return;
   const renderer=gl?'WebGL':'Canvas';const quality=qualityMode==='auto'?'자동':qualityMode==='balanced'?'절전':'고화질';
@@ -212,7 +212,8 @@ function setMode(m){
   $('editInstruction').textContent=({pivot:'고정할 곳을 눌러 주세요.',extraPivot:'고정점을 더 놓을 곳을 눌러 주세요.',spine:'붙어 있는 곳에서 끝까지 그어 주세요.',flowdir:'흐를 방향으로 그어 주세요.'})[m]||'그림에서 부분을 선택하거나 다듬어 주세요.';
   if(ready&&!viewerOpen)requestAnimationFrame(fit);
   for(const b of document.querySelectorAll('.mode'))b.classList.toggle('active',b.dataset.mode===m);
-  $('brushbar').hidden=!['brush','erase','lasso','wand'].includes(m);
+  $('brushbar').hidden=!['brush','erase','lasso','wand','ellipse'].includes(m);
+  $('selOp').hidden=!['lasso','wand','ellipse'].includes(m);
   $('wandbar').hidden=m!=='wand';$('lassobar').hidden=m!=='lasso';
   $('brushLabel').textContent=m==='erase'?'지우개 굵기':'붓 굵기';
   $('brushLabel').hidden=$('brushInput').hidden=$('brushValue').hidden=!['brush','erase'].includes(m);
