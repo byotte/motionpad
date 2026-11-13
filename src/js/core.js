@@ -18,3 +18,20 @@ const MOTION_PRESETS=Object.freeze({
  scarf:{strength:25,spring:8,damping:80,windStrength:65,windAngle:-25,windSpeed:.9,windNoise:25,windDelay:84,pivotEnabled:true}
 });
 function setStatus(s){$('status').textContent=s}
+// 작업이 날아갈 수 있는 동작 앞의 확인창. 문구는 부르는 곳에서 상황에 맞게 정한다.
+function askConfirm({title,message,ok='확인',cancel='취소'}){
+ return new Promise(resolve=>{
+  const d=$('confirmDialog');if(!d||d.open){resolve(false);return}
+  $('confirmTitle').textContent=title;$('confirmMessage').textContent=message;
+  $('confirmOk').textContent=ok;$('confirmCancel').textContent=cancel;
+  const done=v=>{d.close();resolve(v)};
+  $('confirmOk').onclick=()=>done(true);$('confirmCancel').onclick=()=>done(false);
+  d.oncancel=e=>{e.preventDefault();done(false)};
+  d.showModal();$('confirmCancel').focus();
+ });
+}
+// 마지막으로 파일 저장·열기 했을 때와 지금이 다른가(새 그림·프로젝트 열기 전 확인용)
+let savedSignature='';
+function projectSignature(){try{return JSON.stringify([imgBlob?.size||0,zones.map(clean),extraState()])}catch(_){return String(Math.random())}}
+function markProjectSaved(){savedSignature=projectSignature()}
+function hasUnsavedWork(){return !!(ready&&imgBlob)&&projectSignature()!==savedSignature}

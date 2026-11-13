@@ -420,8 +420,9 @@ $('blinkApply').onclick=()=>{
  setBlinkProtection(false);drawBlinkPreview();
  $('blinkHint').textContent='이 눈을 적용했습니다. 다른 눈을 선택하거나 창을 닫아 보세요.';
 };
-$('blinkRemove').onclick=()=>{
+$('blinkRemove').onclick=async()=>{
  const index=Number($('blinkEye').value);
+ if(!await askConfirm({title:'눈 제거',message:`눈 ${index+1}의 깜빡임 설정(눈꼬리·눈꺼풀 위치, 앞머리 보호)을 지울까요?`,ok:'이 눈 제거'}))return;
  blinkEyes[index]=blinkPatches[index]=null;
  stopBlinkPreview();loadBlinkEye();refreshBlinkSetup();scheduleSave();
 };
