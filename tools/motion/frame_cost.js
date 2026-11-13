@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 // 2-0 계측: 감상(플레이) 화면에서 한 프레임에 시간이 어디에 쓰이는지. 코드 변경 없음.
 //
-//   node tools/motion/frame_cost.js [대상.html]   (기본 motionpad.html, 약 10분)
+//   node tools/motion/frame_cost.js [대상.html]          (기본 motionpad.html, 약 15분)
+//   node tools/motion/frame_cost.js [대상.html] --blink  눈 깜빡임만: 폰 화면, 깜빡임이 두 번 이상 들어가게 길게 잰다
+//   주의: 앱 시간은 프레임당 최대 0.035초만 흐른다(dt 상한). FPS가 낮으면 깜빡임 주기(4.5초)가 실제로 더 길어진다.
 //   → 표준출력 표 + tools/motion/out/frame-cost.json
 //
 // 장면: 그림만 / 영역 4개 자동 움직임 / + 외곽까지 흔들기(꼬리) / + 눈 깜빡임 2개 / + 몸체(배경 분리) / 마지막 장면에서 터치 드래그
@@ -18,7 +20,8 @@ const { execFileSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '../..');
 const OUT = path.join(__dirname, 'out');
-const TARGET = path.resolve(process.argv[2] || path.join(ROOT, 'motionpad.html'));
+const ARGS = process.argv.slice(2), BLINK = ARGS.includes('--blink');
+const TARGET = path.resolve(ARGS.find(a => !a.startsWith('--')) || path.join(ROOT, 'motionpad.html'));
 const FIX = path.join(ROOT, 'tools/baseline/fixtures/character.png');
 const KEY = ['tick', 'step', 'updateMasks', 'render', 'updateBlinkScene', 'paintBlinkPatch', 'uploadBlinkTexture', 'drawOverlay', 'updateTailCutout', 'buildBackgroundPlate', 'getTailSource'];
 fs.mkdirSync(OUT, { recursive: true });
@@ -37,21 +40,21 @@ function summarize(profile) {
   return { totalMs: total / 1000, idleMs: idle / 1000, gcMs: gc / 1000, incl: Object.fromEntries(Object.entries(incl).map(([k, v]) => [k, v / 1000])) };
 }
 // 프레임 간격 측정(5초 이상: 눈 깜빡임 주기 4.5초가 반드시 들어간다) + 같은 동안 CPU 프로파일
-async function measure(page, during) {
+async function measure(page, during, windowMs = 5000) {
   const cdp = await page.context().newCDPSession(page);
   await cdp.send('Profiler.enable'); await cdp.send('Profiler.setSamplingInterval', { interval: 200 }); await cdp.send('Profiler.start');
-  await page.evaluate(() => { window.__frames = []; window.__stop = false; let last = performance.now(); const t0 = last;
-    const f = now => { window.__frames.push(now - last); last = now; if (!(window.__stop && now - t0 >= 5000)) requestAnimationFrame(f); else window.__done = true; };
-    window.__done = false; requestAnimationFrame(f); });
+  await page.evaluate(w => { window.__frames = []; window.__stop = false; let last = performance.now(); const t0 = last;
+    const f = now => { window.__frames.push(now - last); last = now; if (!(window.__stop && now - t0 >= w)) requestAnimationFrame(f); else window.__done = true; };
+    window.__done = false; requestAnimationFrame(f); }, windowMs);
   if (during) await during();
   await page.evaluate(() => { window.__stop = true; });
   await page.waitForFunction(() => window.__done, null, { timeout: 120000 });
   const t = (await page.evaluate(() => window.__frames)).slice(1);
   const { profile } = await cdp.send('Profiler.stop'); await cdp.detach();
-  const s = t.slice().sort((a, b) => a - b), n = t.length, prof = summarize(profile), med = s[n >> 1];
+  const s = t.slice().sort((a, b) => a - b), n = t.length, prof = summarize(profile), med = s[n >> 1], slow = t.filter(v => v > med * 1.8);
   const per = v => +(v / n).toFixed(1);
   return { frames: n, fps: +(1000 / (t.reduce((a, b) => a + b, 0) / n)).toFixed(1), avgMs: +(t.reduce((a, b) => a + b, 0) / n).toFixed(1), p95Ms: +s[Math.floor(n * .95)].toFixed(1), maxMs: +s[n - 1].toFixed(1),
-    hitches: t.filter(v => v > med * 1.8).length, jsPerFrame: per(prof.totalMs - prof.idleMs), gcPerFrame: per(prof.gcMs),
+    hitches: slow.length, hitchAvgMs: slow.length ? +(slow.reduce((a, b) => a + b, 0) / slow.length).toFixed(0) : 0, medianMs: +med.toFixed(1), jsPerFrame: per(prof.totalMs - prof.idleMs), gcPerFrame: per(prof.gcMs),
     perFrame: Object.fromEntries(Object.entries(prof.incl).map(([k, v]) => [k, per(v)])), totalMs: Object.fromEntries(Object.entries(prof.incl).map(([k, v]) => [k, +v.toFixed(0)])) };
 }
 
@@ -98,8 +101,8 @@ async function measure(page, during) {
   const variant = (level, image) => {
     const p = JSON.parse(JSON.stringify(proj)), extra = typeof p.extra === 'string' ? JSON.parse(p.extra) : p.extra;
     extra.qualityMode = 'high';
-    p.zones = level === 0 ? [] : p.zones.map((z, i) => ({ ...z, ...presets[i], auto: true, tailCutout: level >= 2 && i === 3, isBase: level >= 4 && i === 1 }));
-    if (level >= 3) extra.blink = { eyes, speed: 100 };
+    p.zones = level <= 0 ? [] : p.zones.map((z, i) => ({ ...z, ...presets[i], auto: true, tailCutout: level >= 2 && i === 3, isBase: level >= 4 && i === 1 }));
+    if (level >= 3 || level === -3) extra.blink = { eyes, speed: 100 };
     p.extra = typeof proj.extra === 'string' ? JSON.stringify(extra) : extra;
     if (image === 'big') p.image = bigURL;
     const f = path.join(OUT, `v${level}-${image}.motionpad.json`); fs.writeFileSync(f, JSON.stringify(p)); return f;
@@ -109,6 +112,27 @@ async function measure(page, during) {
 
   // ── 2. 장면별 계측 ──
   const results = [];
+  if (BLINK) {
+    // 영역 없이 깜빡임만 / 영역4+깜빡임. 창은 FPS에 맞춰 깜빡임 2번 이상(앱 시간 9초 이상)
+    for (const image of ['800', 'big']) for (const throttle of [1, 4]) for (const level of [-3, 3]) {
+      const ctx = await browser.newContext({ ...VPS.phone, acceptDownloads: true }), page = await ctx.newPage(), errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.goto('file://' + TARGET);
+      await page.setInputFiles('#backupFile', variant(level, image)); await page.waitForSelector('.workspace:not([hidden])'); await rafs(page, 5);
+      await page.locator('#viewerBtn').click(); await rafs(page, 10);
+      const cdp = await ctx.newCDPSession(page); await cdp.send('Emulation.setCPUThrottlingRate', { rate: throttle }); await rafs(page, 5);
+      const fps = await page.evaluate(() => new Promise(r => { let n = 0; const t0 = performance.now(); const f = () => { n++; performance.now() - t0 < 1500 ? requestAnimationFrame(f) : r(n / 1.5); }; requestAnimationFrame(f); }));
+      const windowMs = Math.min(60000, Math.max(5000, 9 / Math.min(1, fps * .035) * 1000));
+      const r = { image, vp: 'phone', throttle, level: level < 0 ? '깜빡임만' : '영역4+깜빡임', windowMs: Math.round(windowMs), ...(await measure(page, null, windowMs)), errs };
+      results.push(r); console.log(JSON.stringify(r));
+      await cdp.detach(); await ctx.close();
+    }
+    fs.writeFileSync(path.join(OUT, 'frame-cost-blink.json'), JSON.stringify(results, null, 1));
+    await browser.close();
+    console.log('\n그림 CPU | 장면 | 창(초) | FPS 중앙ms | 끊김 프레임 수·평균ms·최대ms | 합계ms: 깜빡임합성 업로드');
+    for (const r of results) console.log(`${r.image} x${r.throttle} | ${r.level} | ${(r.windowMs / 1000).toFixed(0)} | ${r.fps} ${r.medianMs} | ${r.hitches} ${r.hitchAvgMs} ${r.maxMs} | ${r.totalMs.updateBlinkScene} ${r.totalMs.uploadBlinkTexture}`);
+    return;
+  }
   for (const image of ['800', 'big']) for (const vp of ['pc', 'phone']) for (const throttle of [1, 4]) {
     if (vp === 'pc' && throttle === 4) continue;          // PC는 1배, 폰은 1배·4배
     for (let level = 0; level < LEVELS.length; level++) {
