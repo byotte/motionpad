@@ -330,6 +330,51 @@ function updateMasks(){
   }
  }else if(blinkLastStep>0)blinkLastStep=-1;
 }
+// 선택 테두리: 384 격자의 계단을 그대로 늘려 그리면 폰에서 굵고 울퉁불퉁하다(1-B 측정).
+// 격자 값에서 경계선을 선분으로 뽑아(살짝 고르게 한 뒤 칸 사이를 보간) 화면 해상도에서 일정한 굵기로 긋는다.
+// alpha(i): i번째 칸이 얼마나 안쪽인지 0~255. 돌려주는 값은 [x1,y1,x2,y2,…] (그림 기준 0~1).
+function maskContour(alpha){
+ const N=TILE,P=N+2,a=new Float32Array(P*P),t=new Float32Array(P*P);// 바깥 한 칸은 0(그림 가장자리에서도 선이 닫힌다)
+ for(let y=0;y<N;y++)for(let x=0;x<N;x++)a[(y+1)*P+x+1]=alpha(y*N+x);
+ for(let y=0;y<P;y++)for(let x=1;x<P-1;x++){const i=y*P+x;t[i]=(a[i-1]+2*a[i]+a[i+1])/4}
+ for(let y=1;y<P-1;y++)for(let x=1;x<P-1;x++){const i=y*P+x;a[i]=(t[i-P]+2*t[i]+t[i+P])/4}
+ for(let x=0;x<P;x++)a[x]=a[(P-1)*P+x]=0;for(let y=0;y<P;y++)a[y*P]=a[y*P+P-1]=0;
+ const T=127.5,out=[],f=(u,v)=>(T-u)/(v-u);
+ for(let y=0;y<P-1;y++)for(let x=0;x<P-1;x++){
+  const i=y*P+x,v0=a[i],v1=a[i+1],v2=a[i+P+1],v3=a[i+P],c=(v0>T?1:0)|(v1>T?2:0)|(v2>T?4:0)|(v3>T?8:0);
+  if(c===0||c===15)continue;
+  // 칸 중심 좌표로: 격자점 (x,y)는 그림 칸 (x-1,y-1)의 중심
+  const X=x-.5,Y=y-.5,top=()=>[X+f(v0,v1),Y],right=()=>[X+1,Y+f(v1,v2)],bottom=()=>[X+f(v3,v2),Y+1],left=()=>[X,Y+f(v0,v3)];
+  const seg=(p,q)=>out.push(p[0]/N,p[1]/N,q[0]/N,q[1]/N);
+  switch(c){
+   case 1:case 14:seg(left(),top());break;
+   case 2:case 13:seg(top(),right());break;
+   case 3:case 12:seg(left(),right());break;
+   case 4:case 11:seg(right(),bottom());break;
+   case 6:case 9:seg(top(),bottom());break;
+   case 7:case 8:seg(left(),bottom());break;
+   case 5:seg(left(),top());seg(right(),bottom());break;
+   case 10:seg(top(),right());seg(left(),bottom());break;
+  }
+ }
+ return {segs:new Float32Array(out),path:null,key:''};
+}
+// 어두운 선 위에 흰 선을 겹쳐 어떤 그림 위에서도 보이게. k = 화면 1픽셀이 캔버스 몇 픽셀인지.
+function strokeContour(g,c,w,h,k){
+ if(!c||!c.segs.length)return;
+ const key=w+'x'+h;
+ if(c.key!==key){const p=new Path2D(),s=c.segs;for(let i=0;i<s.length;i+=4){p.moveTo(s[i]*w,s[i+1]*h);p.lineTo(s[i+2]*w,s[i+3]*h)}c.path=p;c.key=key}
+ g.save();g.lineCap='round';g.lineJoin='round';
+ g.strokeStyle='rgba(20,20,26,.85)';g.lineWidth=2.6*k;g.stroke(c.path);
+ g.strokeStyle='#fff';g.lineWidth=1.2*k;g.stroke(c.path);
+ g.restore();
+}
+const maskContours=new WeakMap();
+function zoneContour(i){
+ const mask=rawMasks[i],pixels=rawMaskPixels[i];if(!mask||!pixels)return null;
+ let c=maskContours.get(mask);if(!c){c=maskContour(j=>pixels[j*4+3]);maskContours.set(mask,c)}
+ return c;
+}
 function maskPreview(i,z,isSelected){
  const mask=rawMasks[i];
  if(!mask)return null;
@@ -348,23 +393,6 @@ function maskPreview(i,z,isSelected){
  g.fillStyle=color;
  g.fillRect(0,0,TILE,TILE);
  g.globalCompositeOperation='source-over';
- if(isSelected){
-  const outline=g.createImageData(TILE,TILE),pixels=rawMaskPixels[i];
-  const inside=(x,y)=>x>=0&&y>=0&&x<TILE&&y<TILE&&pixels[(y*TILE+x)*4+3]>=128;
-  for(let y=0;y<TILE;y++)for(let x=0;x<TILE;x++){
-   if(!inside(x,y))continue;
-   const edge=!inside(x-1,y)||!inside(x+1,y)||!inside(x,y-1)||!inside(x,y+1);
-   const inner=!inside(x-2,y)||!inside(x+2,y)||!inside(x,y-2)||!inside(x,y+2);
-   if(!inner)continue;
-   const k=(y*TILE+x)*4;
-   outline.data[k]=outline.data[k+1]=outline.data[k+2]=edge?20:255;
-   outline.data[k+3]=230;
-  }
-  const edgeCanvas=document.createElement('canvas');
-  edgeCanvas.width=edgeCanvas.height=TILE;
-  edgeCanvas.getContext('2d').putImageData(outline,0,0);
-  g.drawImage(edgeCanvas,0,0);
- }
  maskPreviews.set(mask,{key,canvas});
  return canvas;
 }
