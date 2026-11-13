@@ -28,7 +28,7 @@ function setupGL(){
     program=gl.createProgram();gl.attachShader(program,vs);gl.attachShader(program,fs);gl.linkProgram(program);
     if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error('Shader link: '+gl.getProgramInfoLog(program));
     gl.useProgram(program);
-    uni={zone:gl.getUniformLocation(program,'u_zone[0]'),motion:gl.getUniformLocation(program,'u_motion[0]'),fx:gl.getUniformLocation(program,'u_fx[0]'),tap:gl.getUniformLocation(program,'u_tap[0]'),pivot:gl.getUniformLocation(program,'u_pivot[0]'),flow:gl.getUniformLocation(program,'u_flow[0]'),spine:gl.getUniformLocation(program,'u_spine[0]'),spinemotion:gl.getUniformLocation(program,'u_spinemotion[0]'),chainMid:gl.getUniformLocation(program,'u_chainMid[0]'),branchLine:gl.getUniformLocation(program,'u_branchLine[0]'),branchMotion:gl.getUniformLocation(program,'u_branchMotion[0]'),pivotExtra:gl.getUniformLocation(program,'u_pivotExtra[0]'),baseExclude:gl.getUniformLocation(program,'u_baseExclude'),tailCutout:gl.getUniformLocation(program,'u_tailCutout'),time:gl.getUniformLocation(program,'u_time'),count:gl.getUniformLocation(program,'u_count'),ambient:gl.getUniformLocation(program,'u_ambient')};
+    uni={pull:gl.getUniformLocation(program,'u_pull[0]'),zone:gl.getUniformLocation(program,'u_zone[0]'),motion:gl.getUniformLocation(program,'u_motion[0]'),fx:gl.getUniformLocation(program,'u_fx[0]'),tap:gl.getUniformLocation(program,'u_tap[0]'),pivot:gl.getUniformLocation(program,'u_pivot[0]'),flow:gl.getUniformLocation(program,'u_flow[0]'),spine:gl.getUniformLocation(program,'u_spine[0]'),spinemotion:gl.getUniformLocation(program,'u_spinemotion[0]'),chainMid:gl.getUniformLocation(program,'u_chainMid[0]'),branchLine:gl.getUniformLocation(program,'u_branchLine[0]'),branchMotion:gl.getUniformLocation(program,'u_branchMotion[0]'),pivotExtra:gl.getUniformLocation(program,'u_pivotExtra[0]'),baseExclude:gl.getUniformLocation(program,'u_baseExclude'),tailCutout:gl.getUniformLocation(program,'u_tailCutout'),time:gl.getUniformLocation(program,'u_time'),count:gl.getUniformLocation(program,'u_count'),ambient:gl.getUniformLocation(program,'u_ambient')};
     rebuildMesh();
     function newTexture(unit){const tex=gl.createTexture();gl.activeTexture(unit);gl.bindTexture(gl.TEXTURE_2D,tex);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return tex}
     imageTex=newTexture(gl.TEXTURE0);maskTex=newTexture(gl.TEXTURE1);baseMaskTex=newTexture(gl.TEXTURE2);backgroundTex=newTexture(gl.TEXTURE3);
@@ -59,19 +59,22 @@ function cpuDeformation(z,x,y){
  let near=Math.hypot(x-(z.pivotX??z.x),y-(z.pivotY??z.y));
  for(const p of (z.extraPivots||[]))near=Math.min(near,Math.hypot(x-p[0],y-p[1]));
  const pin=smoothstep(.018,radius,near),pivotWeight=z.pivotEnabled?1+(pin-1)*clamp((z.pivotStrength??60)/100*1.65,0,1):1;
- let dx=(z.motionX||0)*pivotWeight+relX*(z.motionScale||0)*pivotWeight;
- let dy=(z.motionY||0)*pivotWeight+relY*(z.motionScale||0)*pivotWeight;
+ const pull=(z.pull??50)/100,reach=Math.max(.02,Math.hypot(z.rx,z.ry)*(1.1+(.42-1.1)*pull));
+ const grab=Math.exp(-((x-(z.grabX??z.x))**2+(y-(z.grabY??z.y))**2)/(reach*reach)),D=[z.physX||0,z.physY||0];
+ let px=D[0]*grab*(1+6*pull),py=D[1]*grab*(1+6*pull);const soft=1+Math.hypot(px,py)/.06;px/=soft;py/=soft;
+ let dx=((z.motionX||0)-D[0]+D[0]+(px-D[0])*pull)*pivotWeight+relX*(z.motionScale||0)*pivotWeight;
+ let dy=((z.motionY||0)-D[1]+D[1]+(py-D[1])*pull)*pivotWeight+relY*(z.motionScale||0)*pivotWeight;
  const t=elapsed*(z.breathSpeed??1),phase=z.phase;
  const inhale=.76*Math.sin(t*1.4+phase*.12-.3)+.24*Math.sin(t*.72+phase*.08+.34);
  const rd=Math.hypot(relX/Math.max(z.rx,.03),relY/Math.max(z.ry,.03));
  const inner=smoothstep(0,.44,rd)*(1-smoothstep(.88,2.2,rd));
  const l=Math.hypot(relX+.0001,relY+.0001);
- const pulse=(z.breath||0)/40*.0105*inhale*inner*pivotWeight;
+ const pulse=(z.breath||0)*(z.autoEnv??1)/40*.0105*inhale*inner*pivotWeight;
  dx+=(relX+.0001)/l*pulse;dy+=(relY+.0001)/l*pulse;
- dx+=Math.sin(relY*42+elapsed*1.9+z.phase)*(z.wave||0)/40*.0036*pivotWeight;
- dy+=Math.sin(relX*38+elapsed*1.5+z.phase)*(z.wave||0)/40*.0022*pivotWeight;
- dx-=relY*Math.sin(elapsed*1.25+z.phase)*(z.twist||0)/35*.023*pivotWeight;
- dy+=relX*Math.sin(elapsed*1.25+z.phase)*(z.twist||0)/35*.023*pivotWeight;
+ dx+=Math.sin(relY*42+elapsed*1.9+z.phase)*(z.wave||0)*(z.autoEnv??1)/40*.0036*pivotWeight;
+ dy+=Math.sin(relX*38+elapsed*1.5+z.phase)*(z.wave||0)*(z.autoEnv??1)/40*.0022*pivotWeight;
+ dx-=relY*Math.sin(elapsed*1.25+z.phase)*(z.twist||0)*(z.autoEnv??1)/35*.023*pivotWeight;
+ dy+=relX*Math.sin(elapsed*1.25+z.phase)*(z.twist||0)*(z.autoEnv??1)/35*.023*pivotWeight;
  if(z.spine?.length>=2){
    const [dist,t]=distSegment(x,y,z.spine[0],z.spine[z.spine.length-1]);
    const influence=(1-smoothstep(.035,.21,dist))*pivotWeight;
@@ -89,7 +92,7 @@ function cpuDeformation(z,x,y){
    const pulse=Math.sin(rad*75-age*23)*Math.exp(-age*3)*(1-smoothstep(0,1.6,age))*(z.ripple/40)*.0036*z.hitPower*pivotWeight;
    dx+=(relX+.0001)/l*pulse;dy+=(relY+.0001)/l*pulse;
  }
- if((z.flow||0)>0){const flow=(z.flow||0)/40*.008,theta=(z.flowAngle||0)*Math.PI/180;dx+=Math.cos(theta)*flow*Math.sin(elapsed*.7);dy+=Math.sin(theta)*flow*Math.sin(elapsed*.7)}
+ if((z.flow||0)>0){const flow=(z.flow||0)*(z.autoEnv??1)/40*.008,theta=(z.flowAngle||0)*Math.PI/180;dx+=Math.cos(theta)*flow*Math.sin(elapsed*.7);dy+=Math.sin(theta)*flow*Math.sin(elapsed*.7)}
  return [clamp(dx,-.065,.065),clamp(dy,-.065,.065)];
 }
 function canvasWarpRegion(g,z,w,h,source=bitmap){
@@ -115,18 +118,21 @@ function render(){
  }
  if(gl){
    const zp=new Float32Array(LIMIT*4),mo=new Float32Array(LIMIT*4),fx=new Float32Array(LIMIT*4),tp=new Float32Array(LIMIT*4),pv=new Float32Array(LIMIT*4),fl=new Float32Array(LIMIT*4),sp=new Float32Array(LIMIT*4),sm=new Float32Array(LIMIT*4),cm=new Float32Array(LIMIT*4),bl=new Float32Array(LIMIT*4),bm=new Float32Array(LIMIT*4),pe=new Float32Array(LIMIT*4);
+   const pu=new Float32Array(LIMIT*4);
    for(let i=0;i<zones.length;i++){
      const z=zones[i],dir=z.flowAngle*Math.PI/180;
      zp.set([z.x,z.y,z.rx,z.ry],i*4);
      mo.set([z.motionX||0,z.motionY||0,z.motionScale||0,z.breathSpeed??1],i*4);
-     fx.set([z.breath/40,z.wave/40,z.twist/35,z.ripple/40],i*4);
+     const env=z.autoEnv??1;
+     fx.set([z.breath/40*env,z.wave/40*env,z.twist/35*env,z.ripple/40],i*4);
      tp.set([z.hitX,z.hitY,elapsed-z.hitAt,z.hitPower],i*4);
      pv.set([z.pivotX??z.x,z.pivotY??z.y,z.pivotEnabled?1:0,(z.pivotStrength??60)/100],i*4);
-     fl.set([(z.flow||0)/40*.014,Math.cos(dir),Math.sin(dir),z.phase],i*4);
+     fl.set([(z.flow||0)/40*.014*env,Math.cos(dir),Math.sin(dir),z.phase],i*4);
      const a=z.spine?.[0]||[z.x,z.y],b=z.spine?.[z.spine.length-1]||[z.x,z.y];
      sp.set([a[0],a[1],b[0],b[1]],i*4);
      sm.set([z.spineTip?.[0]||0,z.spineTip?.[1]||0,z.spine?.length>=2?1:0,0],i*4);
-     cm.set([z.spineMid?.[0]||0,z.spineMid?.[1]||0,0,0],i*4);
+     cm.set([z.spineMid?.[0]||0,z.spineMid?.[1]||0,(z.pull??50)/100,0],i*4);
+     pu.set([z.grabX??z.x,z.grabY??z.y,z.physX||0,z.physY||0],i*4);
      const ba=z.branch?.[0]||[z.x,z.y],bb=z.branch?.[z.branch.length-1]||[z.x,z.y];
      bl.set([ba[0],ba[1],bb[0],bb[1]],i*4);bm.set([z.branchTip?.[0]||0,z.branchTip?.[1]||0,z.branch?.length>=2?1:0,0],i*4);
      const ep=z.extraPivots||[];pe.set([ep[0]?.[0]??-1,ep[0]?.[1]??-1,ep[1]?.[0]??-1,ep[1]?.[1]??-1],i*4);
@@ -136,8 +142,9 @@ function render(){
    gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,maskTex);
    gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,baseMaskTex);
    gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,backgroundTex);
-   for(const [name,data] of [['zone',zp],['motion',mo],['fx',fx],['tap',tp],['pivot',pv],['flow',fl],['spine',sp],['spinemotion',sm],['chainMid',cm],['branchLine',bl],['branchMotion',bm],['pivotExtra',pe]])if(uni[name])gl.uniform4fv(uni[name],data);
-   gl.uniform1f(uni.tailCutout,tailPlate?zones.indexOf(tailCutoutZone()):-1);
+   for(const [name,data] of [['zone',zp],['motion',mo],['fx',fx],['tap',tp],['pivot',pv],['flow',fl],['spine',sp],['spinemotion',sm],['chainMid',cm],['branchLine',bl],['branchMotion',bm],['pivotExtra',pe],['pull',pu]])if(uni[name])gl.uniform4fv(uni[name],data);
+   const tl=tailPlate?tailCutoutZones().map(z=>zones.indexOf(z)):[];
+   gl.uniform4f(uni.tailCutout,tl[0]??-1,tl[1]??-1,tl[2]??-1,tl[3]??-1);
    gl.uniform1f(uni.baseExclude,baseBackgroundExclude&&backgroundPlate?1:0);
    gl.uniform4f(uni.ambient,ambient.enabled?1:0,ambient.enabled?ambient.breath/100:0,ambient.enabled?ambient.sway/100:0,ambient.enabled?ambient.light/100:0);
    gl.uniform1f(uni.time,elapsed);gl.uniform1i(uni.count,zones.length);
@@ -147,7 +154,7 @@ function render(){
  if(!draw2d)return;
  const w=view.width,h=view.height;
  draw2d.clearRect(0,0,w,h);
- const cutout=tailPlate?tailCutoutZone():null;
+ const cutouts=tailPlate?tailCutoutZones():[];
  const scene=blinkScene||tailPlate||bitmap;
  const b=ambient.enabled?ambient.breath/100:0,s=ambient.enabled?ambient.sway/100:0;
  const scale=1+MotionPhysics.wave(elapsed*1.40,-.30)*b*.0073;
@@ -183,7 +190,7 @@ function render(){
 
  for(let i=0;i<zones.length;i++){
    const z=zones[i];
-   if(z===base||z===cutout||!hasLocalMotion(z))continue;
+   if(z===base||cutouts.includes(z)||!hasLocalMotion(z))continue;
    let f=fallbacks[i];if(!f||f.width!==w||f.height!==h){f=document.createElement('canvas');f.width=w;f.height=h;fallbacks[i]=f}
    const g=f.getContext('2d');g.clearRect(0,0,w,h);
    canvasWarpRegion(g,z,w,h,scene);
@@ -191,12 +198,12 @@ function render(){
    g.globalCompositeOperation='source-over';draw2d.drawImage(f,0,0);
  }
 
- if(cutout){
+ for(const cutout of cutouts){
    draw2d.save();
    draw2d.translate(w/2+MotionPhysics.wave(elapsed*.98)*s*w*.0036,h);
    draw2d.scale(scale,scale);
    draw2d.translate(-w/2,-h);
-   canvasWarpRegion(draw2d,cutout,w,h,getTailSource(blinkOriginal||bitmap));
+   canvasWarpRegion(draw2d,cutout,w,h,getTailSource(blinkOriginal||bitmap,cutout));
    draw2d.restore();
  }
  if(!base)applyCanvasLight(draw2d,w,h);

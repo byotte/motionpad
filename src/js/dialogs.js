@@ -18,8 +18,9 @@ document.querySelectorAll('[data-dialog]').forEach(button=>{
   $(button.dataset.dialog).showModal();
  };
 });
-$('startImage').onclick=()=>$('imageBtn').click();
-$('startProject').onclick=()=>$('restoreBtn').click();
+const keepPrevious=async(title)=>!storedLayoutProject||await askConfirm({title,message:'자동 저장된 이전 작업이 있습니다. 새로 시작하면 이전 작업은 이어할 수 없게 됩니다. 계속할까요?',ok:'새로 시작'});
+$('startImage').onclick=async()=>{if(await keepPrevious('새 그림 열기'))$('imageBtn').click()};
+$('startProject').onclick=async()=>{if(await keepPrevious('프로젝트 열기'))$('restoreBtn').click()};
 $('resumeProject').onclick=async()=>{
  if(!storedLayoutProject)return;
  try{await restoreProjectObject(storedLayoutProject);setMode('play');}
@@ -39,8 +40,8 @@ $('leaveEdit').onclick=()=>{
  }
  setMode('play');
 };
-$('menuNew').onclick=()=>$('imageBtn').click();
-$('menuOpen').onclick=()=>$('restoreBtn').click();
+$('menuNew').onclick=async()=>{if(hasUnsavedWork()&&!await askConfirm({title:'새 그림 열기',message:'지금 작업에 파일로 저장하지 않은 변경이 있습니다. 새 그림을 열면 지금 작업은 사라집니다. 그래도 열까요?',ok:'저장하지 않고 열기'}))return;$('imageBtn').click()};
+$('menuOpen').onclick=async()=>{if(hasUnsavedWork()&&!await askConfirm({title:'프로젝트 열기',message:'지금 작업에 파일로 저장하지 않은 변경이 있습니다. 다른 프로젝트를 열면 지금 작업은 사라집니다. 그래도 열까요?',ok:'저장하지 않고 열기'}))return;$('restoreBtn').click()};
 $('layoutSettings').addEventListener('focusin',paintQuality);
 const namedProjects=$('projectSelect');
 const showNamedProjects=()=>$('legacyMenu').hidden=![...namedProjects.options].some(option=>option.value);

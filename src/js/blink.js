@@ -5,12 +5,13 @@ let blinkRect=null,blinkCropStart=null,blinkCropping=false;
 const blinkPrompts=['화면에서 왼쪽 눈꼬리를 찍어 주세요.','같은 눈의 오른쪽 눈꼬리를 찍어 주세요.',
  '윗눈꺼풀 선의 가운데를 찍어 주세요.','아랫눈꺼풀 선의 가운데를 찍어 주세요.'];
 let blinkProtection=[],blinkProtecting=false,blinkStroke=null;
-let blinkEyes=[null,null],blinkPatches=[null,null],blinkSpeed=100,blinkEpoch=0;
+let blinkEyes=[null,null],blinkPatches=[null,null],blinkSpeed=100,blinkInterval=4.5,blinkEpoch=0;
 let blinkLastStep=-1,blinkLastTail=null,blinkScene=null,blinkOriginal=null;
 let blinkComposite=null,blinkTailComposite=null,blinkOverlay=null;
 function restoreBlink(settings){
  const number=(v,fallback,min,max)=>Number.isFinite(v)?clamp(v,min,max):fallback;
  blinkSpeed=number(settings?.speed,100,50,160);
+ blinkInterval=number(settings?.interval,4.5,2,10);
  blinkEyes=[0,1].map(i=>{
   const eye=settings?.eyes?.[i];
   if(!Array.isArray(eye?.points)||eye.points.length!==4||
@@ -43,7 +44,8 @@ function uploadBlinkTexture(unit,texture,source){
  gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,gl.RGBA,gl.UNSIGNED_BYTE,source);
 }
 function updateBlinkScene(){
- const t=((elapsed-blinkEpoch+3.5)%4.5)*1000*blinkSpeed/100;
+ // 2-A: 간격(초)마다 한 번. 적용 직후 1초 뒤 첫 깜빡임(기본 4.5초일 때 이전과 같다)
+ const t=((elapsed-blinkEpoch+blinkInterval-1)%blinkInterval)*1000*blinkSpeed/100;
  const open=clamp((t-105)/145,0,1);
  const amount=t<75?1-(1-t/75)**2:1-open*(2-open);
  const step=blinkPatches.some(Boolean)?Math.round(amount*16):0;
@@ -52,7 +54,7 @@ function updateBlinkScene(){
  blinkLastStep=step;blinkLastTail=tailPlate;
  blinkScene=blinkOriginal=null;
  if(!changed)return false;
- baseForegroundSource=null;tailSource=null;
+ baseForegroundSource=null;tailSource=null;tailSources=new Map();
  if(!step)return true;
  blinkOverlay??=blinkCanvas(renderWidth,renderHeight);
  const layer=blinkOverlay.getContext('2d');
@@ -289,7 +291,7 @@ function stopBlinkPreview(){
 }
 $('eyeEntry').onclick=()=>{
  if(!ready){setStatus('먼저 그림을 열어 주세요.');return}
- blinkRect=null;blinkCropping=false;$('blinkEye').value='0';$('blinkSpeed').value=blinkSpeed;
+ blinkRect=null;blinkCropping=false;$('blinkEye').value='0';$('blinkSpeed').value=blinkSpeed;paintBlinkInterval();
  loadBlinkEye();
  const scale=Math.min(1,1200/Math.max(renderWidth,renderHeight));
  blinkPreview.width=Math.max(1,Math.round(renderWidth*scale));
@@ -418,12 +420,16 @@ $('blinkApply').onclick=()=>{
  setBlinkProtection(false);drawBlinkPreview();
  $('blinkHint').textContent='이 눈을 적용했습니다. 다른 눈을 선택하거나 창을 닫아 보세요.';
 };
-$('blinkRemove').onclick=()=>{
+$('blinkRemove').onclick=async()=>{
  const index=Number($('blinkEye').value);
+ if(!await askConfirm({title:'눈 제거',message:`눈 ${index+1}의 깜빡임 설정(눈꼬리·눈꺼풀 위치, 앞머리 보호)을 지울까요?`,ok:'이 눈 제거'}))return;
  blinkEyes[index]=blinkPatches[index]=null;
  stopBlinkPreview();loadBlinkEye();refreshBlinkSetup();scheduleSave();
 };
 $('blinkSpeed').onchange=()=>{blinkSpeed=Number($('blinkSpeed').value);scheduleSave()};
+function paintBlinkInterval(){$('blinkInterval').value=blinkInterval;$('blinkIntervalValue').textContent=blinkInterval.toFixed(1)+'초'}
+$('blinkInterval').oninput=()=>{blinkInterval=Number($('blinkInterval').value);$('blinkIntervalValue').textContent=blinkInterval.toFixed(1)+'초'};
+$('blinkInterval').onchange=()=>{blinkInterval=Number($('blinkInterval').value);blinkEpoch=elapsed;scheduleSave()};
 $('blinkClose').onclick=()=>blinkDialog.close();
 blinkDialog.addEventListener('close',stopBlinkPreview);
 

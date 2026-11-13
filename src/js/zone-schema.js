@@ -57,10 +57,12 @@ const ZONE_FIELDS=[
  num('dragGain',100,0,200,{input:'dragGainInput',output:'dragGainValue',fmt:pct}),
  num('holdGain',60,0,200,{input:'holdGainInput',output:'holdGainValue',fmt:pct}),
  num('flickGain',100,0,200,{input:'flickGainInput',output:'flickGainValue',fmt:pct}),
+ num('pull',50,0,100,{input:'pullInput',output:'pullValue',fmt:pct}),
+ num('autoRest',0,0,6,{input:'autoRestInput',output:'autoRestValue',fmt:v=>v?`${v.toFixed(1)}초`:'쉬지 않음'}),
  flag('locked',{input:'lockedInput',check:true,noPreview:true}),
 ];
 // 저장하지 않는 실행 중 상태(물리·터치). 불러올 때마다 초기화된다.
-function zoneRuntime(i){return {s:0,v:0,phase:i*1.7+.2,hitDX:0,hitDY:1,hitPulse:0,hitX:.5,hitY:.5,hitAt:-20,hitPower:0,physX:0,physY:0,physVX:0,physVY:0,physScale:0,physSV:0,dragging:false,desiredX:0,desiredY:0,desiredScale:0,chainNodes:null,branchNodes:null,spineTip:[0,0],spineMid:[0,0],branchTip:[0,0],windX:0,windY:0,physicsOutput:null}}
+function zoneRuntime(i){return {s:0,v:0,phase:i*1.7+.2,hitDX:0,hitDY:1,hitPulse:0,hitX:.5,hitY:.5,grabX:.5,grabY:.5,hitAt:-20,hitPower:0,physX:0,physY:0,physVX:0,physVY:0,physScale:0,physSV:0,dragging:false,desiredX:0,desiredY:0,desiredScale:0,chainNodes:null,branchNodes:null,spineTip:[0,0],spineMid:[0,0],branchTip:[0,0],windX:0,windY:0,physicsOutput:null}}
 const ZONE_UI=ZONE_FIELDS.filter(f=>f.ui);
 function clean(z){const out={};for(const f of ZONE_FIELDS)out[f.key]=f.save(z);return out}
 function sanitize(z,i){const kind=['brush','ellipse','raster','polygon'].includes(z.kind)?z.kind:'ellipse';const n=zNum;

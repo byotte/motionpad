@@ -13,6 +13,14 @@
 .stagebar .mode{display:inline-flex;align-items:center;gap:5px;min-height:26px;padding:3px 8px;font-size:var(--toolFont);white-space:nowrap;transition:background .12s}
 .stagebar .mode:hover{background:var(--button)}
 .stagebar .mode.active{box-shadow:inset 0 -2px var(--accent);color:var(--accentInk)}
+/* 영역 관리 묶음: 도구와 구분선으로 나눈다 */
+.toolSep{width:1px;align-self:stretch;margin:3px 6px;background:var(--line)}
+.zoneTools{display:inline-flex;align-items:center;gap:3px;margin-left:auto}
+.zoneTools .zoneNew{display:inline-flex;align-items:center;gap:4px;font-weight:700;color:var(--accentInk)}
+.zoneTools .iconBtn{min-width:28px}
+/* 도구줄 칸이 좁으면(폰 가로 등) 도구는 아이콘만: 줄바꿈으로 캔버스가 줄지 않게 */
+.stagebox{container-type:inline-size}
+@container (max-width:700px){.stagebar .mode>span{display:none}.stagebar .mode{padding-inline:6px}.modegroup{flex-wrap:nowrap;align-items:center}}
 :root[data-theme="light"] .mode{color:var(--sub)}
 :root[data-theme="light"] .stagebar .mode.active{color:var(--accentInk)}
 .workspace.touchPreview .stagebar .mode.active{opacity:.5}

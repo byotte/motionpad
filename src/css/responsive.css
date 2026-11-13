@@ -27,8 +27,13 @@
   .toolbar{flex:0 1 auto;justify-content:flex-start;margin-left:auto}
   .topMenu>summary{padding-inline:6px}
   .stagebar{padding-inline:2px}
-  .modegroup{display:grid;gap:0;grid-template-columns:minmax(0,.58fr) repeat(2,minmax(0,.92fr)) repeat(2,minmax(0,.82fr)) repeat(2,minmax(0,1.3fr))}
-  .stagebar .mode{flex-direction:column;justify-content:center;gap:2px;min-width:0;padding-inline:1px;font-size:10px;text-align:center}
+  /* 좁은 폰: 도구는 아이콘만(이름은 title·안내줄), '새 영역'은 글자 유지 */
+  .modegroup{flex-wrap:nowrap;align-items:center}
+  .stagebar .mode{flex:1 1 0;justify-content:center;min-width:0;padding-inline:2px}
+  .stagebar .mode>span{display:none}
+  .toolSep{margin-inline:3px}
+  .zoneTools{gap:1px}
+  .zoneTools .btn{padding-inline:5px}
   .stage{height:42dvh;min-height:195px}
   .quick{flex:1 1 100%;gap:0 1px}
   .quick .btn{min-width:22px}
@@ -39,7 +44,7 @@
   .viewerAudio .btn{font-size:10px}
   #lassobar{gap:4px;padding-inline:4px}
   #blinkPreview{max-height:41dvh}
-  .blinkSettings .blinkControl{flex-basis:100%}
+  .blinkSettings{grid-template-columns:1fr}
   .blinkFooter{flex-wrap:nowrap}
   #blinkHint,#blinkApply{min-width:0}
 }

@@ -117,7 +117,7 @@ overlay.addEventListener('pointerdown',e=>{
   if(viewerOpen||mode==='play'||touchPreview){
     if(pointers.size>1)return;
     const z=hit(p.x,p.y);gesture={type:'play',id:z?.id||null,start:p,last:p,time:performance.now(),lastTime:performance.now(),dragged:false};
-    if(z){z.dragging=false;z.desiredX=z.desiredY=z.desiredScale=0;z.hitX=p.x;z.hitY=p.y}return;
+    if(z){z.dragging=false;z.desiredX=z.desiredY=z.desiredScale=0;z.hitX=p.x;z.hitY=p.y;z.grabX=p.x;z.grabY=p.y}return;
   }
   if(mode==='pan'||spacePanHeld){
     if(pointers.size!==1)return;gesture={type:'pan',clientX:e.clientX,clientY:e.clientY,panX,panY};return;
@@ -198,10 +198,11 @@ overlay.addEventListener('pointermove',e=>{
       const max=.003+(z.strength/80)*.016,
         gain=(z.dragGain??100)/100,
         dx=p.x-g.start.x,dy=p.y-g.start.y,dist=Math.hypot(dx,dy);
-      const mult=Math.min(max,dist*.14)*gain;
+      const reachUp=1+1.5*(z.pull??50)/100;// 2-B: 잡아당길수록 손가락을 멀리 끌 때 더 따라온다
+      const mult=Math.min(max*reachUp,dist*.14)*gain;
       const [vx,vy]=projectMotion(z.axis,dx/Math.max(.0001,dist)*mult,dy/Math.max(.0001,dist)*mult);
       if(z.axis==='pulse')z.desiredScale=-Math.min(.009,dist*.05)*gain;
-      z.desiredX=clamp(vx,-.025,.025);z.desiredY=clamp(vy,-.025,.025);
+      z.desiredX=clamp(vx,-.025*reachUp,.025*reachUp);z.desiredY=clamp(vy,-.025*reachUp,.025*reachUp);
       z.hitX=p.x;z.hitY=p.y;
     }return;
   }

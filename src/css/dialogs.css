@@ -36,9 +36,12 @@
 .blinkHead{flex-wrap:wrap;padding-block:2px}
 .blinkToolbar,.blinkSettings{background:var(--panel);border-bottom:1px solid var(--line)}
 .blinkToolbar label{display:inline-flex;align-items:center;gap:5px}
-.blinkControl{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:8px;color:var(--ink)}
-.blinkControl input{flex:1;min-width:80px}
-.blinkSettings .blinkControl{flex:1 1 160px;margin:0}
+.blinkControl{display:grid;grid-template-columns:7.2em minmax(60px,1fr) 3.2em;align-items:center;gap:8px;margin-top:8px;color:var(--ink);white-space:nowrap}
+.blinkControl input{width:100%;margin:0}
+.blinkControl output{min-width:3.2em;font-size:12px;color:var(--sub);text-align:right}
+.blinkSettings{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.blinkSettings .blinkControl{margin:0}
+.blinkSettings>.btn{justify-self:start}
 .blinkStage{display:grid;place-items:center;min-height:100px;overflow:hidden;background:repeating-conic-gradient(var(--panel) 0 25%,var(--stageInk) 0 50%) 0/16px 16px}
 #blinkPreview{display:block;width:auto;height:auto;max-width:100%;max-height:54dvh;margin:auto;cursor:crosshair}
 .blinkFooter{position:sticky;bottom:0;justify-content:space-between;background:var(--panel);border-top:1px solid var(--line)}

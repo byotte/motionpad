@@ -52,7 +52,7 @@ $('tailCutoutInput').onchange=e=>{
  const z=getSelected();
  if(!z||z.isBase)return;
  remember();
- if(e.target.checked)for(const other of zones)other.tailCutout=false;
+ if(e.target.checked&&tailCutoutZones().length>=TAIL_MAX){e.target.checked=false;setStatus(`외곽까지 흔들기는 영역 ${TAIL_MAX}개까지 켤 수 있습니다.`);return}
  z.tailCutout=e.target.checked;
  markMask();
  scheduleSave();
@@ -153,7 +153,7 @@ function playSfx(power=1){
     n.connect(filter);filter.connect(gain);gain.connect(audioMaster);n.start(t);n.stop(t+length+.005);
   }catch(e){console.warn('효과음 오류',e)}
 }
-function extraState(){return {blink:{eyes:blinkEyes,speed:blinkSpeed},base:{clip:baseClipEnabled,exclude:baseBackgroundExclude,edge:baseEdge},projectName:projectName||'내 프로젝트',maskColor:$('maskColorInput').value,maskOpacity:Number($('maskOpacityInput').value),track:$('trackSelect').value,musicVolume:Number($('musicVolume').value),sfxVolume:Number($('sfxVolume').value),sfxType,playerVisible,ambient:{...ambient},qualityMode}}
+function extraState(){return {blink:{eyes:blinkEyes,speed:blinkSpeed,interval:blinkInterval},base:{clip:baseClipEnabled,exclude:baseBackgroundExclude,edge:baseEdge},projectName:projectName||'내 프로젝트',maskColor:$('maskColorInput').value,maskOpacity:Number($('maskOpacityInput').value),track:$('trackSelect').value,musicVolume:Number($('musicVolume').value),sfxVolume:Number($('sfxVolume').value),sfxType,playerVisible,ambient:{...ambient},qualityMode}}
 function restoreExtra(d){
  restoreBlink(d?.blink);
  baseClipEnabled=!!d?.base?.clip;baseBackgroundExclude=d?.base?.exclude!==false;baseEdge=clamp(Number(d?.base?.edge??1),0,8);lastBaseSignature='';markMask();refreshBaseUI();
@@ -208,7 +208,7 @@ function setMode(m){
   $('editGuide').hidden=!workspace.classList.contains('placing');
   for(const b of document.querySelectorAll('.mode'))b.setAttribute('aria-pressed',String(b.dataset.mode===m));
   $('leaveEdit').hidden=!editCheckpoint;
-  $('finishEdit').textContent=workspace.classList.contains('placing')?'완료':'선택 완료';
+  $('finishEdit').textContent='완료';
   $('editInstruction').textContent=({pivot:'고정할 곳을 눌러 주세요.',extraPivot:'고정점을 더 놓을 곳을 눌러 주세요.',spine:'붙어 있는 곳에서 끝까지 그어 주세요.',flowdir:'흐를 방향으로 그어 주세요.'})[m]||'그림에서 부분을 선택하거나 다듬어 주세요.';
   if(ready&&!viewerOpen)requestAnimationFrame(fit);
   for(const b of document.querySelectorAll('.mode'))b.classList.toggle('active',b.dataset.mode===m);

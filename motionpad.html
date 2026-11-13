@@ -133,6 +133,14 @@ input:is([type=checkbox],[type=radio]){accent-color:var(--accent)}
 .stagebar .mode{display:inline-flex;align-items:center;gap:5px;min-height:26px;padding:3px 8px;font-size:var(--toolFont);white-space:nowrap;transition:background .12s}
 .stagebar .mode:hover{background:var(--button)}
 .stagebar .mode.active{box-shadow:inset 0 -2px var(--accent);color:var(--accentInk)}
+/* 영역 관리 묶음: 도구와 구분선으로 나눈다 */
+.toolSep{width:1px;align-self:stretch;margin:3px 6px;background:var(--line)}
+.zoneTools{display:inline-flex;align-items:center;gap:3px;margin-left:auto}
+.zoneTools .zoneNew{display:inline-flex;align-items:center;gap:4px;font-weight:700;color:var(--accentInk)}
+.zoneTools .iconBtn{min-width:28px}
+/* 도구줄 칸이 좁으면(폰 가로 등) 도구는 아이콘만: 줄바꿈으로 캔버스가 줄지 않게 */
+.stagebox{container-type:inline-size}
+@container (max-width:700px){.stagebar .mode>span{display:none}.stagebar .mode{padding-inline:6px}.modegroup{flex-wrap:nowrap;align-items:center}}
 :root[data-theme="light"] .mode{color:var(--sub)}
 :root[data-theme="light"] .stagebar .mode.active{color:var(--accentInk)}
 .workspace.touchPreview .stagebar .mode.active{opacity:.5}
@@ -302,9 +310,12 @@ button[data-help]:hover::before{color:var(--ink)}
 .blinkHead{flex-wrap:wrap;padding-block:2px}
 .blinkToolbar,.blinkSettings{background:var(--panel);border-bottom:1px solid var(--line)}
 .blinkToolbar label{display:inline-flex;align-items:center;gap:5px}
-.blinkControl{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:8px;color:var(--ink)}
-.blinkControl input{flex:1;min-width:80px}
-.blinkSettings .blinkControl{flex:1 1 160px;margin:0}
+.blinkControl{display:grid;grid-template-columns:7.2em minmax(60px,1fr) 3.2em;align-items:center;gap:8px;margin-top:8px;color:var(--ink);white-space:nowrap}
+.blinkControl input{width:100%;margin:0}
+.blinkControl output{min-width:3.2em;font-size:12px;color:var(--sub);text-align:right}
+.blinkSettings{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.blinkSettings .blinkControl{margin:0}
+.blinkSettings>.btn{justify-self:start}
 .blinkStage{display:grid;place-items:center;min-height:100px;overflow:hidden;background:repeating-conic-gradient(var(--panel) 0 25%,var(--stageInk) 0 50%) 0/16px 16px}
 #blinkPreview{display:block;width:auto;height:auto;max-width:100%;max-height:54dvh;margin:auto;cursor:crosshair}
 .blinkFooter{position:sticky;bottom:0;justify-content:space-between;background:var(--panel);border-top:1px solid var(--line)}
@@ -367,8 +378,13 @@ button[data-help]:hover::before{color:var(--ink)}
   .toolbar{flex:0 1 auto;justify-content:flex-start;margin-left:auto}
   .topMenu>summary{padding-inline:6px}
   .stagebar{padding-inline:2px}
-  .modegroup{display:grid;gap:0;grid-template-columns:minmax(0,.58fr) repeat(2,minmax(0,.92fr)) repeat(2,minmax(0,.82fr)) repeat(2,minmax(0,1.3fr))}
-  .stagebar .mode{flex-direction:column;justify-content:center;gap:2px;min-width:0;padding-inline:1px;font-size:10px;text-align:center}
+  /* 좁은 폰: 도구는 아이콘만(이름은 title·안내줄), '새 영역'은 글자 유지 */
+  .modegroup{flex-wrap:nowrap;align-items:center}
+  .stagebar .mode{flex:1 1 0;justify-content:center;min-width:0;padding-inline:2px}
+  .stagebar .mode>span{display:none}
+  .toolSep{margin-inline:3px}
+  .zoneTools{gap:1px}
+  .zoneTools .btn{padding-inline:5px}
   .stage{height:42dvh;min-height:195px}
   .quick{flex:1 1 100%;gap:0 1px}
   .quick .btn{min-width:22px}
@@ -379,7 +395,7 @@ button[data-help]:hover::before{color:var(--ink)}
   .viewerAudio .btn{font-size:10px}
   #lassobar{gap:4px;padding-inline:4px}
   #blinkPreview{max-height:41dvh}
-  .blinkSettings .blinkControl{flex-basis:100%}
+  .blinkSettings{grid-template-columns:1fr}
   .blinkFooter{flex-wrap:nowrap}
   #blinkHint,#blinkApply{min-width:0}
 }
@@ -402,23 +418,23 @@ button[data-help]:hover::before{color:var(--ink)}
 </style>
 </head>
 <body>
-<svg class="iconSprite" aria-hidden="true"><defs><symbol id="i-brush" viewBox="0 0 24 24"><path d="M4 20c2.6 0 4.5-1.3 4.5-3.4a2.2 2.2 0 0 0-4.4 0c0 1.5-.4 2.6-.1 3.4z"/><path d="M8 15.4 18.6 4.8a1.7 1.7 0 0 1 2.4 2.4L10.4 17.8"/></symbol><symbol id="i-erase" viewBox="0 0 24 24"><path d="M9 20h11"/><path d="M5.2 15.3 13.6 6.9a2 2 0 0 1 2.8 0l2.4 2.4a2 2 0 0 1 0 2.8L11 20H8.2l-3-3a1.2 1.2 0 0 1 0-1.7z"/><path d="m9.5 11 5 5"/></symbol><symbol id="i-wand" viewBox="0 0 24 24"><path d="m4 20 11-11"/><path d="m13.5 7.5 3 3"/><path d="M18 3v4M16 5h4M20 11v2.5M18.8 12.2h2.5M10 3v2.5M8.8 4.2h2.5"/></symbol><symbol id="i-lasso" viewBox="0 0 24 24"><path d="M12 4c4.7 0 8 2.3 8 5.3s-3.3 5.2-8 5.2-8-2.3-8-5.2S7.3 4 12 4z" stroke-dasharray="2.6 2.4"/><path d="M8.5 14c-1.4 1.6-1 3.6.8 3.9 1.6.3 2 1.5 1 3.1"/></symbol><symbol id="i-ellipse" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8.5" ry="6.5" stroke-dasharray="2.6 2.4"/></symbol><symbol id="i-move" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/><path d="m9 6 3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></symbol><symbol id="i-pan" viewBox="0 0 24 24"><path d="M8 13V6a1.5 1.5 0 0 1 3 0v5.5M11 11V4.5a1.5 1.5 0 0 1 3 0v7M14 11.5V6a1.5 1.5 0 0 1 3 0v8.5c0 3.8-2.4 6.5-5.8 6.5-2.4 0-3.9-1.1-5.3-3.3L4.2 15.4a1.5 1.5 0 0 1 2.5-1.7L8 15.4"/></symbol><symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol><symbol id="i-redo" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></symbol><symbol id="i-minus" viewBox="0 0 24 24"><path d="M6 12h12"/></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></symbol><symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m11 18-6-6 6-6"/></symbol></defs></svg>
+<svg class="iconSprite" aria-hidden="true"><defs><symbol id="i-brush" viewBox="0 0 24 24"><path d="M4 20c2.6 0 4.5-1.3 4.5-3.4a2.2 2.2 0 0 0-4.4 0c0 1.5-.4 2.6-.1 3.4z"/><path d="M8 15.4 18.6 4.8a1.7 1.7 0 0 1 2.4 2.4L10.4 17.8"/></symbol><symbol id="i-erase" viewBox="0 0 24 24"><path d="M9 20h11"/><path d="M5.2 15.3 13.6 6.9a2 2 0 0 1 2.8 0l2.4 2.4a2 2 0 0 1 0 2.8L11 20H8.2l-3-3a1.2 1.2 0 0 1 0-1.7z"/><path d="m9.5 11 5 5"/></symbol><symbol id="i-wand" viewBox="0 0 24 24"><path d="m4 20 11-11"/><path d="m13.5 7.5 3 3"/><path d="M18 3v4M16 5h4M20 11v2.5M18.8 12.2h2.5M10 3v2.5M8.8 4.2h2.5"/></symbol><symbol id="i-lasso" viewBox="0 0 24 24"><path d="M12 4c4.7 0 8 2.3 8 5.3s-3.3 5.2-8 5.2-8-2.3-8-5.2S7.3 4 12 4z" stroke-dasharray="2.6 2.4"/><path d="M8.5 14c-1.4 1.6-1 3.6.8 3.9 1.6.3 2 1.5 1 3.1"/></symbol><symbol id="i-ellipse" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8.5" ry="6.5" stroke-dasharray="2.6 2.4"/></symbol><symbol id="i-move" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/><path d="m9 6 3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></symbol><symbol id="i-pan" viewBox="0 0 24 24"><path d="M8 13V6a1.5 1.5 0 0 1 3 0v5.5M11 11V4.5a1.5 1.5 0 0 1 3 0v7M14 11.5V6a1.5 1.5 0 0 1 3 0v8.5c0 3.8-2.4 6.5-5.8 6.5-2.4 0-3.9-1.1-5.3-3.3L4.2 15.4a1.5 1.5 0 0 1 2.5-1.7L8 15.4"/></symbol><symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol><symbol id="i-redo" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></symbol><symbol id="i-minus" viewBox="0 0 24 24"><path d="M6 12h12"/></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></symbol><symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="1.5"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/></symbol><symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m11 18-6-6 6-6"/></symbol></defs></svg>
 <div class="app">
 <header class="header starting"><div class="brand"><div class="logo" aria-hidden="true">∿</div><h1>MotionPad <span>0.5 RC 23</span></h1></div>
 <nav class="toolbar"><details class="topMenu"><summary>파일</summary><div class="topMenuItems"><button class="btn" id="menuNew">새 그림 열기…</button><button class="btn" id="menuOpen">프로젝트 열기…</button><hr class="menuSep"><button class="btn" id="backupBtn" type="button" title="다시 열어 편집할 프로젝트 저장">프로젝트 저장</button><button class="btn" id="saveAsBtn" type="button" aria-haspopup="dialog" >다른 이름으로 저장…</button><hr class="menuSep"><button class="btn" data-dialog="videoDialog">영상으로 내보내기…</button><button class="btn" id="legacyMenu" data-dialog="filesDialog" hidden>기기에 보관한 프로젝트…</button></div></details><details class="topMenu"><summary>소리</summary><div class="topMenuItems"><button class="btn" id="openMusic" data-dialog="soundDialog">배경음악…</button><button class="btn" id="openEffects" data-dialog="soundDialog">터치 효과음…</button></div></details><details class="topMenu"><summary>설정</summary><div class="topMenuItems"><button class="btn" data-dialog="layoutSettings">색상 테마 · 화면 표시 품질…</button><hr class="menuSep"><button class="btn" id="maskMenu">선택 영역 표시…</button></div></details><button class="btn primary" id="viewerBtn">플레이</button></nav></header>
 <section class="welcome" id="welcome"><h2>MotionPad</h2><div class="welcomeActions"><button class="btn primary" id="startImage">새 그림 열기</button><button class="btn" id="startProject">프로젝트 열기</button><button class="btn" id="resumeProject" hidden>이전 작업 이어하기</button><button class="btn" id="sampleBtn">샘플 그림으로 체험하기</button></div></section><main class="workspace" hidden>
-<section class="stagebox" aria-label="이미지 영역 편집"><div class="stagebar"><div class="modegroup"><button class="mode active" id="brushMode" data-mode="brush"><svg class="ic" aria-hidden="true"><use href="#i-brush"/></svg><span>붓</span></button><button class="mode" id="eraseMode" data-mode="erase"><svg class="ic" aria-hidden="true"><use href="#i-erase"/></svg><span>지우개</span></button><button class="mode" id="wandMode" data-mode="wand"><svg class="ic" aria-hidden="true"><use href="#i-wand"/></svg><span>마술봉</span></button><button class="mode" id="lassoMode" data-mode="lasso"><svg class="ic" aria-hidden="true"><use href="#i-lasso"/></svg><span>올가미</span></button><button class="mode" id="ellipseMode" data-mode="ellipse"><svg class="ic" aria-hidden="true"><use href="#i-ellipse"/></svg><span>도형</span></button><button class="mode" id="editMode" data-mode="edit"><svg class="ic" aria-hidden="true"><use href="#i-move"/></svg><span>이동</span></button><button hidden class="mode" id="branchMode" data-mode="branch">가지 선</button><button class="mode" id="panMode" data-mode="pan"><svg class="ic" aria-hidden="true"><use href="#i-pan"/></svg><span>화면 이동</span></button></div></div>
-<div class="stageOptions"><div class="brushbar" id="editGuide" hidden><span id="editInstruction"></span><button class="btn" id="leaveEdit">그만두기</button><button class="btn" id="finishEdit">선택 완료</button></div><div class="brushbar" id="brushbar"><label for="brushInput" id="brushLabel">붓 굵기</label><input type="range" min="2" max="32" step="1" value="10" id="brushInput"><output id="brushValue">10%</output><div class="selOp" id="shapeKind" role="radiogroup" aria-label="도형 모양"><label title="타원(원)"><input type="radio" name="shapeKind" value="ellipse" checked>타원</label><label title="사각형"><input type="radio" name="shapeKind" value="rect">사각형</label></div><div class="selOp" id="selOp" role="radiogroup" aria-label="선택 방식"><label title="선택한 영역의 모양을 새로 바꿉니다"><input type="radio" name="selectOp" value="new" checked>새로</label><label title="선택한 영역에 더합니다"><input type="radio" name="selectOp" value="add">더하기</label><label title="선택한 영역에서 뺍니다"><input type="radio" name="selectOp" value="subtract">빼기</label></div></div>
-<div class="brushbar" id="wandbar" hidden><strong id="wandStep" role="status">1. 그림에서 선택할 부분을 누르세요.</strong><button class="btn" id="wandApply" type="button" disabled>선택 적용</button><button class="btn" id="wandCancel" type="button" disabled>취소</button><label for="toleranceInput">선택 범위</label><input type="range" min="2" max="128" value="30" step="1" id="toleranceInput"><output id="toleranceValue">30</output><button class="btn" type="button" data-help="그림을 누른 뒤 선택 범위를 조절하세요. 색과 경계에 따라 미리보기가 바뀝니다." aria-label="마술봉 도움말">?</button></div>
-<div class="brushbar" id="lassobar" hidden><label class="toggle lassoSegmentsChoice"><input id="lassoSegments" type="checkbox" aria-label="구간 이어 그리기">나눠 그리기</label><button class="btn" id="lassoFinish" type="button" disabled>선택 완료</button><button class="btn" id="lassoUndo" type="button" disabled>마지막 구간 취소</button><label class="toggle lassoOutlineChoice"><input id="encloseInput" checked type="checkbox" aria-label="둘러싸서 외곽 선택">윤곽에 맞추기</label><label for="magnetInput">경계선 자석 강도</label><input type="range" min="0" max="100" value="60" step="1" id="magnetInput"><output id="magnetValue">60%</output><button class="btn" type="button" data-help="그린 선 가까이에 뚜렷한 경계가 있으면 따라갑니다. 흐린 경계는 나눠 그리거나 붓과 지우개로 다듬어 주세요." aria-label="올가미 도움말">?</button></div>
+<section class="stagebox" aria-label="이미지 영역 편집"><div class="stagebar"><div class="modegroup"><button class="mode active" id="brushMode" title="붓" aria-label="붓" data-mode="brush"><svg class="ic" aria-hidden="true"><use href="#i-brush"/></svg><span>붓</span></button><button class="mode" id="eraseMode" title="지우개" aria-label="지우개" data-mode="erase"><svg class="ic" aria-hidden="true"><use href="#i-erase"/></svg><span>지우개</span></button><button class="mode" id="wandMode" title="마술봉" aria-label="마술봉" data-mode="wand"><svg class="ic" aria-hidden="true"><use href="#i-wand"/></svg><span>마술봉</span></button><button class="mode" id="lassoMode" title="올가미" aria-label="올가미" data-mode="lasso"><svg class="ic" aria-hidden="true"><use href="#i-lasso"/></svg><span>올가미</span></button><button class="mode" id="ellipseMode" title="도형" aria-label="도형" data-mode="ellipse"><svg class="ic" aria-hidden="true"><use href="#i-ellipse"/></svg><span>도형</span></button><button class="mode" id="editMode" title="이동" aria-label="이동" data-mode="edit"><svg class="ic" aria-hidden="true"><use href="#i-move"/></svg><span>이동</span></button><button hidden class="mode" id="branchMode" data-mode="branch">가지 선</button><button class="mode" id="panMode" title="화면 이동" aria-label="화면 이동" data-mode="pan"><svg class="ic" aria-hidden="true"><use href="#i-pan"/></svg><span>화면 이동</span></button><span class="toolSep" aria-hidden="true"></span><div class="zoneTools" role="group" aria-label="영역 관리"><button class="btn zoneNew" id="newRegionBtn" title="새 영역을 만듭니다. 다음에 그리는 선택이 새 영역이 됩니다"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>새 영역</button><button class="btn iconBtn" id="toolDuplicateBtn" title="선택한 영역 복제" aria-label="선택한 영역 복제"><svg class="ic" aria-hidden="true"><use href="#i-copy"/></svg></button><button class="btn iconBtn" id="toolDeleteBtn" title="선택한 영역 삭제" aria-label="선택한 영역 삭제"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button></div></div></div>
+<div class="stageOptions"><div class="brushbar" id="editGuide" hidden><span id="editInstruction"></span><button class="btn" id="leaveEdit">그만두기</button><button class="btn" id="finishEdit">완료</button></div><div class="brushbar" id="brushbar"><label for="brushInput" id="brushLabel">붓 굵기</label><input type="range" min="2" max="32" step="1" value="10" id="brushInput"><output id="brushValue">10%</output><div class="selOp" id="shapeKind" role="radiogroup" aria-label="도형 모양"><label title="타원(원)"><input type="radio" name="shapeKind" value="ellipse" checked>타원</label><label title="사각형"><input type="radio" name="shapeKind" value="rect">사각형</label></div><div class="selOp" id="selOp" role="radiogroup" aria-label="선택 방식"><label title="선택한 영역의 모양을 지우고 새로 그린 모양으로 바꿉니다(움직임 설정은 유지)"><input type="radio" name="selectOp" value="new" checked>교체</label><label title="선택한 영역에 더합니다"><input type="radio" name="selectOp" value="add">더하기</label><label title="선택한 영역에서 뺍니다"><input type="radio" name="selectOp" value="subtract">빼기</label></div></div>
+<div class="brushbar" id="wandbar" hidden><strong id="wandStep" role="status">1. 그림에서 선택할 부분을 누르세요.</strong><button class="btn" id="wandApply" type="button" disabled>적용</button><button class="btn" id="wandCancel" type="button" disabled>취소</button><label for="toleranceInput">선택 범위</label><input type="range" min="2" max="128" value="30" step="1" id="toleranceInput"><output id="toleranceValue">30</output><button class="btn" type="button" data-help="그림을 누른 뒤 선택 범위를 조절하세요. 색과 경계에 따라 미리보기가 바뀝니다." aria-label="마술봉 도움말">?</button></div>
+<div class="brushbar" id="lassobar" hidden><label class="toggle lassoSegmentsChoice"><input id="lassoSegments" type="checkbox" aria-label="구간 이어 그리기">나눠 그리기</label><button class="btn" id="lassoFinish" type="button" disabled>적용</button><button class="btn" id="lassoUndo" type="button" disabled>마지막 구간 취소</button><label class="toggle lassoOutlineChoice"><input id="encloseInput" checked type="checkbox" aria-label="둘러싸서 외곽 선택">윤곽에 맞추기</label><label for="magnetInput">경계선 자석 강도</label><input type="range" min="0" max="100" value="60" step="1" id="magnetInput"><output id="magnetValue">60%</output><button class="btn" type="button" data-help="그린 선 가까이에 뚜렷한 경계가 있으면 따라갑니다. 흐린 경계는 나눠 그리거나 붓과 지우개로 다듬어 주세요." aria-label="올가미 도움말">?</button></div>
 <div class="brushbar" id="outlineControls" hidden><strong id="outlineStep" role="status">경계를 확인하고 있습니다.</strong>
 <label>선택 범위 <input type="range" id="outlineRange" min="-24" max="24" value="0"></label>
 <label>보정 <select id="outlineAction"><option value="draw">다시 둘러 그리기</option><option value="keep">남길 곳 누르기</option><option value="remove">뺄 곳 누르기</option></select></label>
 <button type="button" class="btn" id="outlineUndo" disabled>마지막 보정 취소</button>
-<button type="button" class="btn" id="outlineApply" disabled>선택 적용</button><button type="button" class="btn" id="outlineCancel">취소</button>
+<button type="button" class="btn" id="outlineApply" disabled>적용</button><button type="button" class="btn" id="outlineCancel">취소</button>
 </div></div>
 <div class="stage" id="stage"><div class="surface" id="surface"><canvas id="view"></canvas><canvas id="overlay"></canvas></div><canvas id="loupe" class="loupe" width="160" height="160" hidden aria-label="확대 미리보기"></canvas></div>
-<div class="stagebottom"><div class="quick"><button class="btn iconBtn" id="undoBtn" title="실행 취소" aria-label="실행 취소" disabled><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button><button class="btn iconBtn" id="redoBtn" title="다시 실행" aria-label="다시 실행" disabled><svg class="ic" aria-hidden="true"><use href="#i-redo"/></svg></button><button class="btn" id="newRegionBtn" title="기존 선택 해제 후 별도 영역을 그립니다">새 영역</button><button class="btn iconBtn" id="zoomOutBtn" title="화면 축소" aria-label="화면 축소"><svg class="ic" aria-hidden="true"><use href="#i-minus"/></svg></button><button class="btn" id="zoomResetBtn" title="화면 원래 크기">100%</button><button class="btn iconBtn" id="zoomInBtn" title="화면 확대" aria-label="화면 확대"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></button><label class="toggle precisionSwitch"><input id="loupeInput" type="checkbox">돋보기</label><label class="toggle precisionSwitch"><input id="offsetInput" type="checkbox" aria-label="손가락 위에 그리기">손가락 보정</label></div><label class="toggle"><input type="checkbox" id="showZones" checked>영역선</label><span class="status" id="status" role="status">준비 중</span></div></section>
+<div class="stagebottom"><div class="quick"><button class="btn iconBtn" id="undoBtn" title="실행 취소" aria-label="실행 취소" disabled><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button><button class="btn iconBtn" id="redoBtn" title="다시 실행" aria-label="다시 실행" disabled><svg class="ic" aria-hidden="true"><use href="#i-redo"/></svg></button><button class="btn iconBtn" id="zoomOutBtn" title="화면 축소" aria-label="화면 축소"><svg class="ic" aria-hidden="true"><use href="#i-minus"/></svg></button><button class="btn" id="zoomResetBtn" title="화면 원래 크기">100%</button><button class="btn iconBtn" id="zoomInBtn" title="화면 확대" aria-label="화면 확대"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></button><label class="toggle precisionSwitch"><input id="loupeInput" type="checkbox">돋보기</label><label class="toggle precisionSwitch"><input id="offsetInput" type="checkbox" aria-label="손가락 위에 그리기">손가락 보정</label></div><label class="toggle"><input type="checkbox" id="showZones" checked>영역선</label><span class="status" id="status" role="status">준비 중</span></div></section>
 <aside class="side">
 
 <details id="ambientPanel" open><summary>전체 그림 · 호흡과 흔들림</summary>
@@ -458,9 +474,11 @@ button[data-help]:hover::before{color:var(--ink)}
 
 <div class="field"><div class="fieldhead"><label for="springInput">반발 속도</label><output id="springValue">14</output></div><input id="springInput" type="range" min="3" max="30" step="1"></div>
 <div class="field"><div class="fieldhead"><label for="dampingInput">잔진동 길이</label><output id="dampingValue">62%</output></div><input id="dampingInput" type="range" min="0" max="100" step="1"></div>
+<div class="field"><div class="fieldhead"><label for="pullInput">잡아당김 (0%: 영역 전체가 함께 이동)</label><output id="pullValue">50%</output></div><input id="pullInput" type="range" min="0" max="100" step="1"></div>
 <div class="field" id="widthRow"><div class="fieldhead"><label for="widthInput">타원 너비</label><output id="widthValue">20%</output></div><input id="widthInput" type="range" min="4" max="88" step="1"></div>
 <div class="field" id="heightRow"><div class="fieldhead"><label for="heightInput">타원 높이</label><output id="heightValue">20%</output></div><input id="heightInput" type="range" min="4" max="88" step="1"></div>
 <div class="field"><div class="fieldhead"><label for="autoSpeedInput">자동 움직임 속도</label><output id="autoSpeedValue">1.0</output></div><input id="autoSpeedInput" type="range" min="0.2" max="3" step="0.1"></div>
+<div class="field"><div class="fieldhead"><label for="autoRestInput">움직임 사이 쉬는 간격</label><output id="autoRestValue">쉬지 않음</output></div><input id="autoRestInput" type="range" min="0" max="6" step="0.5"></div>
 <div class="field" id="rotationRow"><div class="fieldhead"><label for="rotationInput">타원 각도</label><output id="rotationValue">0°</output></div><input id="rotationInput" type="range" min="-180" max="180" step="1"></div>
 <p class="mini">‘도형’ 도구에서 손잡이나 두 손가락으로 크기·비율·기울기를 바꿀 수 있습니다. 잠근 영역은 이동되지 않습니다.</p></details>
 <details id="effects"><summary>효과 조합 · 마스크 세부 설정</summary>
@@ -511,7 +529,7 @@ button[data-help]:hover::before{color:var(--ink)}
 <div class="field"><label for="sfxTypeInput">터치 효과음 종류</label><select id="sfxTypeInput"><option value="off">끄기</option><option value="soft" selected>부드러운 터치</option><option value="slap">경쾌한 타격</option><option value="jelly">젤리·탄성</option><option value="water">물결·액체</option><option value="wetClip">물기 있는 짧은 터치 · 녹음</option><option value="hardClip">타격음 · 녹음</option><option value="softClip">부드러운 찰싹 · 녹음</option><option value="mudClip">질척한 터치 · 녹음</option></select></div>
 <div class="field"><div class="fieldhead"><label for="sfxVolume">터치 효과음 볼륨</label><output id="sfxVolumeValue">25%</output></div><input id="sfxVolume" type="range" min="0" max="100" value="25"></div></div></div><footer class="dlgFoot"><button type="button" class="btn dlgClose">닫기</button></footer></dialog><dialog id="layoutSettings" class="saveDialog layoutDialog"><header class="dlgHead"><h2>설정</h2><button type="button" class="dlgX" aria-label="닫기">×</button></header><div class="dlgBody" tabindex="-1" autofocus><fieldset class="themeOptions"><legend>색상 테마</legend><label>다크<span class="themeSample" data-theme="violet"><i></i></span><input type="radio" name="appTheme" value="violet"></label><label>라이트<span class="themeSample" data-theme="light"><i></i></span><input type="radio" name="appTheme" value="light"></label><label>모노<span class="themeSample" data-theme="mono"><i></i></span><input type="radio" name="appTheme" value="mono"></label></fieldset><fieldset class="qualityOptions"><legend>화면 표시 품질</legend><label><input type="radio" name="displayQuality" value="auto">자동</label><label><input type="radio" name="displayQuality" value="high">선명하게</label><label><input type="radio" name="displayQuality" value="balanced">절전</label><p>편집과 플레이 중 화면의 선명도와 기기 부담을 조절합니다.</p></fieldset><button class="btn" id="fpsToggle" title="성능 측정">FPS</button><span class="engineBadge" id="engineBadge" aria-label="렌더러와 프레임레이트" title="그래픽 렌더러 · 최근 FPS · 그래픽 품질">렌더러 확인 중</span></div><footer class="dlgFoot"><button type="button" class="btn dlgClose">닫기</button></footer></dialog><div class="viewer" id="viewer" hidden><div class="viewerStage" id="viewerStage"></div><button class="exitViewer" id="exitViewer" aria-label="편집으로 돌아가기"><svg class="ic" aria-hidden="true"><use href="#i-back"/></svg></button><div class="viewerAudio compact" id="viewerAudio"><div class="playerHeader"><span class="playerTitle">♪ 음악 플레이어</span><button class="playerHandle" id="playerCollapse" aria-label="음악 플레이어 접기" title="음악 플레이어 접기">⌄</button></div><div class="playerControls"><div class="playerRow"><button id="musicBtn" class="btn" title="음악 재생·정지">▶ 음악</button><select id="viewerTrack" title="음악 선택"><option value="lounge">느린 라운지</option><option value="dream">몽환</option><option value="mystery">밤의 신스</option><option value="file">내 음악</option></select><label title="음악 볼륨">♫ <input id="viewerMusicVolume" type="range" min="0" max="100" value="40"></label></div><div class="playerRow"><button id="muteViewer" class="btn" title="효과음 켜기·끄기">효과음</button><select id="viewerEffects" class="viewerEffects" aria-label="터치 효과음 종류"><option value="off">끄기</option><option value="soft" selected>부드러운 터치</option><option value="slap">경쾌한 타격</option><option value="jelly">젤리·탄성</option><option value="water">물결·액체</option><option value="wetClip">물기 있는 짧은 터치 · 녹음</option><option value="hardClip">타격음 · 녹음</option><option value="softClip">부드러운 찰싹 · 녹음</option><option value="mudClip">질척한 터치 · 녹음</option></select><label title="효과음 볼륨" class="playerSfx">효과 <input id="viewerSfxVolume" type="range" min="0" max="100" value="25"></label></div></div></div><div class="viewerHint" id="viewerHint">그림을 터치하면 반응합니다.</div></div>
 <dialog id="saveAsDialog" class="saveDialog" aria-labelledby="saveAsTitle"><form id="saveAsForm"><header class="dlgHead"><h2 id="saveAsTitle">이름 바꿔 저장</h2><button type="button" class="dlgX" aria-label="닫기">×</button></header><div class="dlgBody"><label for="saveAsName">파일 이름</label><input id="saveAsName" type="text" maxlength="70" autocomplete="off" autofocus><p class="mini">.motionpad.json 파일로 다운로드합니다.</p></div><footer class="dlgFoot"><button class="btn primary" type="submit">다운로드</button><button id="cancelSaveAs" class="btn" type="button">취소</button></footer></form></dialog>
-<dialog id="zoneMenuDialog" class="saveDialog" aria-labelledby="zoneMenuTitle"><header class="dlgHead"><h2 id="zoneMenuTitle">영역</h2><button type="button" class="dlgX" aria-label="닫기">×</button></header><div class="dlgBody" tabindex="-1" autofocus><div class="settingActions"><button id="zoneMenuDuplicate" class="btn" type="button">복제</button><button id="zoneMenuDelete" class="btn warn" type="button">삭제</button><button id="zoneMenuLock" class="btn" type="button">잠금</button></div></div><footer class="dlgFoot"><button id="zoneMenuCancel" class="btn" type="button">닫기</button></footer></dialog>
+<dialog id="confirmDialog" class="saveDialog" aria-labelledby="confirmTitle"><header class="dlgHead"><h2 id="confirmTitle">확인</h2></header><div class="dlgBody"><p id="confirmMessage"></p></div><footer class="dlgFoot"><button id="confirmCancel" class="btn" type="button">취소</button><button id="confirmOk" class="btn warn" type="button">확인</button></footer></dialog><dialog id="zoneMenuDialog" class="saveDialog" aria-labelledby="zoneMenuTitle"><header class="dlgHead"><h2 id="zoneMenuTitle">영역</h2><button type="button" class="dlgX" aria-label="닫기">×</button></header><div class="dlgBody" tabindex="-1" autofocus><div class="settingActions"><button id="zoneMenuDuplicate" class="btn" type="button">복제</button><button id="zoneMenuDelete" class="btn warn" type="button">삭제</button><button id="zoneMenuLock" class="btn" type="button">잠금</button></div></div><footer class="dlgFoot"><button id="zoneMenuCancel" class="btn" type="button">닫기</button></footer></dialog>
 <input id="imageFile" class="sr" type="file" accept="image/*"><input id="backupFile" class="sr" type="file" accept="application/json,.json"><input id="musicFile" class="sr" type="file" accept="audio/*">
 <dialog id="blinkDialog" aria-labelledby="blinkTitle">
  <div class="blinkHead"><h2 id="blinkTitle">눈 깜빡임 설정</h2><div class="settingActions">
@@ -533,6 +551,7 @@ button[data-help]:hover::before{color:var(--ink)}
  <div class="blinkStage" tabindex="-1" autofocus><canvas id="blinkPreview" aria-label="눈 위치 지정 및 깜빡임 미리보기"></canvas></div>
  <div class="blinkSettings">
  <label class="blinkControl">깜빡임 속도 <input id="blinkSpeed" type="range" min="50" max="160" value="100"></label>
+ <label class="blinkControl">깜빡임 간격 <input id="blinkInterval" type="range" min="2" max="10" step="0.5" value="4.5"><output id="blinkIntervalValue">4.5초</output></label>
  <input id="blinkAmount" type="hidden" value="0">
  <label class="blinkControl">감긴 눈 모양 <input id="blinkCurve" type="range" min="-100" max="100" value="0"></label>
  <label class="blinkControl">눈꺼풀 보정 범위 <input id="blinkCover" type="range" min="5" max="65" value="24"></label>
@@ -563,6 +582,23 @@ const MOTION_PRESETS=Object.freeze({
  scarf:{strength:25,spring:8,damping:80,windStrength:65,windAngle:-25,windSpeed:.9,windNoise:25,windDelay:84,pivotEnabled:true}
 });
 function setStatus(s){$('status').textContent=s}
+// 작업이 날아갈 수 있는 동작 앞의 확인창. 문구는 부르는 곳에서 상황에 맞게 정한다.
+function askConfirm({title,message,ok='확인',cancel='취소'}){
+ return new Promise(resolve=>{
+  const d=$('confirmDialog');if(!d||d.open){resolve(false);return}
+  $('confirmTitle').textContent=title;$('confirmMessage').textContent=message;
+  $('confirmOk').textContent=ok;$('confirmCancel').textContent=cancel;
+  const done=v=>{d.close();resolve(v)};
+  $('confirmOk').onclick=()=>done(true);$('confirmCancel').onclick=()=>done(false);
+  d.oncancel=e=>{e.preventDefault();done(false)};
+  d.showModal();$('confirmCancel').focus();
+ });
+}
+// 마지막으로 파일 저장·열기 했을 때와 지금이 다른가(새 그림·프로젝트 열기 전 확인용)
+let savedSignature='';
+function projectSignature(){try{return JSON.stringify([imgBlob?.size||0,zones.map(clean),extraState()])}catch(_){return String(Math.random())}}
+function markProjectSaved(){savedSignature=projectSignature()}
+function hasUnsavedWork(){return !!(ready&&imgBlob)&&projectSignature()!==savedSignature}
 /* 0-3: 영역 속성표. 저장(clean)·불러오기 검사(sanitize)·화면 반영(updateUI/updateValues)·입력 연결·이동 스냅샷(snap)을
    모두 이 표 하나에서 만든다. 속성을 추가·변경할 때는 여기만 고친다. 표의 순서 = 저장 파일의 속성 순서(포맷 v2 그대로).
    항목: key, save(z)=저장값, read(z,ctx)=검사된 값, snap(z)=이동 스냅샷 값(위치·모양만),
@@ -622,10 +658,12 @@ const ZONE_FIELDS=[
  num('dragGain',100,0,200,{input:'dragGainInput',output:'dragGainValue',fmt:pct}),
  num('holdGain',60,0,200,{input:'holdGainInput',output:'holdGainValue',fmt:pct}),
  num('flickGain',100,0,200,{input:'flickGainInput',output:'flickGainValue',fmt:pct}),
+ num('pull',50,0,100,{input:'pullInput',output:'pullValue',fmt:pct}),
+ num('autoRest',0,0,6,{input:'autoRestInput',output:'autoRestValue',fmt:v=>v?`${v.toFixed(1)}초`:'쉬지 않음'}),
  flag('locked',{input:'lockedInput',check:true,noPreview:true}),
 ];
 // 저장하지 않는 실행 중 상태(물리·터치). 불러올 때마다 초기화된다.
-function zoneRuntime(i){return {s:0,v:0,phase:i*1.7+.2,hitDX:0,hitDY:1,hitPulse:0,hitX:.5,hitY:.5,hitAt:-20,hitPower:0,physX:0,physY:0,physVX:0,physVY:0,physScale:0,physSV:0,dragging:false,desiredX:0,desiredY:0,desiredScale:0,chainNodes:null,branchNodes:null,spineTip:[0,0],spineMid:[0,0],branchTip:[0,0],windX:0,windY:0,physicsOutput:null}}
+function zoneRuntime(i){return {s:0,v:0,phase:i*1.7+.2,hitDX:0,hitDY:1,hitPulse:0,hitX:.5,hitY:.5,grabX:.5,grabY:.5,hitAt:-20,hitPower:0,physX:0,physY:0,physVX:0,physVY:0,physScale:0,physSV:0,dragging:false,desiredX:0,desiredY:0,desiredScale:0,chainNodes:null,branchNodes:null,spineTip:[0,0],spineMid:[0,0],branchTip:[0,0],windX:0,windY:0,physicsOutput:null}}
 const ZONE_UI=ZONE_FIELDS.filter(f=>f.ui);
 function clean(z){const out={};for(const f of ZONE_FIELDS)out[f.key]=f.save(z);return out}
 function sanitize(z,i){const kind=['brush','ellipse','raster','polygon'].includes(z.kind)?z.kind:'ellipse';const n=zNum;
@@ -678,7 +716,7 @@ for(const activePanel of ['ambientPanel','partsPanel']){
 }
 $('effects').open=false;
 $('clearBranchBtn').onclick=()=>{const z=getSelected();if(!z||z.locked)return;remember();z.branch=[];z.branchNodes=null;updateUI();scheduleSave();setStatus('가지 선을 삭제했습니다.')};
-$('clearExtraPivotsBtn').onclick=()=>{const z=getSelected();if(!z||z.locked)return;remember();z.extraPivots=[];updateUI();scheduleSave();setStatus('추가 축을 삭제했습니다.')};
+$('clearExtraPivotsBtn').onclick=async()=>{const z=getSelected();if(!z||z.locked||!z.extraPivots?.length)return;if(!await askConfirm({title:'추가 축 삭제',message:`‘${z.name}’ 영역에 놓은 추가 축 ${z.extraPivots.length}개를 모두 지울까요?`,ok:'추가 축 삭제'}))return;remember();z.extraPivots=[];updateUI();scheduleSave();setStatus('추가 축을 삭제했습니다.')};
 
 
 $('pivotMode').onclick=()=>setMode('pivot');$('extraPivotMode').onclick=()=>setMode('extraPivot');$('branchMode').onclick=()=>setMode('branch');$('spineMode').onclick=()=>setMode('spine');$('flowDirMode').onclick=()=>setMode('flowdir');$('panMode').onclick=()=>setMode('pan');
@@ -686,9 +724,9 @@ $('brushMode').onclick=()=>setMode('brush');$('eraseMode').onclick=()=>setMode('
 $('brushInput').oninput=e=>{brushSize=Number(e.target.value);$('brushValue').textContent=brushSize+'%'};$('toleranceInput').oninput=e=>$('toleranceValue').textContent=e.target.value;$('magnetInput').oninput=e=>$('magnetValue').textContent=e.target.value+'%';
 for(const {key,ui} of ZONE_UI){const id=ui.input,conv=ui.fromInput||(ui.check?x=>x:Number);$(id).addEventListener(ui.event||'input',e=>{const z=getSelected();if(!z)return;const value=conv(ui.check?e.target.checked:e.target.value);if(z[key]===value)return;z[key]=value;if(ui.mask)markMask();if(key==='name')updateUI();else updateValues();scheduleSave();if(!ui.noPreview)previewMotion()})}
 for(const {ui} of ZONE_UI){const e=$(ui.input);e.addEventListener('pointerdown',()=>{if(getSelected())remember()},{passive:true});e.addEventListener('focus',()=>{if(getSelected())remember()})}
-function deleteZone(){const z=getSelected();if(!z)return;remember();zones=zones.filter(a=>a.id!==z.id);if(z.isBase){baseClipEnabled=false;lastBaseSignature=''}selected=zones[0]?.id||null;updateUI();markMask();scheduleSave()}
-$('deleteBtn').onclick=deleteZone;$('quickDeleteBtn').onclick=deleteZone;function duplicateZone(){const z=getSelected();if(!z)return;if(zones.length>=LIMIT){setStatus('영역 개수 제한입니다.');return}remember();const copy=structuredClone(clean(z));copy.tailCutout=false;copy.isBase=false;copy.id=newId();copy.name=z.name+' 복사';copy.x=clamp(copy.x+.03,0,1);copy.y=clamp(copy.y+.03,0,1);if(copy.pivotX!=null)copy.pivotX=clamp(copy.pivotX+.03,0,1);if(copy.pivotY!=null)copy.pivotY=clamp(copy.pivotY+.03,0,1);if(Array.isArray(copy.spine))copy.spine.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)});if(Array.isArray(copy.branch))copy.branch.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)});if(Array.isArray(copy.extraPivots))copy.extraPivots.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)});if(copy.kind==='brush')copy.strokes.forEach(st=>st.points.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)}));if(copy.kind==='polygon')copy.polygon.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)});const zz=sanitize(copy,zones.length);if(zz.kind==='raster'){rasterize(zz);recalcRaster(zz)}zones.push(zz);selected=zz.id;markMask();updateUI();scheduleSave();setMode('edit')} $('duplicateBtn').onclick=duplicateZone;
-// 선택 방식(1-A): 새로 = 선택한 영역의 모양을 바꿈(움직임 설정은 유지), 더하기, 빼기. 선택한 영역이 없으면 새 영역.
+async function deleteZone(){const z=getSelected();if(!z)return;if(!await askConfirm({title:'영역 삭제',message:`‘${z.name}’ 영역과 그 움직임 설정을 지울까요? 실행 취소로 되돌릴 수 있습니다.`,ok:'영역 삭제'}))return;if(!zones.includes(z))return;remember();zones=zones.filter(a=>a.id!==z.id);if(z.isBase){baseClipEnabled=false;lastBaseSignature=''}selected=zones[0]?.id||null;updateUI();markMask();scheduleSave()}
+$('deleteBtn').onclick=deleteZone;$('quickDeleteBtn').onclick=deleteZone;$('toolDeleteBtn').onclick=()=>{if(!getSelected()){setStatus('지울 영역을 먼저 선택해 주세요.');return}deleteZone()};$('toolDuplicateBtn').onclick=()=>{if(!getSelected()){setStatus('복제할 영역을 먼저 선택해 주세요.');return}duplicateZone()};function duplicateZone(){const z=getSelected();if(!z)return;if(zones.length>=LIMIT){setStatus('영역 개수 제한입니다.');return}remember();const copy=structuredClone(clean(z));copy.tailCutout=false;copy.isBase=false;copy.id=newId();copy.name=z.name+' 복사';copy.x=clamp(copy.x+.03,0,1);copy.y=clamp(copy.y+.03,0,1);if(copy.pivotX!=null)copy.pivotX=clamp(copy.pivotX+.03,0,1);if(copy.pivotY!=null)copy.pivotY=clamp(copy.pivotY+.03,0,1);if(Array.isArray(copy.spine))copy.spine.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)});if(Array.isArray(copy.branch))copy.branch.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)});if(Array.isArray(copy.extraPivots))copy.extraPivots.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)});if(copy.kind==='brush')copy.strokes.forEach(st=>st.points.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)}));if(copy.kind==='polygon')copy.polygon.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)});const zz=sanitize(copy,zones.length);if(zz.kind==='raster'){rasterize(zz);recalcRaster(zz)}zones.push(zz);selected=zz.id;markMask();updateUI();scheduleSave();setMode('edit')} $('duplicateBtn').onclick=duplicateZone;
+// 선택 방식(1-A): 교체(값 new) = 선택한 영역의 모양을 바꿈(움직임 설정은 유지), 더하기, 빼기. 선택한 영역이 없으면 새 영역.
 function selectOp(){return document.querySelector('input[name="selectOp"]:checked')?.value||'new'}
 function setSelectOp(op){const r=document.querySelector(`input[name="selectOp"][value="${op}"]`);if(r)r.checked=true}
 function editableSelected(){const z=getSelected();return z&&!z.locked?z:null}
@@ -1303,7 +1341,7 @@ overlay.addEventListener('pointerdown',e=>{
   if(viewerOpen||mode==='play'||touchPreview){
     if(pointers.size>1)return;
     const z=hit(p.x,p.y);gesture={type:'play',id:z?.id||null,start:p,last:p,time:performance.now(),lastTime:performance.now(),dragged:false};
-    if(z){z.dragging=false;z.desiredX=z.desiredY=z.desiredScale=0;z.hitX=p.x;z.hitY=p.y}return;
+    if(z){z.dragging=false;z.desiredX=z.desiredY=z.desiredScale=0;z.hitX=p.x;z.hitY=p.y;z.grabX=p.x;z.grabY=p.y}return;
   }
   if(mode==='pan'||spacePanHeld){
     if(pointers.size!==1)return;gesture={type:'pan',clientX:e.clientX,clientY:e.clientY,panX,panY};return;
@@ -1384,10 +1422,11 @@ overlay.addEventListener('pointermove',e=>{
       const max=.003+(z.strength/80)*.016,
         gain=(z.dragGain??100)/100,
         dx=p.x-g.start.x,dy=p.y-g.start.y,dist=Math.hypot(dx,dy);
-      const mult=Math.min(max,dist*.14)*gain;
+      const reachUp=1+1.5*(z.pull??50)/100;// 2-B: 잡아당길수록 손가락을 멀리 끌 때 더 따라온다
+      const mult=Math.min(max*reachUp,dist*.14)*gain;
       const [vx,vy]=projectMotion(z.axis,dx/Math.max(.0001,dist)*mult,dy/Math.max(.0001,dist)*mult);
       if(z.axis==='pulse')z.desiredScale=-Math.min(.009,dist*.05)*gain;
-      z.desiredX=clamp(vx,-.025,.025);z.desiredY=clamp(vy,-.025,.025);
+      z.desiredX=clamp(vx,-.025*reachUp,.025*reachUp);z.desiredY=clamp(vy,-.025*reachUp,.025*reachUp);
       z.hitX=p.x;z.hitY=p.y;
     }return;
   }
@@ -1630,7 +1669,7 @@ function syncBaseTexturesGL(){
   gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D,tailOriginalTex);
   gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,bitmap);
   gl.activeTexture(gl.TEXTURE5);gl.bindTexture(gl.TEXTURE_2D,tailMaskTex);
-  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,tailMask);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,tailChannels||tailMask);
  }
 }
 const emptyBaseMask=document.createElement('canvas');emptyBaseMask.width=emptyBaseMask.height=TILE;
@@ -1638,41 +1677,54 @@ const emptyBaseMask=document.createElement('canvas');emptyBaseMask.width=emptyBa
 let rawMaskPixels=[];
 let tailPlate=null,tailSource=null,tailMask=null,tailBasePlate=null,tailOriginalTex=null,tailMaskTex=null;
 
-function tailCutoutZone(){
- return zones.find(z=>z.tailCutout&&!z.isBase)||null;
+// 2-D: '외곽까지 흔들기' 영역 최대 4개. 영역 모양은 한 텍스처의 R·G·B·A 채널에 하나씩, 빈자리 배경판은 합친 모양으로 한 장.
+const TAIL_MAX=4;let tailChannels=null,tailSources=new Map();
+function tailCutoutZones(){
+ return zones.filter(z=>z.tailCutout&&!z.isBase).slice(0,TAIL_MAX);
 }
+function tailCutoutZone(){return tailCutoutZones()[0]||null}
 
 function updateTailCutout(){
- tailPlate=tailSource=tailMask=tailBasePlate=null;
+ tailPlate=tailMask=tailBasePlate=tailChannels=null;tailSource=null;tailSources=new Map();
  baseForegroundSource=null;
- const index=zones.indexOf(tailCutoutZone());
- if(index<0)return;
- const mask=rawMasks[index];
- const plate=buildBackgroundPlate(mask);
+ const list=tailCutoutZones().map(z=>rawMasks[zones.indexOf(z)]).filter(Boolean);
+ if(!list.length)return;
+ const union=document.createElement('canvas');
+ union.width=union.height=TILE;
+ const u=union.getContext('2d',{willReadFrequently:true});
+ for(const m of list)u.drawImage(m,0,0);
+ const plate=buildBackgroundPlate(union);
  if(!plate)return;
  tailPlate=plate;
- tailMask=mask;
+ tailMask=union;
+ // 캔버스는 투명한 칸의 색을 지우므로(premultiplied) 픽셀 데이터를 그대로 텍스처로 올린다
+ const img=new ImageData(TILE,TILE);
+ list.forEach((m,k)=>{const a=m.getContext('2d',{willReadFrequently:true}).getImageData(0,0,TILE,TILE).data;for(let i=0;i<TILE*TILE;i++)img.data[i*4+k]=a[i*4+3]});
+ tailChannels=img;
  const baseIndex=zones.findIndex(z=>z.isBase);
  if(backgroundPlate&&baseIndex>=0&&!baseClipEnabled){
-  const union=document.createElement('canvas');
-  union.width=union.height=TILE;
-  const g=union.getContext('2d');
+  const both=document.createElement('canvas');
+  both.width=both.height=TILE;
+  const g=both.getContext('2d');
   g.drawImage(rawMasks[baseIndex],0,0);
-  g.drawImage(mask,0,0);
-  tailBasePlate=buildBackgroundPlate(union);
+  g.drawImage(union,0,0);
+  tailBasePlate=buildBackgroundPlate(both);
  }
 }
 
-function getTailSource(image=bitmap){
- if(tailSource)return tailSource;
- tailSource=document.createElement('canvas');
- tailSource.width=renderWidth;
- tailSource.height=renderHeight;
- const g=tailSource.getContext('2d');
+// 영역 하나의 오려낸 그림(캔버스 대체 경로용)
+function getTailSource(image=bitmap,z=tailCutoutZone()){
+ const key=z?.id;
+ if(tailSources.has(key))return tailSources.get(key);
+ const mask=rawMasks[zones.indexOf(z)]||tailMask;
+ const c=document.createElement('canvas');
+ c.width=renderWidth;c.height=renderHeight;
+ const g=c.getContext('2d');
  g.drawImage(image,0,0);
  g.globalCompositeOperation='destination-in';
- g.drawImage(tailMask,0,0,renderWidth,renderHeight);
- return tailSource;
+ g.drawImage(mask,0,0,renderWidth,renderHeight);
+ tailSources.set(key,c);
+ return c;
 }
 const maskPreviews=new WeakMap();
 
@@ -1715,9 +1767,9 @@ function updateMasks(){
   return c.clipped;
  });
  // '외곽까지 흔들기' 배경은 그 영역·몸체의 원본 마스크나 그림이 바뀔 때만 다시 만든다.
- const tailIndex=zones.indexOf(tailCutoutZone());
- const tailKey=tailIndex<0?'none':JSON.stringify([zones[tailIndex].id,keys[tailIndex],entries[tailIndex].clipKey,baseIndex>=0?keys[baseIndex]:'',baseClipEnabled,!!backgroundPlate,renderWidth,renderHeight]);
- if(tailKey!==lastTailKey||lastTailBitmap!==bitmap||(tailIndex>=0&&tailMask!==rawMasks[tailIndex])){updateTailCutout();lastTailKey=tailKey;lastTailBitmap=bitmap}
+ const tailList=tailCutoutZones().map(z=>zones.indexOf(z));
+ const tailKey=!tailList.length?'none':JSON.stringify([tailList.map(i=>[zones[i].id,keys[i],entries[i].clipKey]),baseIndex>=0?keys[baseIndex]:'',baseClipEnabled,!!backgroundPlate,renderWidth,renderHeight]);
+ if(tailKey!==lastTailKey||lastTailBitmap!==bitmap){updateTailCutout();lastTailKey=tailKey;lastTailBitmap=bitmap}
  rawMaskPixels=entries.map(c=>c.pixels);
  masks=zones.map((z,i)=>{
   const c=entries[i];
@@ -1736,7 +1788,7 @@ function updateMasks(){
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
   gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,maskAtlas);
   // 그림·배경판·몸체·분리 레이어 텍스처는 내용이 바뀐 경우에만 다시 올린다.
-  const sync=[gl,baseMaskCanvas,tailBasePlate||backgroundPlate,tailPlate,bitmap,tailMask];
+  const sync=[gl,baseMaskCanvas,tailBasePlate||backgroundPlate,tailPlate,bitmap,tailChannels];
   if(sync.some((v,i)=>v!==lastGLSync[i])){
    syncBaseTexturesGL();lastGLSync=sync;
    if(blinkLastStep>0)blinkLastStep=-1;
@@ -1849,11 +1901,11 @@ uniform sampler2D u_tex;
 uniform sampler2D u_mask;
 uniform sampler2D u_baseMask;
 uniform sampler2D u_background;
-uniform float u_tailCutout;
+uniform vec4 u_tailCutout;
 uniform sampler2D u_tailOriginal,u_tailMask;
 uniform float u_baseExclude;
 uniform vec4 u_zone[12],u_motion[12],u_fx[12],u_tap[12],u_pivot[12],u_flow[12],u_spine[12],u_spinemotion[12];
-uniform vec4 u_chainMid[12],u_branchLine[12],u_branchMotion[12],u_pivotExtra[12];
+uniform vec4 u_chainMid[12],u_branchLine[12],u_branchMotion[12],u_pivotExtra[12],u_pull[12];
 uniform int u_count;
 uniform float u_time;
 uniform vec4 u_ambient;
@@ -1867,10 +1919,20 @@ float pointToSegment(vec2 uv,vec2 a,vec2 b,out float t){
  vec2 v=b-a;t=clamp(dot(uv-a,v)/max(dot(v,v),0.00001),0.0,1.0);
  return length(uv-(a+t*v));
 }
+vec4 tailLayer(vec4 color,vec2 source,int k,float light){
+ vec4 foreground=texture2D(u_tailOriginal,source);
+ vec4 m=texture2D(u_tailMask,source);
+ float ch=k==0?m.r:k==1?m.g:k==2?m.b:m.a;
+ float inside=step(0.0,source.x)*step(source.x,1.0)*step(0.0,source.y)*step(source.y,1.0);
+ float alpha=inside*ch*foreground.a;
+ float outAlpha=alpha+color.a*(1.0-alpha);
+ vec3 rgb=(foreground.rgb*light*alpha+color.rgb*color.a*(1.0-alpha))/max(outAlpha,.00001);
+ return vec4(rgb,outAlpha);
+}
 void main(){
  vec2 shift=vec2(0.0),flowVector=vec2(0.0);
  float flowWeight=0.0;
- vec2 cutoutShift=vec2(0.0);
+ vec2 cs0=vec2(0.0),cs1=vec2(0.0),cs2=vec2(0.0),cs3=vec2(0.0);
  for(int i=0;i<12;i++){
    if(i>=u_count)break;
    vec4 z=u_zone[i];
@@ -1878,7 +1940,8 @@ void main(){
    float fi=float(i);
    vec2 tile=vec2(mod(fi,4.0),floor(fi/4.0));
    float mask=texture2D(u_mask,(tile+v_uv)/vec2(4.0,3.0)).a;
-   bool cutout=abs(float(i)-u_tailCutout)<.5;
+   float fi2=float(i);
+   bool cutout=abs(fi2-u_tailCutout.x)<.5||abs(fi2-u_tailCutout.y)<.5||abs(fi2-u_tailCutout.z)<.5||abs(fi2-u_tailCutout.w)<.5;
    if(mask<.001&&!cutout)continue;
    vec4 mo=u_motion[i],fx=u_fx[i],tap=u_tap[i],piv=u_pivot[i],fl=u_flow[i],sp=u_spine[i],st=u_spinemotion[i],mid=u_chainMid[i];
    vec2 rel=v_uv-z.xy;
@@ -1886,7 +1949,13 @@ void main(){
    float radius=max(.028,length(z.zw)*1.15);
    float pinWeight=smoothstep(.018,radius,anchor);
    float pivotWeight=mix(1.0,pinWeight,piv.z*clamp(piv.w*1.65,0.0,1.0));
-   vec2 local=mo.xy*pivotWeight+rel*mo.z*pivotWeight;
+   // 2-B 잡아당김: 끌기 변위 D를 누른 지점 둘레에 모은다. pull 0 = 영역 전체가 함께 이동(이전과 같음).
+   vec4 pl=u_pull[i];float pull=mid.z;
+   float reach=max(.02,length(z.zw)*mix(1.1,.42,pull));
+   float grab=exp(-dot(v_uv-pl.xy,v_uv-pl.xy)/(reach*reach));
+   vec2 pulled=pl.zw*grab*(1.0+6.0*pull);
+   pulled/=1.0+length(pulled)/.06;
+   vec2 local=(mo.xy-pl.zw+mix(pl.zw,pulled,pull))*pivotWeight+rel*mo.z*pivotWeight;
    // Local breathing is a smooth displacement field, not a hard rectangular scale.
    float tBreath=u_time*mo.w,phase=fl.w;
    float inhale=.76*sin(tBreath*1.40+phase*.12-.3)+.24*sin(tBreath*.72+phase*.08+.34);
@@ -1919,7 +1988,8 @@ void main(){
    }
    // Effect safety: bounded distortion without changing the user's sliders.
    if(cutout){
-     cutoutShift=clamp(local,vec2(-.055),vec2(.055));
+     vec2 c=clamp(local,vec2(-.055),vec2(.055));
+     if(abs(fi2-u_tailCutout.x)<.5)cs0=c;else if(abs(fi2-u_tailCutout.y)<.5)cs1=c;else if(abs(fi2-u_tailCutout.z)<.5)cs2=c;else cs3=c;
      continue;
    }
    shift+=clamp(local,vec2(-.055),vec2(.055))*mask;
@@ -1933,7 +2003,7 @@ void main(){
    float drift=.80*sin(u_time*.98)+.20*sin(u_time*1.51+1.7);
    vec2 ambientShift=vec2(.013*u_ambient.z*drift,.018*u_ambient.y*inhale)*tw;
    shift+=ambientShift;
-   cutoutShift+=ambientShift;
+   cs0+=ambientShift;cs1+=ambientShift;cs2+=ambientShift;cs3+=ambientShift;
  }
  vec2 uv=clamp(v_uv-clamp(shift,vec2(-.08),vec2(.08)),vec2(.001),vec2(.999));
  vec4 color;
@@ -1951,15 +2021,11 @@ void main(){
    color.rgb*=light;
    color=mix(background,color,alpha);
  }else color.rgb*=light;
- if(u_tailCutout>=0.0){
-   vec2 source=v_uv-cutoutShift;
-   vec4 foreground=texture2D(u_tailOriginal,source);
-   float inside=step(0.0,source.x)*step(source.x,1.0)*step(0.0,source.y)*step(source.y,1.0);
-   float alpha=inside*texture2D(u_tailMask,source).a*foreground.a;
-   float outAlpha=alpha+color.a*(1.0-alpha);
-   vec3 rgb=(foreground.rgb*light*alpha+color.rgb*color.a*(1.0-alpha))/max(outAlpha,.00001);
-   color=vec4(rgb,outAlpha);
- }
+ // 2-D: 분리 영역을 목록 순서대로 위에 겹친다(뒤 영역이 위)
+ if(u_tailCutout.x>=0.0)color=tailLayer(color,v_uv-cs0,0,light);
+ if(u_tailCutout.y>=0.0)color=tailLayer(color,v_uv-cs1,1,light);
+ if(u_tailCutout.z>=0.0)color=tailLayer(color,v_uv-cs2,2,light);
+ if(u_tailCutout.w>=0.0)color=tailLayer(color,v_uv-cs3,3,light);
  gl_FragColor=color;
 }`;
 
@@ -1972,10 +2038,10 @@ g.fillStyle='#6ea9a4';g.beginPath();g.roundRect(92,320,475,565,105);g.fill();g.f
 const jiggle=g.createLinearGradient(560,540,840,750);jiggle.addColorStop(0,'#a4d8ff');jiggle.addColorStop(1,'#8e8edb');g.fillStyle=jiggle;g.beginPath();g.ellipse(686,674,146,156,0,0,Math.PI*2);g.fill();circle(648,640,14,'#273c6f');circle(741,640,14,'#273c6f');g.strokeStyle='#303e6b';g.lineWidth=11;g.beginPath();g.arc(693,687,40,.1,Math.PI-.1);g.stroke();for(let i=0;i<3;i++){g.strokeStyle='#a4baff';g.lineWidth=19;g.beginPath();g.moveTo(610+i*60,785);g.quadraticCurveTo(560+i*87,860,575+i*68,932);g.stroke()}g.textAlign='center';g.fillStyle='#d5ece7';g.font='25px system-ui';g.fillText('BOTTOM ↓',430,1008);return c}
 async function canvasBlob(c,type='image/webp',quality=.92){return new Promise(ok=>c.toBlob(ok,type,quality))}
 async function loadImage(blob){const url=URL.createObjectURL(blob);try{const im=new Image();await new Promise((ok,fail)=>{im.onload=ok;im.onerror=fail;im.src=url});if(!im.naturalWidth||!im.naturalHeight)throw Error('손상된 이미지');return im}finally{URL.revokeObjectURL(url)}}
-async function useBlob(blob,reset=true){const source=await loadImage(blob),factor=Math.min(1,1900/Math.max(source.naturalWidth,source.naturalHeight));const c=document.createElement('canvas');c.width=Math.max(1,Math.round(source.naturalWidth*factor));c.height=Math.max(1,Math.round(source.naturalHeight*factor));c.getContext('2d').drawImage(source,0,0,c.width,c.height);const compressed=await canvasBlob(c);imgBlob=blob.size<=20*1024*1024?blob:(compressed||blob);bitmap=c;renderWidth=c.width;renderHeight=c.height;clearSelectionDrafts();restoreBlink(null);lastBaseSignature='';baseMaskCanvas=null;backgroundPlate=null;computeEdge();if(reset){zones=[];selected=null}ready=true;$('welcome').hidden=true;document.querySelector('.workspace').hidden=false;document.querySelector('.header').classList.remove('starting');if(!gl&&!draw2d)setupGL();uploadImage();markMask();fit();updateUI();scheduleSave();setStatus(`${c.width}×${c.height} · ${gl?'WebGL':'Canvas'} 모드`)}
+async function useBlob(blob,reset=true){const source=await loadImage(blob),factor=Math.min(1,1900/Math.max(source.naturalWidth,source.naturalHeight));const c=document.createElement('canvas');c.width=Math.max(1,Math.round(source.naturalWidth*factor));c.height=Math.max(1,Math.round(source.naturalHeight*factor));c.getContext('2d').drawImage(source,0,0,c.width,c.height);const compressed=await canvasBlob(c);imgBlob=blob.size<=20*1024*1024?blob:(compressed||blob);bitmap=c;renderWidth=c.width;renderHeight=c.height;clearSelectionDrafts();restoreBlink(null);lastBaseSignature='';baseMaskCanvas=null;backgroundPlate=null;computeEdge();if(reset){zones=[];selected=null}ready=true;$('welcome').hidden=true;document.querySelector('.workspace').hidden=false;document.querySelector('.header').classList.remove('starting');if(!gl&&!draw2d)setupGL();uploadImage();markMask();fit();updateUI();scheduleSave();markProjectSaved();setStatus(`${c.width}×${c.height} · ${gl?'WebGL':'Canvas'} 모드`)}
 $('imageBtn').onclick=()=>$('imageFile').click();$('imageFile').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;try{if(!f.type.startsWith('image/'))throw Error('이미지 파일을 선택한다');await useBlob(f,true);undoStack=[];redoStack=[];refreshHistory();setMode('play');setStatus('그림을 불러왔습니다.')}catch(err){alert('이미지 불러오기 실패: '+err.message)}e.target.value=''};
 async function sample(){const c=sampleCanvas(),blob=await canvasBlob(c);await useBlob(blob,true);zones=[sanitize({name:'로봇 몸체',x:.39,y:.60,rx:.20,ry:.24,kind:'ellipse',axis:'y',strength:22},0),sanitize({name:'생명체',kind:'brush',strokes:[{r:.15,points:[[.8,.62],[.8,.68],[.81,.72]]}],axis:'diag',strength:30,auto:true},1)];selected=zones[0].id;markMask();updateUI();scheduleSave();setStatus('샘플 · TOP과 BOTTOM 방향을 확인한다')}
-$('sampleBtn').onclick=()=>{sample().then(()=>setMode('play'))};
+$('sampleBtn').onclick=async()=>{if(storedLayoutProject&&!await askConfirm({title:'샘플 그림으로 체험하기',message:'자동 저장된 이전 작업이 있습니다. 샘플을 열면 이전 작업은 이어할 수 없게 됩니다. 계속할까요?',ok:'샘플 열기'}))return;sample().then(()=>setMode('play'))};
 async function enterViewer(){if(!ready)return;viewerOpen=true;previousMode=mode;gesture=null;pointers.clear();$('viewer').hidden=false;applyPlayerVisibility();$('viewerStage').appendChild(surface);setMode('play');fit();$('viewerHint').classList.remove('dim');setTimeout(()=>$('viewerHint').classList.add('dim'),3000);stopMusic();if($('viewer').requestFullscreen)try{await $('viewer').requestFullscreen({navigationUI:'hide'})}catch(e){}fit()}
 async function exitViewer(){if(!viewerOpen)return;viewerOpen=false;if(document.fullscreenElement)try{await document.exitFullscreen()}catch(e){}stage.appendChild(surface);$('viewer').hidden=true;stopMusic();setMode(previousMode);gesture=null;pointers.clear();fit()}
 $('viewerBtn').onclick=enterViewer;$('exitViewer').onclick=exitViewer;document.addEventListener('keydown',e=>{if(e.key==='Escape'&&viewerOpen)exitViewer()});document.addEventListener('fullscreenchange',()=>{if(viewerOpen&&!document.fullscreenElement&&document.fullscreenEnabled)exitViewer()});
@@ -2017,7 +2083,7 @@ $('trackSelect').onchange=e=>setTrack(e.target.value);$('viewerTrack').onchange=
 $('musicVolume').oninput=e=>{$('musicVolumeValue').textContent=e.target.value+'%';$('viewerMusicVolume').value=e.target.value;if(activeAudio)activeAudio.volume=e.target.value/100;scheduleSave()};$('viewerMusicVolume').oninput=e=>{$('musicVolume').value=e.target.value;$('musicVolumeValue').textContent=e.target.value+'%';if(activeAudio)activeAudio.volume=e.target.value/100;scheduleSave()};
 $('sfxVolume').oninput=e=>{$('sfxVolumeValue').textContent=e.target.value+'%';scheduleSave()};$('muteViewer').onclick=()=>{effectMuted=!effectMuted;$('muteViewer').textContent=effectMuted?'효과음 켜기':'효과음 끄기'};
 $('musicFileBtn').onclick=()=>$('musicFile').click();$('musicFile').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;if(!f.type.startsWith('audio/')&&!/\.(mp3|m4a|wav|ogg|webm)$/i.test(f.name)){alert('오디오 파일을 선택해 주세요.');return}if(f.size>15*1024*1024){alert('음악 파일은 15MB 이하로 선택해 주세요.');return}audioBlob=f;audioName=f.name;setTrack('file');scheduleSave();setStatus('음악 파일을 불러왔습니다: '+f.name);e.target.value=''};
-async function restoreProjectObject(o){stopMusic();await useBlob(o.image,true);zones=(o.zones||[]).slice(0,LIMIT).map(sanitize);normalizeBaseOrder();selected=zones[0]?.id||null;audioBlob=o.audio||null;audioName=o.audioName||'';restoreExtra(o.extra||{});setMode("play");undoStack=[];redoStack=[];refreshHistory();markMask();updateUI();scheduleSave()}
+async function restoreProjectObject(o){stopMusic();await useBlob(o.image,true);zones=(o.zones||[]).slice(0,LIMIT).map(sanitize);normalizeBaseOrder();selected=zones[0]?.id||null;audioBlob=o.audio||null;audioName=o.audioName||'';restoreExtra(o.extra||{});setMode("play");undoStack=[];redoStack=[];refreshHistory();markMask();updateUI();scheduleSave();markProjectSaved()}
 
 function openDB(){return new Promise((ok,fail)=>{if(!('indexedDB'in window))return fail(Error('IndexedDB 지원 안 됨'));const req=indexedDB.open('motionpad-v1',1);req.onupgradeneeded=()=>req.result.createObjectStore('projects');req.onsuccess=()=>ok(req.result);req.onerror=()=>fail(req.error)})}
 function dbPutKey(key,v){return new Promise((ok,fail)=>{const t=db.transaction('projects','readwrite');t.objectStore('projects').put(v,key);t.oncomplete=ok;t.onerror=()=>fail(t.error)})}
@@ -2151,7 +2217,7 @@ async function saveProject(requestedName=projectName){
     const data=JSON.parse(snapshot);
     data.image=await toDataURL(image);
     data.audio=audio?await toDataURL(audio):null;
-    downloadProject(new Blob([JSON.stringify(data)],{type:'application/json'}),name);
+    downloadProject(new Blob([JSON.stringify(data)],{type:'application/json'}),name);markProjectSaved();
     if(image===imgBlob && projectName!==requestedName){
       projectName=requestedName;
       scheduleSave();
@@ -2231,7 +2297,7 @@ function setupGL(){
     program=gl.createProgram();gl.attachShader(program,vs);gl.attachShader(program,fs);gl.linkProgram(program);
     if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error('Shader link: '+gl.getProgramInfoLog(program));
     gl.useProgram(program);
-    uni={zone:gl.getUniformLocation(program,'u_zone[0]'),motion:gl.getUniformLocation(program,'u_motion[0]'),fx:gl.getUniformLocation(program,'u_fx[0]'),tap:gl.getUniformLocation(program,'u_tap[0]'),pivot:gl.getUniformLocation(program,'u_pivot[0]'),flow:gl.getUniformLocation(program,'u_flow[0]'),spine:gl.getUniformLocation(program,'u_spine[0]'),spinemotion:gl.getUniformLocation(program,'u_spinemotion[0]'),chainMid:gl.getUniformLocation(program,'u_chainMid[0]'),branchLine:gl.getUniformLocation(program,'u_branchLine[0]'),branchMotion:gl.getUniformLocation(program,'u_branchMotion[0]'),pivotExtra:gl.getUniformLocation(program,'u_pivotExtra[0]'),baseExclude:gl.getUniformLocation(program,'u_baseExclude'),tailCutout:gl.getUniformLocation(program,'u_tailCutout'),time:gl.getUniformLocation(program,'u_time'),count:gl.getUniformLocation(program,'u_count'),ambient:gl.getUniformLocation(program,'u_ambient')};
+    uni={pull:gl.getUniformLocation(program,'u_pull[0]'),zone:gl.getUniformLocation(program,'u_zone[0]'),motion:gl.getUniformLocation(program,'u_motion[0]'),fx:gl.getUniformLocation(program,'u_fx[0]'),tap:gl.getUniformLocation(program,'u_tap[0]'),pivot:gl.getUniformLocation(program,'u_pivot[0]'),flow:gl.getUniformLocation(program,'u_flow[0]'),spine:gl.getUniformLocation(program,'u_spine[0]'),spinemotion:gl.getUniformLocation(program,'u_spinemotion[0]'),chainMid:gl.getUniformLocation(program,'u_chainMid[0]'),branchLine:gl.getUniformLocation(program,'u_branchLine[0]'),branchMotion:gl.getUniformLocation(program,'u_branchMotion[0]'),pivotExtra:gl.getUniformLocation(program,'u_pivotExtra[0]'),baseExclude:gl.getUniformLocation(program,'u_baseExclude'),tailCutout:gl.getUniformLocation(program,'u_tailCutout'),time:gl.getUniformLocation(program,'u_time'),count:gl.getUniformLocation(program,'u_count'),ambient:gl.getUniformLocation(program,'u_ambient')};
     rebuildMesh();
     function newTexture(unit){const tex=gl.createTexture();gl.activeTexture(unit);gl.bindTexture(gl.TEXTURE_2D,tex);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return tex}
     imageTex=newTexture(gl.TEXTURE0);maskTex=newTexture(gl.TEXTURE1);baseMaskTex=newTexture(gl.TEXTURE2);backgroundTex=newTexture(gl.TEXTURE3);
@@ -2262,19 +2328,22 @@ function cpuDeformation(z,x,y){
  let near=Math.hypot(x-(z.pivotX??z.x),y-(z.pivotY??z.y));
  for(const p of (z.extraPivots||[]))near=Math.min(near,Math.hypot(x-p[0],y-p[1]));
  const pin=smoothstep(.018,radius,near),pivotWeight=z.pivotEnabled?1+(pin-1)*clamp((z.pivotStrength??60)/100*1.65,0,1):1;
- let dx=(z.motionX||0)*pivotWeight+relX*(z.motionScale||0)*pivotWeight;
- let dy=(z.motionY||0)*pivotWeight+relY*(z.motionScale||0)*pivotWeight;
+ const pull=(z.pull??50)/100,reach=Math.max(.02,Math.hypot(z.rx,z.ry)*(1.1+(.42-1.1)*pull));
+ const grab=Math.exp(-((x-(z.grabX??z.x))**2+(y-(z.grabY??z.y))**2)/(reach*reach)),D=[z.physX||0,z.physY||0];
+ let px=D[0]*grab*(1+6*pull),py=D[1]*grab*(1+6*pull);const soft=1+Math.hypot(px,py)/.06;px/=soft;py/=soft;
+ let dx=((z.motionX||0)-D[0]+D[0]+(px-D[0])*pull)*pivotWeight+relX*(z.motionScale||0)*pivotWeight;
+ let dy=((z.motionY||0)-D[1]+D[1]+(py-D[1])*pull)*pivotWeight+relY*(z.motionScale||0)*pivotWeight;
  const t=elapsed*(z.breathSpeed??1),phase=z.phase;
  const inhale=.76*Math.sin(t*1.4+phase*.12-.3)+.24*Math.sin(t*.72+phase*.08+.34);
  const rd=Math.hypot(relX/Math.max(z.rx,.03),relY/Math.max(z.ry,.03));
  const inner=smoothstep(0,.44,rd)*(1-smoothstep(.88,2.2,rd));
  const l=Math.hypot(relX+.0001,relY+.0001);
- const pulse=(z.breath||0)/40*.0105*inhale*inner*pivotWeight;
+ const pulse=(z.breath||0)*(z.autoEnv??1)/40*.0105*inhale*inner*pivotWeight;
  dx+=(relX+.0001)/l*pulse;dy+=(relY+.0001)/l*pulse;
- dx+=Math.sin(relY*42+elapsed*1.9+z.phase)*(z.wave||0)/40*.0036*pivotWeight;
- dy+=Math.sin(relX*38+elapsed*1.5+z.phase)*(z.wave||0)/40*.0022*pivotWeight;
- dx-=relY*Math.sin(elapsed*1.25+z.phase)*(z.twist||0)/35*.023*pivotWeight;
- dy+=relX*Math.sin(elapsed*1.25+z.phase)*(z.twist||0)/35*.023*pivotWeight;
+ dx+=Math.sin(relY*42+elapsed*1.9+z.phase)*(z.wave||0)*(z.autoEnv??1)/40*.0036*pivotWeight;
+ dy+=Math.sin(relX*38+elapsed*1.5+z.phase)*(z.wave||0)*(z.autoEnv??1)/40*.0022*pivotWeight;
+ dx-=relY*Math.sin(elapsed*1.25+z.phase)*(z.twist||0)*(z.autoEnv??1)/35*.023*pivotWeight;
+ dy+=relX*Math.sin(elapsed*1.25+z.phase)*(z.twist||0)*(z.autoEnv??1)/35*.023*pivotWeight;
  if(z.spine?.length>=2){
    const [dist,t]=distSegment(x,y,z.spine[0],z.spine[z.spine.length-1]);
    const influence=(1-smoothstep(.035,.21,dist))*pivotWeight;
@@ -2292,7 +2361,7 @@ function cpuDeformation(z,x,y){
    const pulse=Math.sin(rad*75-age*23)*Math.exp(-age*3)*(1-smoothstep(0,1.6,age))*(z.ripple/40)*.0036*z.hitPower*pivotWeight;
    dx+=(relX+.0001)/l*pulse;dy+=(relY+.0001)/l*pulse;
  }
- if((z.flow||0)>0){const flow=(z.flow||0)/40*.008,theta=(z.flowAngle||0)*Math.PI/180;dx+=Math.cos(theta)*flow*Math.sin(elapsed*.7);dy+=Math.sin(theta)*flow*Math.sin(elapsed*.7)}
+ if((z.flow||0)>0){const flow=(z.flow||0)*(z.autoEnv??1)/40*.008,theta=(z.flowAngle||0)*Math.PI/180;dx+=Math.cos(theta)*flow*Math.sin(elapsed*.7);dy+=Math.sin(theta)*flow*Math.sin(elapsed*.7)}
  return [clamp(dx,-.065,.065),clamp(dy,-.065,.065)];
 }
 function canvasWarpRegion(g,z,w,h,source=bitmap){
@@ -2318,18 +2387,21 @@ function render(){
  }
  if(gl){
    const zp=new Float32Array(LIMIT*4),mo=new Float32Array(LIMIT*4),fx=new Float32Array(LIMIT*4),tp=new Float32Array(LIMIT*4),pv=new Float32Array(LIMIT*4),fl=new Float32Array(LIMIT*4),sp=new Float32Array(LIMIT*4),sm=new Float32Array(LIMIT*4),cm=new Float32Array(LIMIT*4),bl=new Float32Array(LIMIT*4),bm=new Float32Array(LIMIT*4),pe=new Float32Array(LIMIT*4);
+   const pu=new Float32Array(LIMIT*4);
    for(let i=0;i<zones.length;i++){
      const z=zones[i],dir=z.flowAngle*Math.PI/180;
      zp.set([z.x,z.y,z.rx,z.ry],i*4);
      mo.set([z.motionX||0,z.motionY||0,z.motionScale||0,z.breathSpeed??1],i*4);
-     fx.set([z.breath/40,z.wave/40,z.twist/35,z.ripple/40],i*4);
+     const env=z.autoEnv??1;
+     fx.set([z.breath/40*env,z.wave/40*env,z.twist/35*env,z.ripple/40],i*4);
      tp.set([z.hitX,z.hitY,elapsed-z.hitAt,z.hitPower],i*4);
      pv.set([z.pivotX??z.x,z.pivotY??z.y,z.pivotEnabled?1:0,(z.pivotStrength??60)/100],i*4);
-     fl.set([(z.flow||0)/40*.014,Math.cos(dir),Math.sin(dir),z.phase],i*4);
+     fl.set([(z.flow||0)/40*.014*env,Math.cos(dir),Math.sin(dir),z.phase],i*4);
      const a=z.spine?.[0]||[z.x,z.y],b=z.spine?.[z.spine.length-1]||[z.x,z.y];
      sp.set([a[0],a[1],b[0],b[1]],i*4);
      sm.set([z.spineTip?.[0]||0,z.spineTip?.[1]||0,z.spine?.length>=2?1:0,0],i*4);
-     cm.set([z.spineMid?.[0]||0,z.spineMid?.[1]||0,0,0],i*4);
+     cm.set([z.spineMid?.[0]||0,z.spineMid?.[1]||0,(z.pull??50)/100,0],i*4);
+     pu.set([z.grabX??z.x,z.grabY??z.y,z.physX||0,z.physY||0],i*4);
      const ba=z.branch?.[0]||[z.x,z.y],bb=z.branch?.[z.branch.length-1]||[z.x,z.y];
      bl.set([ba[0],ba[1],bb[0],bb[1]],i*4);bm.set([z.branchTip?.[0]||0,z.branchTip?.[1]||0,z.branch?.length>=2?1:0,0],i*4);
      const ep=z.extraPivots||[];pe.set([ep[0]?.[0]??-1,ep[0]?.[1]??-1,ep[1]?.[0]??-1,ep[1]?.[1]??-1],i*4);
@@ -2339,8 +2411,9 @@ function render(){
    gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,maskTex);
    gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,baseMaskTex);
    gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,backgroundTex);
-   for(const [name,data] of [['zone',zp],['motion',mo],['fx',fx],['tap',tp],['pivot',pv],['flow',fl],['spine',sp],['spinemotion',sm],['chainMid',cm],['branchLine',bl],['branchMotion',bm],['pivotExtra',pe]])if(uni[name])gl.uniform4fv(uni[name],data);
-   gl.uniform1f(uni.tailCutout,tailPlate?zones.indexOf(tailCutoutZone()):-1);
+   for(const [name,data] of [['zone',zp],['motion',mo],['fx',fx],['tap',tp],['pivot',pv],['flow',fl],['spine',sp],['spinemotion',sm],['chainMid',cm],['branchLine',bl],['branchMotion',bm],['pivotExtra',pe],['pull',pu]])if(uni[name])gl.uniform4fv(uni[name],data);
+   const tl=tailPlate?tailCutoutZones().map(z=>zones.indexOf(z)):[];
+   gl.uniform4f(uni.tailCutout,tl[0]??-1,tl[1]??-1,tl[2]??-1,tl[3]??-1);
    gl.uniform1f(uni.baseExclude,baseBackgroundExclude&&backgroundPlate?1:0);
    gl.uniform4f(uni.ambient,ambient.enabled?1:0,ambient.enabled?ambient.breath/100:0,ambient.enabled?ambient.sway/100:0,ambient.enabled?ambient.light/100:0);
    gl.uniform1f(uni.time,elapsed);gl.uniform1i(uni.count,zones.length);
@@ -2350,7 +2423,7 @@ function render(){
  if(!draw2d)return;
  const w=view.width,h=view.height;
  draw2d.clearRect(0,0,w,h);
- const cutout=tailPlate?tailCutoutZone():null;
+ const cutouts=tailPlate?tailCutoutZones():[];
  const scene=blinkScene||tailPlate||bitmap;
  const b=ambient.enabled?ambient.breath/100:0,s=ambient.enabled?ambient.sway/100:0;
  const scale=1+MotionPhysics.wave(elapsed*1.40,-.30)*b*.0073;
@@ -2386,7 +2459,7 @@ function render(){
 
  for(let i=0;i<zones.length;i++){
    const z=zones[i];
-   if(z===base||z===cutout||!hasLocalMotion(z))continue;
+   if(z===base||cutouts.includes(z)||!hasLocalMotion(z))continue;
    let f=fallbacks[i];if(!f||f.width!==w||f.height!==h){f=document.createElement('canvas');f.width=w;f.height=h;fallbacks[i]=f}
    const g=f.getContext('2d');g.clearRect(0,0,w,h);
    canvasWarpRegion(g,z,w,h,scene);
@@ -2394,12 +2467,12 @@ function render(){
    g.globalCompositeOperation='source-over';draw2d.drawImage(f,0,0);
  }
 
- if(cutout){
+ for(const cutout of cutouts){
    draw2d.save();
    draw2d.translate(w/2+MotionPhysics.wave(elapsed*.98)*s*w*.0036,h);
    draw2d.scale(scale,scale);
    draw2d.translate(-w/2,-h);
-   canvasWarpRegion(draw2d,cutout,w,h,getTailSource(blinkOriginal||bitmap));
+   canvasWarpRegion(draw2d,cutout,w,h,getTailSource(blinkOriginal||bitmap,cutout));
    draw2d.restore();
  }
  if(!base)applyCanvasLight(draw2d,w,h);
@@ -2426,6 +2499,15 @@ function applyCanvasLight(g,w,h,foregroundOnly=false){
 /* Render-independent physics: output positions and displacements in normalized image UV.
    The Canvas fallback and WebGL shader consume the same motion outputs. */
 const MotionPhysics=Object.freeze({
+  // 2-C 쉬는 간격: 움직임(약 2.5초/속도) → 부드럽게 멈춤 → autoRest초 쉼 → 다시. 0이면 늘 1(이전과 같음).
+  restEnvelope(z,t){
+    const rest=clamp(z.autoRest||0,0,6);if(!rest)return 1;
+    const active=2.5/(z.autoSpeed||1),fade=Math.min(.6,active/3),period=active+rest;
+    const u=(((t+(z.phase||0)*.37)%period)+period)%period;
+    if(u>=active)return 0;
+    const s=v=>{v=clamp(v,0,1);return v*v*(3-2*v)};
+    return Math.min(s(u/fade),s((active-u)/fade));
+  },
   wave(t,phase=0){return .78*Math.sin(t+phase)+.22*Math.sin(t*.57+phase*.31+.75)},
   wind(z,t){
     const size=clamp((z.windStrength||0)/100,0,1);
@@ -2472,11 +2554,13 @@ const MotionPhysics=Object.freeze({
     // A smooth damped spring with an exact stable target during sustained drags.
     for(const [pos,vel,target] of [['physX','physVX',px],['physY','physVY',py],['physScale','physSV',ps]]){
       z[vel]=((z[vel]||0)+(target-(z[pos]||0))*k*k*dt)*friction;
-      z[pos]=clamp((z[pos]||0)+z[vel]*dt,-.030,.030);
+      const lim=pos==='physScale'?.030:.030*(1+1.5*(z.pull??50)/100);
+      z[pos]=clamp((z[pos]||0)+z[vel]*dt,-lim,lim);
     }
-    const wind=this.wind(z,t);
+    const env=this.restEnvelope(z,t);z.autoEnv=env;
+    const wind=this.wind(z,t).map(v=>v*env);
     const strength=clamp(z.strength??0,0,80)/80;
-    const idle=z.auto?this.wave(t*1.18*(z.autoSpeed||1),z.phase)*strength:0;
+    const idle=z.auto?this.wave(t*1.18*(z.autoSpeed||1),z.phase)*strength*env:0;
     const [axisX,axisY]=TAP_DIRECTIONS[z.axis]||[.28,1];
     const idleX=z.axis==='pulse'?0:idle*.022*axisX;
     const idleY=z.axis==='pulse'?0:idle*.022*axisY;
@@ -2611,7 +2695,7 @@ $('tailCutoutInput').onchange=e=>{
  const z=getSelected();
  if(!z||z.isBase)return;
  remember();
- if(e.target.checked)for(const other of zones)other.tailCutout=false;
+ if(e.target.checked&&tailCutoutZones().length>=TAIL_MAX){e.target.checked=false;setStatus(`외곽까지 흔들기는 영역 ${TAIL_MAX}개까지 켤 수 있습니다.`);return}
  z.tailCutout=e.target.checked;
  markMask();
  scheduleSave();
@@ -2712,7 +2796,7 @@ function playSfx(power=1){
     n.connect(filter);filter.connect(gain);gain.connect(audioMaster);n.start(t);n.stop(t+length+.005);
   }catch(e){console.warn('효과음 오류',e)}
 }
-function extraState(){return {blink:{eyes:blinkEyes,speed:blinkSpeed},base:{clip:baseClipEnabled,exclude:baseBackgroundExclude,edge:baseEdge},projectName:projectName||'내 프로젝트',maskColor:$('maskColorInput').value,maskOpacity:Number($('maskOpacityInput').value),track:$('trackSelect').value,musicVolume:Number($('musicVolume').value),sfxVolume:Number($('sfxVolume').value),sfxType,playerVisible,ambient:{...ambient},qualityMode}}
+function extraState(){return {blink:{eyes:blinkEyes,speed:blinkSpeed,interval:blinkInterval},base:{clip:baseClipEnabled,exclude:baseBackgroundExclude,edge:baseEdge},projectName:projectName||'내 프로젝트',maskColor:$('maskColorInput').value,maskOpacity:Number($('maskOpacityInput').value),track:$('trackSelect').value,musicVolume:Number($('musicVolume').value),sfxVolume:Number($('sfxVolume').value),sfxType,playerVisible,ambient:{...ambient},qualityMode}}
 function restoreExtra(d){
  restoreBlink(d?.blink);
  baseClipEnabled=!!d?.base?.clip;baseBackgroundExclude=d?.base?.exclude!==false;baseEdge=clamp(Number(d?.base?.edge??1),0,8);lastBaseSignature='';markMask();refreshBaseUI();
@@ -2767,7 +2851,7 @@ function setMode(m){
   $('editGuide').hidden=!workspace.classList.contains('placing');
   for(const b of document.querySelectorAll('.mode'))b.setAttribute('aria-pressed',String(b.dataset.mode===m));
   $('leaveEdit').hidden=!editCheckpoint;
-  $('finishEdit').textContent=workspace.classList.contains('placing')?'완료':'선택 완료';
+  $('finishEdit').textContent='완료';
   $('editInstruction').textContent=({pivot:'고정할 곳을 눌러 주세요.',extraPivot:'고정점을 더 놓을 곳을 눌러 주세요.',spine:'붙어 있는 곳에서 끝까지 그어 주세요.',flowdir:'흐를 방향으로 그어 주세요.'})[m]||'그림에서 부분을 선택하거나 다듬어 주세요.';
   if(ready&&!viewerOpen)requestAnimationFrame(fit);
   for(const b of document.querySelectorAll('.mode'))b.classList.toggle('active',b.dataset.mode===m);
@@ -2850,12 +2934,13 @@ let blinkRect=null,blinkCropStart=null,blinkCropping=false;
 const blinkPrompts=['화면에서 왼쪽 눈꼬리를 찍어 주세요.','같은 눈의 오른쪽 눈꼬리를 찍어 주세요.',
  '윗눈꺼풀 선의 가운데를 찍어 주세요.','아랫눈꺼풀 선의 가운데를 찍어 주세요.'];
 let blinkProtection=[],blinkProtecting=false,blinkStroke=null;
-let blinkEyes=[null,null],blinkPatches=[null,null],blinkSpeed=100,blinkEpoch=0;
+let blinkEyes=[null,null],blinkPatches=[null,null],blinkSpeed=100,blinkInterval=4.5,blinkEpoch=0;
 let blinkLastStep=-1,blinkLastTail=null,blinkScene=null,blinkOriginal=null;
 let blinkComposite=null,blinkTailComposite=null,blinkOverlay=null;
 function restoreBlink(settings){
  const number=(v,fallback,min,max)=>Number.isFinite(v)?clamp(v,min,max):fallback;
  blinkSpeed=number(settings?.speed,100,50,160);
+ blinkInterval=number(settings?.interval,4.5,2,10);
  blinkEyes=[0,1].map(i=>{
   const eye=settings?.eyes?.[i];
   if(!Array.isArray(eye?.points)||eye.points.length!==4||
@@ -2888,7 +2973,8 @@ function uploadBlinkTexture(unit,texture,source){
  gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,gl.RGBA,gl.UNSIGNED_BYTE,source);
 }
 function updateBlinkScene(){
- const t=((elapsed-blinkEpoch+3.5)%4.5)*1000*blinkSpeed/100;
+ // 2-A: 간격(초)마다 한 번. 적용 직후 1초 뒤 첫 깜빡임(기본 4.5초일 때 이전과 같다)
+ const t=((elapsed-blinkEpoch+blinkInterval-1)%blinkInterval)*1000*blinkSpeed/100;
  const open=clamp((t-105)/145,0,1);
  const amount=t<75?1-(1-t/75)**2:1-open*(2-open);
  const step=blinkPatches.some(Boolean)?Math.round(amount*16):0;
@@ -2897,7 +2983,7 @@ function updateBlinkScene(){
  blinkLastStep=step;blinkLastTail=tailPlate;
  blinkScene=blinkOriginal=null;
  if(!changed)return false;
- baseForegroundSource=null;tailSource=null;
+ baseForegroundSource=null;tailSource=null;tailSources=new Map();
  if(!step)return true;
  blinkOverlay??=blinkCanvas(renderWidth,renderHeight);
  const layer=blinkOverlay.getContext('2d');
@@ -3134,7 +3220,7 @@ function stopBlinkPreview(){
 }
 $('eyeEntry').onclick=()=>{
  if(!ready){setStatus('먼저 그림을 열어 주세요.');return}
- blinkRect=null;blinkCropping=false;$('blinkEye').value='0';$('blinkSpeed').value=blinkSpeed;
+ blinkRect=null;blinkCropping=false;$('blinkEye').value='0';$('blinkSpeed').value=blinkSpeed;paintBlinkInterval();
  loadBlinkEye();
  const scale=Math.min(1,1200/Math.max(renderWidth,renderHeight));
  blinkPreview.width=Math.max(1,Math.round(renderWidth*scale));
@@ -3263,12 +3349,16 @@ $('blinkApply').onclick=()=>{
  setBlinkProtection(false);drawBlinkPreview();
  $('blinkHint').textContent='이 눈을 적용했습니다. 다른 눈을 선택하거나 창을 닫아 보세요.';
 };
-$('blinkRemove').onclick=()=>{
+$('blinkRemove').onclick=async()=>{
  const index=Number($('blinkEye').value);
+ if(!await askConfirm({title:'눈 제거',message:`눈 ${index+1}의 깜빡임 설정(눈꼬리·눈꺼풀 위치, 앞머리 보호)을 지울까요?`,ok:'이 눈 제거'}))return;
  blinkEyes[index]=blinkPatches[index]=null;
  stopBlinkPreview();loadBlinkEye();refreshBlinkSetup();scheduleSave();
 };
 $('blinkSpeed').onchange=()=>{blinkSpeed=Number($('blinkSpeed').value);scheduleSave()};
+function paintBlinkInterval(){$('blinkInterval').value=blinkInterval;$('blinkIntervalValue').textContent=blinkInterval.toFixed(1)+'초'}
+$('blinkInterval').oninput=()=>{blinkInterval=Number($('blinkInterval').value);$('blinkIntervalValue').textContent=blinkInterval.toFixed(1)+'초'};
+$('blinkInterval').onchange=()=>{blinkInterval=Number($('blinkInterval').value);blinkEpoch=elapsed;scheduleSave()};
 $('blinkClose').onclick=()=>blinkDialog.close();
 blinkDialog.addEventListener('close',stopBlinkPreview);
 
@@ -3292,8 +3382,9 @@ document.querySelectorAll('[data-dialog]').forEach(button=>{
   $(button.dataset.dialog).showModal();
  };
 });
-$('startImage').onclick=()=>$('imageBtn').click();
-$('startProject').onclick=()=>$('restoreBtn').click();
+const keepPrevious=async(title)=>!storedLayoutProject||await askConfirm({title,message:'자동 저장된 이전 작업이 있습니다. 새로 시작하면 이전 작업은 이어할 수 없게 됩니다. 계속할까요?',ok:'새로 시작'});
+$('startImage').onclick=async()=>{if(await keepPrevious('새 그림 열기'))$('imageBtn').click()};
+$('startProject').onclick=async()=>{if(await keepPrevious('프로젝트 열기'))$('restoreBtn').click()};
 $('resumeProject').onclick=async()=>{
  if(!storedLayoutProject)return;
  try{await restoreProjectObject(storedLayoutProject);setMode('play');}
@@ -3313,8 +3404,8 @@ $('leaveEdit').onclick=()=>{
  }
  setMode('play');
 };
-$('menuNew').onclick=()=>$('imageBtn').click();
-$('menuOpen').onclick=()=>$('restoreBtn').click();
+$('menuNew').onclick=async()=>{if(hasUnsavedWork()&&!await askConfirm({title:'새 그림 열기',message:'지금 작업에 파일로 저장하지 않은 변경이 있습니다. 새 그림을 열면 지금 작업은 사라집니다. 그래도 열까요?',ok:'저장하지 않고 열기'}))return;$('imageBtn').click()};
+$('menuOpen').onclick=async()=>{if(hasUnsavedWork()&&!await askConfirm({title:'프로젝트 열기',message:'지금 작업에 파일로 저장하지 않은 변경이 있습니다. 다른 프로젝트를 열면 지금 작업은 사라집니다. 그래도 열까요?',ok:'저장하지 않고 열기'}))return;$('restoreBtn').click()};
 $('layoutSettings').addEventListener('focusin',paintQuality);
 const namedProjects=$('projectSelect');
 const showNamedProjects=()=>$('legacyMenu').hidden=![...namedProjects.options].some(option=>option.value);

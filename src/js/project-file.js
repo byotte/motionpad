@@ -27,7 +27,7 @@ async function saveProject(requestedName=projectName){
     const data=JSON.parse(snapshot);
     data.image=await toDataURL(image);
     data.audio=audio?await toDataURL(audio):null;
-    downloadProject(new Blob([JSON.stringify(data)],{type:'application/json'}),name);
+    downloadProject(new Blob([JSON.stringify(data)],{type:'application/json'}),name);markProjectSaved();
     if(image===imgBlob && projectName!==requestedName){
       projectName=requestedName;
       scheduleSave();
