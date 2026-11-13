@@ -20,7 +20,7 @@ uniform sampler2D u_mask;
 uniform sampler2D u_baseMask;
 uniform sampler2D u_background;
 uniform vec4 u_tailCutout;
-uniform sampler2D u_tailOriginal,u_tailMask;
+uniform sampler2D u_tailOriginal,u_tailMask,u_dist;
 uniform float u_baseExclude;
 uniform vec4 u_zone[12],u_motion[12],u_fx[12],u_tap[12],u_pivot[12],u_flow[12],u_spine[12],u_spinemotion[12];
 uniform vec4 u_chainMid[12],u_branchLine[12],u_branchMotion[12],u_pivotExtra[12],u_pull[12];
@@ -60,8 +60,11 @@ void main(){
    float mask=texture2D(u_mask,(tile+v_uv)/vec2(4.0,3.0)).a;
    float fi2=float(i);
    bool cutout=abs(fi2-u_tailCutout.x)<.5||abs(fi2-u_tailCutout.y)<.5||abs(fi2-u_tailCutout.z)<.5||abs(fi2-u_tailCutout.w)<.5;
-   if(mask<.001&&!cutout)continue;
-   vec4 mo=u_motion[i],fx=u_fx[i],tap=u_tap[i],piv=u_pivot[i],fl=u_flow[i],sp=u_spine[i],st=u_spinemotion[i],mid=u_chainMid[i];
+   vec4 st=u_spinemotion[i];
+   // 2-M: st.w>0 = 이 영역이 지금 경계 띠가 접힐 만큼 크게 움직일 수 있다(값 = 띠가 버티는 이동량). 그때는 영역 밖도 계산한다.
+   bool wide=st.w>0.0;
+   if(mask<.001&&!cutout&&!wide)continue;
+   vec4 mo=u_motion[i],fx=u_fx[i],tap=u_tap[i],piv=u_pivot[i],fl=u_flow[i],sp=u_spine[i],mid=u_chainMid[i];
    vec2 rel=v_uv-z.xy;
    float anchor=anchoredDistance(v_uv,piv,u_pivotExtra[i]);
    float radius=max(.028,length(z.zw)*1.15);
@@ -110,7 +113,17 @@ void main(){
      if(abs(fi2-u_tailCutout.x)<.5)cs0=c;else if(abs(fi2-u_tailCutout.y)<.5)cs1=c;else if(abs(fi2-u_tailCutout.z)<.5)cs2=c;else cs3=c;
      continue;
    }
-   shift+=clamp(local,vec2(-.055),vec2(.055))*mask;
+   vec2 moved=clamp(local,vec2(-.055),vec2(.055));
+   float weight=mask;
+   // 2-M 접힘 방지: 이동량이 경계 띠 폭을 넘으면 띠가 접힌다. 그때만 영역 바깥으로 이동량의 2배 폭까지 서서히 줄어드는 띠로 바꾼다(안쪽은 그대로 100%).
+   if(wide){
+     float amount=length(moved);
+     if(amount>.5*st.w){
+       float outside=(1.0-texture2D(u_dist,(tile+v_uv)/vec2(4.0,3.0)).r)*.16;
+       weight=mix(mask,1.0-smoothstep(0.0,2.0*amount,outside),smoothstep(.5*st.w,st.w,amount));
+     }
+   }
+   shift+=moved*weight;
    flowVector+=vec2(fl.y,fl.z)*fl.x*mask;
    flowWeight+=fl.x*mask;
  }

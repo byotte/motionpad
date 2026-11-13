@@ -21,6 +21,7 @@ const METHODS = {
   'patch-ng': (d, c) => A.fillPatch(d, c.inside, c.w, c.h, { guide: 0 }),
   'patch-g3': (d, c) => A.fillPatch(d, c.inside, c.w, c.h, { guide: 3 }),
   'patch-m80': (d, c) => A.fillPatch(d, c.inside, c.w, c.h, { minSize: 80 }),
+  app: (d, c) => A.fillPatch(d, c.inside, c.w, c.h, { top: 1, em: 3, pm: 3, band: Math.ceil(.075 * Math.max(c.w, c.h)) }),
   'patch-hf': (d, c) => A.fillPatch(d, c.inside, c.w, c.h, { top: 1, em: 3, pm: 3 }),
   'patch-band': (d, c) => A.fillPatch(d, c.inside, c.w, c.h, { band: Math.ceil(.06 * Math.max(c.w, c.h)) }),
   'patch-half': (d, c) => A.fillPatch(d, c.inside, c.w, c.h, { top: 1 }),
