@@ -31,7 +31,9 @@ function videoPlan(sizeOverride){
  // 3-G: 원본 = 처음 연 그림의 크기(편집 사본 1900px가 아니라). 영상은 긴 변 3840(4K), 움짤은 2048까지.
  const up=Math.max(1,Math.max(sourceSize.w,sourceSize.h)/Math.max(rw,rh)||1),maxLong=format==='gif'?2048:3840;
  let s=size==='orig'?up:Number(size)/Math.min(OW,OH);
- const capped=s>maxLong/Math.max(OW,OH);s=Math.min(s,maxLong/Math.max(OW,OH));
+ // 영상 인코더는 긴 변뿐 아니라 픽셀 수도 4K(3840×2160 = 약 830만)까지만 받는다(넘으면 녹화가 실패한다, 3-G 측정).
+ const lim4k=format==='gif'?Infinity:Math.sqrt(3840*2160/(OW*OH)),sMax=Math.min(maxLong/Math.max(OW,OH),lim4k);
+ const capped=s>sMax*1.001;s=Math.min(s,sMax);
  OW=even(OW*s);OH=even(OH*s);
  const k=(ratio!=='image'&&fitMode==='fit')?Math.min(OW/rw,OH/rh):Math.max(OW/rw,OH/rh);
  const lim=glLimits(),devLong=Math.min(8192,lim.view||4096,lim.tex||4096),dw=rw*k,dh=rh*k,cap=Math.min(1,devLong/Math.max(dw,dh));
@@ -54,7 +56,7 @@ function fmtBytes(b){return b>=1048576?`${(b/1048576).toFixed(b>=10485760?0:1)}M
 // 3-G: 원본·큰 크기를 골랐을 때만 나오는 안내.
 function videoWarnings(p){
  const w=[];
- if(p.capped)w.push(p.format==='gif'?`움짤은 긴 변 ${p.maxLong}px까지 저장합니다(그보다 크면 만드는 중 멈추거나 열리지 않을 수 있어서).`:`원본이 커서 4K(긴 변 ${p.maxLong}px)로 줄여 저장합니다. 대부분의 기기·앱이 재생할 수 있는 최대 크기입니다.`);
+ if(p.capped)w.push(p.format==='gif'?`움짤은 긴 변 ${p.maxLong}px까지 저장합니다(그보다 크면 만드는 중 멈추거나 열리지 않을 수 있어서).`:`원본이 커서 4K 크기(긴 변 ${p.maxLong}px, 약 830만 픽셀)에 맞춰 줄여 저장합니다. 영상 녹화기가 받을 수 있는 최대 크기입니다.`);
  if(p.deviceLimited)w.push(`이 기기는 그림을 최대 ${p.devLong}px까지만 그릴 수 있어, 그만큼 그린 뒤 늘려 저장합니다. 크게 확대하면 조금 덜 선명할 수 있습니다.`);
  if(p.format==='gif'&&(Math.max(p.OW,p.OH)>1080||p.bytes>15*1048576))w.push('큰 움짤은 ① 메신저·SNS에 용량 제한으로 안 올라가거나 ② 사진첩·뷰어에서 늦게 열리고 재생이 끊기거나 ③ 만드는 동안 프레임이 빠져 뚝뚝 끊길 수 있습니다. 480~720을 권합니다.');
  return w.length?`<span class="videoWarn">${w.join('<br>')}</span>`:'';
@@ -97,7 +99,7 @@ async function recordVideo(opts={}){
  $('videoProgress').textContent=`녹화 준비 중 · ${W}×${H} · ${duration}초 / ${fps} FPS`;
  const start=performance.now();let frameNo=0;const secs=()=>Math.max(1,Math.round((performance.now()-start)/1000));
  recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};
- recorder.onerror=e=>{console.error('MediaRecorder error',e);videoCancelled=true;videoErrorMessage='인코더 오류로 영상 저장을 취소했습니다.'};
+ recorder.onerror=e=>{console.error('MediaRecorder error',e);videoCancelled=true;videoErrorMessage='이 기기에서 이 크기로는 영상을 만들지 못했습니다. 세부 설정에서 크기를 1080으로 줄여 다시 시도해 주세요.'};
  recorder.onstop=()=>{
   cancelAnimationFrame(videoAnimationFrame);videoAnimationFrame=0;track.stop();exportRender=null;leaveHiRes();fit();
   $('exportVideoBtn').disabled=false;$('cancelVideoBtn').hidden=true;videoRecorder=null;
