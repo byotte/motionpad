@@ -49,7 +49,8 @@ const MotionPhysics=Object.freeze({
     // A smooth damped spring with an exact stable target during sustained drags.
     for(const [pos,vel,target] of [['physX','physVX',px],['physY','physVY',py],['physScale','physSV',ps]]){
       z[vel]=((z[vel]||0)+(target-(z[pos]||0))*k*k*dt)*friction;
-      z[pos]=clamp((z[pos]||0)+z[vel]*dt,-.030,.030);
+      const lim=pos==='physScale'?.030:.030*(1+1.5*(z.pull??50)/100);
+      z[pos]=clamp((z[pos]||0)+z[vel]*dt,-lim,lim);
     }
     const wind=this.wind(z,t);
     const strength=clamp(z.strength??0,0,80)/80;

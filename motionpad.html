@@ -461,6 +461,7 @@ button[data-help]:hover::before{color:var(--ink)}
 
 <div class="field"><div class="fieldhead"><label for="springInput">반발 속도</label><output id="springValue">14</output></div><input id="springInput" type="range" min="3" max="30" step="1"></div>
 <div class="field"><div class="fieldhead"><label for="dampingInput">잔진동 길이</label><output id="dampingValue">62%</output></div><input id="dampingInput" type="range" min="0" max="100" step="1"></div>
+<div class="field"><div class="fieldhead"><label for="pullInput">잡아당김 (0%: 영역 전체가 함께 이동)</label><output id="pullValue">50%</output></div><input id="pullInput" type="range" min="0" max="100" step="1"></div>
 <div class="field" id="widthRow"><div class="fieldhead"><label for="widthInput">타원 너비</label><output id="widthValue">20%</output></div><input id="widthInput" type="range" min="4" max="88" step="1"></div>
 <div class="field" id="heightRow"><div class="fieldhead"><label for="heightInput">타원 높이</label><output id="heightValue">20%</output></div><input id="heightInput" type="range" min="4" max="88" step="1"></div>
 <div class="field"><div class="fieldhead"><label for="autoSpeedInput">자동 움직임 속도</label><output id="autoSpeedValue">1.0</output></div><input id="autoSpeedInput" type="range" min="0.2" max="3" step="0.1"></div>
@@ -626,10 +627,11 @@ const ZONE_FIELDS=[
  num('dragGain',100,0,200,{input:'dragGainInput',output:'dragGainValue',fmt:pct}),
  num('holdGain',60,0,200,{input:'holdGainInput',output:'holdGainValue',fmt:pct}),
  num('flickGain',100,0,200,{input:'flickGainInput',output:'flickGainValue',fmt:pct}),
+ num('pull',50,0,100,{input:'pullInput',output:'pullValue',fmt:pct}),
  flag('locked',{input:'lockedInput',check:true,noPreview:true}),
 ];
 // 저장하지 않는 실행 중 상태(물리·터치). 불러올 때마다 초기화된다.
-function zoneRuntime(i){return {s:0,v:0,phase:i*1.7+.2,hitDX:0,hitDY:1,hitPulse:0,hitX:.5,hitY:.5,hitAt:-20,hitPower:0,physX:0,physY:0,physVX:0,physVY:0,physScale:0,physSV:0,dragging:false,desiredX:0,desiredY:0,desiredScale:0,chainNodes:null,branchNodes:null,spineTip:[0,0],spineMid:[0,0],branchTip:[0,0],windX:0,windY:0,physicsOutput:null}}
+function zoneRuntime(i){return {s:0,v:0,phase:i*1.7+.2,hitDX:0,hitDY:1,hitPulse:0,hitX:.5,hitY:.5,grabX:.5,grabY:.5,hitAt:-20,hitPower:0,physX:0,physY:0,physVX:0,physVY:0,physScale:0,physSV:0,dragging:false,desiredX:0,desiredY:0,desiredScale:0,chainNodes:null,branchNodes:null,spineTip:[0,0],spineMid:[0,0],branchTip:[0,0],windX:0,windY:0,physicsOutput:null}}
 const ZONE_UI=ZONE_FIELDS.filter(f=>f.ui);
 function clean(z){const out={};for(const f of ZONE_FIELDS)out[f.key]=f.save(z);return out}
 function sanitize(z,i){const kind=['brush','ellipse','raster','polygon'].includes(z.kind)?z.kind:'ellipse';const n=zNum;
@@ -1307,7 +1309,7 @@ overlay.addEventListener('pointerdown',e=>{
   if(viewerOpen||mode==='play'||touchPreview){
     if(pointers.size>1)return;
     const z=hit(p.x,p.y);gesture={type:'play',id:z?.id||null,start:p,last:p,time:performance.now(),lastTime:performance.now(),dragged:false};
-    if(z){z.dragging=false;z.desiredX=z.desiredY=z.desiredScale=0;z.hitX=p.x;z.hitY=p.y}return;
+    if(z){z.dragging=false;z.desiredX=z.desiredY=z.desiredScale=0;z.hitX=p.x;z.hitY=p.y;z.grabX=p.x;z.grabY=p.y}return;
   }
   if(mode==='pan'||spacePanHeld){
     if(pointers.size!==1)return;gesture={type:'pan',clientX:e.clientX,clientY:e.clientY,panX,panY};return;
@@ -1388,10 +1390,11 @@ overlay.addEventListener('pointermove',e=>{
       const max=.003+(z.strength/80)*.016,
         gain=(z.dragGain??100)/100,
         dx=p.x-g.start.x,dy=p.y-g.start.y,dist=Math.hypot(dx,dy);
-      const mult=Math.min(max,dist*.14)*gain;
+      const reachUp=1+1.5*(z.pull??50)/100;// 2-B: 잡아당길수록 손가락을 멀리 끌 때 더 따라온다
+      const mult=Math.min(max*reachUp,dist*.14)*gain;
       const [vx,vy]=projectMotion(z.axis,dx/Math.max(.0001,dist)*mult,dy/Math.max(.0001,dist)*mult);
       if(z.axis==='pulse')z.desiredScale=-Math.min(.009,dist*.05)*gain;
-      z.desiredX=clamp(vx,-.025,.025);z.desiredY=clamp(vy,-.025,.025);
+      z.desiredX=clamp(vx,-.025*reachUp,.025*reachUp);z.desiredY=clamp(vy,-.025*reachUp,.025*reachUp);
       z.hitX=p.x;z.hitY=p.y;
     }return;
   }
@@ -1857,7 +1860,7 @@ uniform float u_tailCutout;
 uniform sampler2D u_tailOriginal,u_tailMask;
 uniform float u_baseExclude;
 uniform vec4 u_zone[12],u_motion[12],u_fx[12],u_tap[12],u_pivot[12],u_flow[12],u_spine[12],u_spinemotion[12];
-uniform vec4 u_chainMid[12],u_branchLine[12],u_branchMotion[12],u_pivotExtra[12];
+uniform vec4 u_chainMid[12],u_branchLine[12],u_branchMotion[12],u_pivotExtra[12],u_pull[12];
 uniform int u_count;
 uniform float u_time;
 uniform vec4 u_ambient;
@@ -1890,7 +1893,13 @@ void main(){
    float radius=max(.028,length(z.zw)*1.15);
    float pinWeight=smoothstep(.018,radius,anchor);
    float pivotWeight=mix(1.0,pinWeight,piv.z*clamp(piv.w*1.65,0.0,1.0));
-   vec2 local=mo.xy*pivotWeight+rel*mo.z*pivotWeight;
+   // 2-B 잡아당김: 끌기 변위 D를 누른 지점 둘레에 모은다. pull 0 = 영역 전체가 함께 이동(이전과 같음).
+   vec4 pl=u_pull[i];float pull=mid.z;
+   float reach=max(.02,length(z.zw)*mix(1.1,.42,pull));
+   float grab=exp(-dot(v_uv-pl.xy,v_uv-pl.xy)/(reach*reach));
+   vec2 pulled=pl.zw*grab*(1.0+6.0*pull);
+   pulled/=1.0+length(pulled)/.06;
+   vec2 local=(mo.xy-pl.zw+mix(pl.zw,pulled,pull))*pivotWeight+rel*mo.z*pivotWeight;
    // Local breathing is a smooth displacement field, not a hard rectangular scale.
    float tBreath=u_time*mo.w,phase=fl.w;
    float inhale=.76*sin(tBreath*1.40+phase*.12-.3)+.24*sin(tBreath*.72+phase*.08+.34);
@@ -2235,7 +2244,7 @@ function setupGL(){
     program=gl.createProgram();gl.attachShader(program,vs);gl.attachShader(program,fs);gl.linkProgram(program);
     if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error('Shader link: '+gl.getProgramInfoLog(program));
     gl.useProgram(program);
-    uni={zone:gl.getUniformLocation(program,'u_zone[0]'),motion:gl.getUniformLocation(program,'u_motion[0]'),fx:gl.getUniformLocation(program,'u_fx[0]'),tap:gl.getUniformLocation(program,'u_tap[0]'),pivot:gl.getUniformLocation(program,'u_pivot[0]'),flow:gl.getUniformLocation(program,'u_flow[0]'),spine:gl.getUniformLocation(program,'u_spine[0]'),spinemotion:gl.getUniformLocation(program,'u_spinemotion[0]'),chainMid:gl.getUniformLocation(program,'u_chainMid[0]'),branchLine:gl.getUniformLocation(program,'u_branchLine[0]'),branchMotion:gl.getUniformLocation(program,'u_branchMotion[0]'),pivotExtra:gl.getUniformLocation(program,'u_pivotExtra[0]'),baseExclude:gl.getUniformLocation(program,'u_baseExclude'),tailCutout:gl.getUniformLocation(program,'u_tailCutout'),time:gl.getUniformLocation(program,'u_time'),count:gl.getUniformLocation(program,'u_count'),ambient:gl.getUniformLocation(program,'u_ambient')};
+    uni={pull:gl.getUniformLocation(program,'u_pull[0]'),zone:gl.getUniformLocation(program,'u_zone[0]'),motion:gl.getUniformLocation(program,'u_motion[0]'),fx:gl.getUniformLocation(program,'u_fx[0]'),tap:gl.getUniformLocation(program,'u_tap[0]'),pivot:gl.getUniformLocation(program,'u_pivot[0]'),flow:gl.getUniformLocation(program,'u_flow[0]'),spine:gl.getUniformLocation(program,'u_spine[0]'),spinemotion:gl.getUniformLocation(program,'u_spinemotion[0]'),chainMid:gl.getUniformLocation(program,'u_chainMid[0]'),branchLine:gl.getUniformLocation(program,'u_branchLine[0]'),branchMotion:gl.getUniformLocation(program,'u_branchMotion[0]'),pivotExtra:gl.getUniformLocation(program,'u_pivotExtra[0]'),baseExclude:gl.getUniformLocation(program,'u_baseExclude'),tailCutout:gl.getUniformLocation(program,'u_tailCutout'),time:gl.getUniformLocation(program,'u_time'),count:gl.getUniformLocation(program,'u_count'),ambient:gl.getUniformLocation(program,'u_ambient')};
     rebuildMesh();
     function newTexture(unit){const tex=gl.createTexture();gl.activeTexture(unit);gl.bindTexture(gl.TEXTURE_2D,tex);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return tex}
     imageTex=newTexture(gl.TEXTURE0);maskTex=newTexture(gl.TEXTURE1);baseMaskTex=newTexture(gl.TEXTURE2);backgroundTex=newTexture(gl.TEXTURE3);
@@ -2266,8 +2275,11 @@ function cpuDeformation(z,x,y){
  let near=Math.hypot(x-(z.pivotX??z.x),y-(z.pivotY??z.y));
  for(const p of (z.extraPivots||[]))near=Math.min(near,Math.hypot(x-p[0],y-p[1]));
  const pin=smoothstep(.018,radius,near),pivotWeight=z.pivotEnabled?1+(pin-1)*clamp((z.pivotStrength??60)/100*1.65,0,1):1;
- let dx=(z.motionX||0)*pivotWeight+relX*(z.motionScale||0)*pivotWeight;
- let dy=(z.motionY||0)*pivotWeight+relY*(z.motionScale||0)*pivotWeight;
+ const pull=(z.pull??50)/100,reach=Math.max(.02,Math.hypot(z.rx,z.ry)*(1.1+(.42-1.1)*pull));
+ const grab=Math.exp(-((x-(z.grabX??z.x))**2+(y-(z.grabY??z.y))**2)/(reach*reach)),D=[z.physX||0,z.physY||0];
+ let px=D[0]*grab*(1+6*pull),py=D[1]*grab*(1+6*pull);const soft=1+Math.hypot(px,py)/.06;px/=soft;py/=soft;
+ let dx=((z.motionX||0)-D[0]+D[0]+(px-D[0])*pull)*pivotWeight+relX*(z.motionScale||0)*pivotWeight;
+ let dy=((z.motionY||0)-D[1]+D[1]+(py-D[1])*pull)*pivotWeight+relY*(z.motionScale||0)*pivotWeight;
  const t=elapsed*(z.breathSpeed??1),phase=z.phase;
  const inhale=.76*Math.sin(t*1.4+phase*.12-.3)+.24*Math.sin(t*.72+phase*.08+.34);
  const rd=Math.hypot(relX/Math.max(z.rx,.03),relY/Math.max(z.ry,.03));
@@ -2322,6 +2334,7 @@ function render(){
  }
  if(gl){
    const zp=new Float32Array(LIMIT*4),mo=new Float32Array(LIMIT*4),fx=new Float32Array(LIMIT*4),tp=new Float32Array(LIMIT*4),pv=new Float32Array(LIMIT*4),fl=new Float32Array(LIMIT*4),sp=new Float32Array(LIMIT*4),sm=new Float32Array(LIMIT*4),cm=new Float32Array(LIMIT*4),bl=new Float32Array(LIMIT*4),bm=new Float32Array(LIMIT*4),pe=new Float32Array(LIMIT*4);
+   const pu=new Float32Array(LIMIT*4);
    for(let i=0;i<zones.length;i++){
      const z=zones[i],dir=z.flowAngle*Math.PI/180;
      zp.set([z.x,z.y,z.rx,z.ry],i*4);
@@ -2333,7 +2346,8 @@ function render(){
      const a=z.spine?.[0]||[z.x,z.y],b=z.spine?.[z.spine.length-1]||[z.x,z.y];
      sp.set([a[0],a[1],b[0],b[1]],i*4);
      sm.set([z.spineTip?.[0]||0,z.spineTip?.[1]||0,z.spine?.length>=2?1:0,0],i*4);
-     cm.set([z.spineMid?.[0]||0,z.spineMid?.[1]||0,0,0],i*4);
+     cm.set([z.spineMid?.[0]||0,z.spineMid?.[1]||0,(z.pull??50)/100,0],i*4);
+     pu.set([z.grabX??z.x,z.grabY??z.y,z.physX||0,z.physY||0],i*4);
      const ba=z.branch?.[0]||[z.x,z.y],bb=z.branch?.[z.branch.length-1]||[z.x,z.y];
      bl.set([ba[0],ba[1],bb[0],bb[1]],i*4);bm.set([z.branchTip?.[0]||0,z.branchTip?.[1]||0,z.branch?.length>=2?1:0,0],i*4);
      const ep=z.extraPivots||[];pe.set([ep[0]?.[0]??-1,ep[0]?.[1]??-1,ep[1]?.[0]??-1,ep[1]?.[1]??-1],i*4);
@@ -2343,7 +2357,7 @@ function render(){
    gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,maskTex);
    gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,baseMaskTex);
    gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,backgroundTex);
-   for(const [name,data] of [['zone',zp],['motion',mo],['fx',fx],['tap',tp],['pivot',pv],['flow',fl],['spine',sp],['spinemotion',sm],['chainMid',cm],['branchLine',bl],['branchMotion',bm],['pivotExtra',pe]])if(uni[name])gl.uniform4fv(uni[name],data);
+   for(const [name,data] of [['zone',zp],['motion',mo],['fx',fx],['tap',tp],['pivot',pv],['flow',fl],['spine',sp],['spinemotion',sm],['chainMid',cm],['branchLine',bl],['branchMotion',bm],['pivotExtra',pe],['pull',pu]])if(uni[name])gl.uniform4fv(uni[name],data);
    gl.uniform1f(uni.tailCutout,tailPlate?zones.indexOf(tailCutoutZone()):-1);
    gl.uniform1f(uni.baseExclude,baseBackgroundExclude&&backgroundPlate?1:0);
    gl.uniform4f(uni.ambient,ambient.enabled?1:0,ambient.enabled?ambient.breath/100:0,ambient.enabled?ambient.sway/100:0,ambient.enabled?ambient.light/100:0);
@@ -2476,7 +2490,8 @@ const MotionPhysics=Object.freeze({
     // A smooth damped spring with an exact stable target during sustained drags.
     for(const [pos,vel,target] of [['physX','physVX',px],['physY','physVY',py],['physScale','physSV',ps]]){
       z[vel]=((z[vel]||0)+(target-(z[pos]||0))*k*k*dt)*friction;
-      z[pos]=clamp((z[pos]||0)+z[vel]*dt,-.030,.030);
+      const lim=pos==='physScale'?.030:.030*(1+1.5*(z.pull??50)/100);
+      z[pos]=clamp((z[pos]||0)+z[vel]*dt,-lim,lim);
     }
     const wind=this.wind(z,t);
     const strength=clamp(z.strength??0,0,80)/80;

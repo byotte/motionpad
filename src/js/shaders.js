@@ -23,7 +23,7 @@ uniform float u_tailCutout;
 uniform sampler2D u_tailOriginal,u_tailMask;
 uniform float u_baseExclude;
 uniform vec4 u_zone[12],u_motion[12],u_fx[12],u_tap[12],u_pivot[12],u_flow[12],u_spine[12],u_spinemotion[12];
-uniform vec4 u_chainMid[12],u_branchLine[12],u_branchMotion[12],u_pivotExtra[12];
+uniform vec4 u_chainMid[12],u_branchLine[12],u_branchMotion[12],u_pivotExtra[12],u_pull[12];
 uniform int u_count;
 uniform float u_time;
 uniform vec4 u_ambient;
@@ -56,7 +56,13 @@ void main(){
    float radius=max(.028,length(z.zw)*1.15);
    float pinWeight=smoothstep(.018,radius,anchor);
    float pivotWeight=mix(1.0,pinWeight,piv.z*clamp(piv.w*1.65,0.0,1.0));
-   vec2 local=mo.xy*pivotWeight+rel*mo.z*pivotWeight;
+   // 2-B 잡아당김: 끌기 변위 D를 누른 지점 둘레에 모은다. pull 0 = 영역 전체가 함께 이동(이전과 같음).
+   vec4 pl=u_pull[i];float pull=mid.z;
+   float reach=max(.02,length(z.zw)*mix(1.1,.42,pull));
+   float grab=exp(-dot(v_uv-pl.xy,v_uv-pl.xy)/(reach*reach));
+   vec2 pulled=pl.zw*grab*(1.0+6.0*pull);
+   pulled/=1.0+length(pulled)/.06;
+   vec2 local=(mo.xy-pl.zw+mix(pl.zw,pulled,pull))*pivotWeight+rel*mo.z*pivotWeight;
    // Local breathing is a smooth displacement field, not a hard rectangular scale.
    float tBreath=u_time*mo.w,phase=fl.w;
    float inhale=.76*sin(tBreath*1.40+phase*.12-.3)+.24*sin(tBreath*.72+phase*.08+.34);
