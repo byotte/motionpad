@@ -295,7 +295,7 @@ function zoneSummary(z) {
     page.on('dialog', d => nativeDialogs.push(d.type()));
     await openImage(page);
     await clickMode(page, 'ellipseMode'); await drag(page, [[0.36, 0.25], [0.64, 0.52]]);
-    await page.evaluate(() => { document.getElementById('partsPanel').open = true; });
+    await page.evaluate(() => { document.getElementById('partsPanel').open = true; const zp = document.getElementById('zonesPanel'); if (zp) zp.open = true; });
     // 메뉴: 영역 칩 우클릭 → 앱 메뉴가 있으면 '복제'
     await page.locator('#zoneList .chip').first().click({ button: 'right' });
     await rafs(page, 2);
