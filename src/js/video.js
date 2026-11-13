@@ -20,9 +20,9 @@ function safeDownloadVideo(blob,name){
  setStatus('영상 저장을 시작했습니다. 다운로드 목록에서 파일을 확인하세요.');
 }
 async function recordVideo(){
- if(!ready){alert('먼저 이미지를 불러와 주세요.');return}
+ if(!ready){showNotice('영상 내보내기','먼저 그림을 열어 주세요.');return}
  if(videoRecorder&&videoRecorder.state!=='inactive')return;
- const mime=videoMimeType();if(!mime){alert('현재 브라우저는 동영상 녹화를 지원하지 않습니다. Chrome에서 다시 시도해 주세요.');return}
+ const mime=videoMimeType();if(!mime){showNotice('영상 내보내기','이 브라우저는 영상 녹화를 지원하지 않습니다. Chrome에서 다시 시도해 주세요.');return}
  const duration=Number($('videoDuration').value)||5,fps=Number($('videoFPS').value)||30;
  const target=Math.min(1280,renderWidth),W=Math.round(target),H=Math.max(1,Math.round(target*renderHeight/renderWidth));
  const output=document.createElement('canvas');output.width=W;output.height=H;
@@ -31,7 +31,7 @@ async function recordVideo(){
  const stream=output.captureStream(fps),track=stream.getVideoTracks()[0];videoCaptureTrack=track;
  const chunks=[];let recorder;
  try{recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:Math.min(8_000_000,Math.max(1_200_000,W*H*3))});}
- catch(e){track.stop();alert('영상 인코더를 시작하지 못했습니다: '+e.message);return}
+ catch(e){track.stop();showNotice('영상 내보내기','영상 녹화를 시작하지 못했습니다.'+why(e));return}
  blinkEpoch=elapsed;
  videoRecorder=recorder;videoCancelled=false;videoErrorMessage='';
  $('exportVideoBtn').disabled=true;$('cancelVideoBtn').hidden=false;
@@ -67,6 +67,6 @@ async function recordVideo(){
  }
  videoAnimationFrame=requestAnimationFrame(nextFrame);
 }
-$('exportVideoBtn').onclick=()=>recordVideo().catch(e=>{console.error(e);$('exportVideoBtn').disabled=false;$('cancelVideoBtn').hidden=true;alert('영상 저장 중 오류: '+e.message)});
+$('exportVideoBtn').onclick=()=>recordVideo().catch(e=>{console.error(e);$('exportVideoBtn').disabled=false;$('cancelVideoBtn').hidden=true;showNotice('영상 내보내기','영상을 저장하다 문제가 생겼습니다.'+why(e))});
 $('cancelVideoBtn').onclick=()=>interruptVideoRecording('사용자가 영상 저장을 취소했습니다.');
 

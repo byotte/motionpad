@@ -24,7 +24,7 @@ $('startProject').onclick=async()=>{if(await keepPrevious('프로젝트 열기')
 $('resumeProject').onclick=async()=>{
  if(!storedLayoutProject)return;
  try{await restoreProjectObject(storedLayoutProject);setMode('play');}
- catch(err){alert('이전 작업을 열지 못했습니다: '+err.message);}
+ catch(err){showNotice('이어하기 실패','이전 작업을 열지 못했습니다.'+why(err));}
 };
 for(const id of ['imageBtn','restoreBtn'])$(id).addEventListener('click',()=>$('filesDialog').close());
 

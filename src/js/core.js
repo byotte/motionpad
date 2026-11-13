@@ -23,11 +23,24 @@ function askConfirm({title,message,ok='확인',cancel='취소'}){
  return new Promise(resolve=>{
   const d=$('confirmDialog');if(!d||d.open){resolve(false);return}
   $('confirmTitle').textContent=title;$('confirmMessage').textContent=message;
-  $('confirmOk').textContent=ok;$('confirmCancel').textContent=cancel;
+  $('confirmOk').textContent=ok;$('confirmCancel').textContent=cancel;$('confirmCancel').hidden=false;$('confirmOk').classList.add('warn');
   const done=v=>{d.close();resolve(v)};
   $('confirmOk').onclick=()=>done(true);$('confirmCancel').onclick=()=>done(false);
   d.oncancel=e=>{e.preventDefault();done(false)};
   d.showModal();$('confirmCancel').focus();
+ });
+}
+// 3-A: 브라우저 기본 알림창(alert) 대신 앱 디자인 알림창. 버튼 하나, 닫으면 끝.
+const why=e=>e&&e.message?` (${e.message})`:'';// 알림창 끝에 붙이는 원인(있을 때만)
+function showNotice(title,message){
+ return new Promise(resolve=>{
+  const d=$('confirmDialog');if(!d){resolve();return}
+  if(d.open){setStatus(message);resolve();return}
+  $('confirmTitle').textContent=title;$('confirmMessage').textContent=message;
+  $('confirmOk').textContent='확인';$('confirmOk').classList.remove('warn');$('confirmCancel').hidden=true;
+  const done=()=>{d.close();resolve()};
+  $('confirmOk').onclick=done;d.oncancel=e=>{e.preventDefault();done()};
+  d.showModal();$('confirmOk').focus();
  });
 }
 // 마지막으로 파일 저장·열기 했을 때와 지금이 다른가(새 그림·프로젝트 열기 전 확인용)
