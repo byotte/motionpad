@@ -82,6 +82,8 @@ const round = v => Math.round(v * 100) / 100;
 async function newPage(browser, vp, theme, frozen = false) {
   const { width, height, ...rest } = vp;
   const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1, acceptDownloads: true, ...rest });
+  // 시험은 내려받기 경로로 저장한다(저장 위치 고르기 창은 자동 조작으로 다룰 수 없다)
+  await context.addInitScript(() => { try { Object.defineProperty(window, 'showSaveFilePicker', { value: undefined }); } catch (_) {} });
   if (frozen) {
     // install만 하면 시간이 실제처럼 흘러 위상이 흔들린다 → pauseAt으로 완전히 멈추고 settle()로만 진행
     await context.clock.install({ time: new Date('2026-01-01T00:00:00Z') });

@@ -28,6 +28,7 @@ const rafs = (p, n) => p.evaluate(n => new Promise(r => { let k = 0; const f = (
 (async () => {
   const browser = await chromium.launch(), errors = [];
   const ctx = await browser.newContext({ viewport: { width: 1200, height: 900 }, acceptDownloads: true }), page = await ctx.newPage();
+  await ctx.addInitScript(() => { try { Object.defineProperty(window, 'showSaveFilePicker', { value: undefined }); } catch (_) {} });
   page.on('pageerror', e => errors.push(String(e))); page.on('console', m => { if (m.type() === 'error') errors.push(m.text().slice(0, 200)); });
   await page.goto('file://' + TARGET);
   await page.setInputFiles('#imageFile', IMG); await page.waitForSelector('.workspace:not([hidden])'); await rafs(page, 3);

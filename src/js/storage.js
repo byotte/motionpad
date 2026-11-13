@@ -12,10 +12,10 @@ $('loadNamedBtn').onclick=async()=>{const k=$('projectSelect').value;if(!k)retur
 $('deleteNamedBtn').onclick=async()=>{const k=$('projectSelect').value;if(!k)return;if(!await askConfirm({title:'보관한 프로젝트 삭제',message:`기기에 보관한 ‘${k.slice(6)}’을(를) 지울까요? 지우면 되돌릴 수 없습니다.`,ok:'삭제'}))return;try{await dbDelete(k);await refreshNamed();setStatus('저장된 프로젝트를 삭제했습니다.')}catch(e){showNotice('삭제 실패','보관한 프로젝트를 지우지 못했습니다.'+why(e))}};
 function dbGet(){return new Promise((ok,fail)=>{const t=db.transaction('projects','readonly');const r=t.objectStore('projects').get('active');r.onsuccess=()=>ok(r.result);r.onerror=()=>fail(r.error)})}
 function scheduleSave(){if(!ready||!db)return;clearTimeout(saveTimer);saveTimer=setTimeout(async()=>{try{await dbPut({image:imgBlob,zones:zones.map(clean),audio:audioBlob,audioName,extra:extraState(),savedAt:Date.now()});saveError=false}catch(e){if(!saveError){setStatus('자동 저장에 실패했습니다. 프로젝트 파일로 저장해 주세요.');saveError=true}console.warn(e)}},700)}
-const MAX_PROJECT_BYTES=45*1024*1024;
+const MAX_PROJECT_BYTES=160*1024*1024,MAX_PROJECT_LABEL='160MB';
 function downloadProject(blob,name){
   if(!blob.size)throw Error('저장할 데이터가 없습니다.');
-  if(blob.size>MAX_PROJECT_BYTES)throw Error('프로젝트 파일이 45MB를 넘습니다. 이미지나 음악 용량을 줄여 주세요.');
+  if(blob.size>MAX_PROJECT_BYTES)throw Error(`프로젝트 파일이 ${MAX_PROJECT_LABEL}를 넘습니다. 이미지나 음악 용량을 줄여 주세요.`);
 
   const link=document.createElement('a');
   const url=URL.createObjectURL(blob);

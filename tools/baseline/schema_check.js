@@ -36,6 +36,8 @@ fs.writeFileSync(path.join(OUT, 'input.motionpad.json'), JSON.stringify(project)
 
 async function run(browser, file) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true });
+  // 시험은 내려받기 경로로 저장한다(저장 위치 고르기 창은 자동 조작으로 다룰 수 없다)
+  await context.addInitScript(() => { try { Object.defineProperty(window, 'showSaveFilePicker', { value: undefined }); } catch (_) {} });
   // 빈 아이디 영역의 새 아이디를 같게 하려고 난수를 고정
   await context.addInitScript(() => { let a = 7; Math.random = () => { a = (a * 16807) % 2147483647; return a / 2147483647; }; });
   const page = await context.newPage();
