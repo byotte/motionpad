@@ -31,18 +31,22 @@ function videoPlan(sizeOverride){
  const size=sizeOverride||radioValue('videoSize')||'orig',format=radioValue('videoFormat')||'video';
  // 3-G: 원본 = 처음 연 그림의 크기(편집 사본 1900px가 아니라). 영상은 긴 변 3840(4K), 움짤은 2048까지.
  const up=Math.max(1,Math.max(sourceSize.w,sourceSize.h)/Math.max(rw,rh)||1),maxLong=format==='gif'?2048:3840;
- let s=size==='orig'?up:Number(size)/Math.min(OW,OH);
+ // 직접 입력: 비율 유지면 가로에 맞춰 같은 비율로, 아니면 적은 가로×세로 그대로(그림과 비율이 다르면 '비율이 다를 때' 방식으로 채운다).
+ const custom=size==='custom',cw=clamp(Number($('videoW').value)||0,16,3840),ch=clamp(Number($('videoH').value)||0,16,3840),free=custom&&!$('videoKeepRatio').checked;
+ if(free){const a=cw/ch,ia=rw/rh;if(fitMode==='fill'?a<ia:a>=ia){OH=rh;OW=rh*a}else{OW=rw;OH=rw/a}}
+ let s=size==='orig'?up:custom?cw/OW:Number(size)/Math.min(OW,OH);
  // 영상 인코더는 긴 변뿐 아니라 픽셀 수도 4K(3840×2160 = 약 830만)까지만 받는다(넘으면 녹화가 실패한다, 3-G 측정).
  const lim4k=format==='gif'?Infinity:Math.sqrt(3840*2160/(OW*OH)),sMax=Math.min(maxLong/Math.max(OW,OH),lim4k);
  const capped=s>sMax*1.001;s=Math.min(s,sMax);
  OW=even(OW*s);OH=even(OH*s);
- const k=(ratio!=='image'&&fitMode==='fit')?Math.min(OW/rw,OH/rh):Math.max(OW/rw,OH/rh);
+ const fitActive=ratio!=='image'||free;
+ const k=(fitActive&&fitMode==='fit')?Math.min(OW/rw,OH/rh):Math.max(OW/rw,OH/rh);
  const lim=glLimits(),devLong=Math.min(8192,lim.view||4096,lim.tex||4096),dw=rw*k,dh=rh*k,cap=Math.min(1,devLong/Math.max(dw,dh));
  const srcLong=Math.max(sourceSize.w,sourceSize.h)||Math.max(rw,rh),drawLong=Math.max(dw,dh),deviceLimited=drawLong>devLong+1&&srcLong>devLong;
  const fps=Number($('videoFPS').value)||30,duration=Number($('videoDuration').value)||5,q=Number($('videoQuality').value);
  const bpp=.02*15**(q/100),bitrate=Math.round(clamp(bpp*OW*OH*fps,250_000,40_000_000));
  const gifColors=Math.round(32+q/100*224);
- return {format,gifColors,capped,maxLong,deviceLimited,devLong,drawLong,OW,OH,dw,dh,dx:(OW-dw)/2,dy:(OH-dh)/2,vw:Math.max(1,Math.round(dw*cap)),vh:Math.max(1,Math.round(dh*cap)),fps,duration,bitrate,bytes:format==='gif'?gifEstimate(OW,OH,fps,duration,gifColors):bitrate*duration/8,ratio,fitMode};
+ return {format,gifColors,capped,maxLong,deviceLimited,devLong,drawLong,OW,OH,dw,dh,dx:(OW-dw)/2,dy:(OH-dh)/2,vw:Math.max(1,Math.round(dw*cap)),vh:Math.max(1,Math.round(dh*cap)),fps,duration,bitrate,custom,fitActive,bytes:format==='gif'?gifEstimate(OW,OH,fps,duration,gifColors):bitrate*duration/8,ratio,fitMode};
 }
 // 움짤 용량 추정: 첫 장(전체) + 이후 장(바뀐 부분). 샘플 그림으로 잰 값에 맞춘 대략치.
 function gifEstimate(W,H,fps,duration,colors){const px=W*H,c=.55+.45*colors/256;return px*.45*c+px*.07*c*fps*duration}
@@ -57,7 +61,7 @@ function fmtBytes(b){return b>=1048576?`${(b/1048576).toFixed(b>=10485760?0:1)}M
 // 3-G: 원본·큰 크기를 골랐을 때만 나오는 안내.
 function videoWarnings(p){
  const w=[];
- if(p.capped)w.push(p.format==='gif'?`움짤은 긴 변 ${p.maxLong}px까지 저장합니다(그보다 크면 만드는 중 멈추거나 열리지 않을 수 있어서).`:`원본이 커서 4K 크기(긴 변 ${p.maxLong}px, 약 830만 픽셀)에 맞춰 줄여 저장합니다. 영상 녹화기가 받을 수 있는 최대 크기입니다.`);
+ if(p.capped)w.push(p.format==='gif'?`움짤은 긴 변 ${p.maxLong}px까지 저장합니다(그보다 크면 만드는 중 멈추거나 열리지 않을 수 있어서).`:`${p.custom?'입력한 크기가':'원본이'} 커서 4K 크기(긴 변 ${p.maxLong}px, 약 830만 픽셀)에 맞춰 줄여 저장합니다. 영상 녹화기가 받을 수 있는 최대 크기입니다.`);
  if(p.deviceLimited)w.push(`이 기기는 그림을 최대 ${p.devLong}px까지만 그릴 수 있어, 그만큼 그린 뒤 늘려 저장합니다. 크게 확대하면 조금 덜 선명할 수 있습니다.`);
  if(p.format==='gif'&&(Math.max(p.OW,p.OH)>1080||p.bytes>15*1048576))w.push('큰 움짤은 ① 메신저·SNS에 용량 제한으로 안 올라가거나 ② 사진첩·뷰어에서 늦게 열리고 재생이 끊기거나 ③ 만드는 동안 프레임이 빠져 뚝뚝 끊길 수 있습니다. 480~720을 권합니다.');
  return w.length?`<span class="videoWarn">${w.join('<br>')}</span>`:'';
@@ -67,13 +71,18 @@ function refreshVideoPlan(){
  const sizeOrig=document.querySelector('input[name="videoSize"][value="orig"]+span');
  if(sizeOrig){const o=videoPlan('orig');sizeOrig.textContent=`원본 ${o.OW}×${o.OH}`}
  const fmt=document.querySelector('input[name="videoFormat"][value="video"]+span');if(fmt)fmt.textContent=ext?`영상 (${ext})`:'영상';
- $('videoQualityValue').textContent=$('videoQuality').value;$('exportVideoBtn').textContent=p.format==='gif'?'움짤 저장':'영상 저장';
- $('videoFitRow').hidden=p.ratio==='image';
+ const q=Number($('videoQuality').value);$('videoQualityValue').textContent=`${q} · ${q<17?'낮음':q<50?'보통':q<84?'높음':'최고'}`;
+ $('videoCustomRow').hidden=!p.custom;
+ // 직접 입력 칸: 고르지 않았을 때는 지금 크기를 따라가고, 비율 유지면 세로는 가로에서 계산해 보여 준다.
+ if(!p.custom){$('videoW').value=p.OW;$('videoH').value=p.OH}else if($('videoKeepRatio').checked&&document.activeElement!==$('videoH'))$('videoH').value=p.OH;$('exportVideoBtn').textContent=p.format==='gif'?'움짤 저장':'영상 저장';
+ $('videoFitRow').hidden=!p.fitActive;
  $('videoEstimate').innerHTML=`예상: <b>${p.OW}×${p.OH} · ${p.duration}초 · ${p.fps} FPS${p.format==='gif'?` · ${p.gifColors}색`:''} · 약 ${fmtBytes(p.bytes)}</b><br><span class="micro">${p.format==='gif'?'움짤은 영상보다 훨씬 큽니다. 크기 480·짧은 길이를 권합니다.':'실제 용량은 움직임이 적으면 더 작아질 수 있습니다.'}</span>`+videoWarnings(p);
 }
 // 형식을 바꾸면 그 형식에 맞는 크기·FPS로 바꿔 둔다(움짤 480·15 FPS, 영상 원본·30 FPS). 이후 사용자가 바꾼 값은 그대로.
 for(const r of document.querySelectorAll('input[name="videoFormat"]'))r.addEventListener('change',()=>{const gif=r.value==='gif'&&r.checked;
  const s=document.querySelector(`input[name="videoSize"][value="${gif?'480':'orig'}"]`);if(s)s.checked=true;$('videoFPS').value=gif?'15':'30';refreshVideoPlan()});
+// 비율 유지 상태에서 세로를 고치면 가로를 같은 비율로 맞춘다(가로를 고치면 세로는 refreshVideoPlan이 맞춘다).
+$('videoH').addEventListener('input',()=>{if(!ready||!$('videoKeepRatio').checked)return;const p=videoPlan('orig'),h=Number($('videoH').value);if(h>0)$('videoW').value=Math.round(h*p.OW/p.OH)});
 for(const el of document.querySelectorAll('#videoDialog input,#videoDialog select'))el.addEventListener('input',refreshVideoPlan);
 document.querySelector('[data-dialog="videoDialog"]')?.addEventListener('click',()=>setTimeout(refreshVideoPlan));
 // opts.live: 플레이 화면 녹화(● 버튼). 멈출 때까지(최대 60초) 녹화하고 끝 이어붙이기는 하지 않는다. opts.fx: 터치 이펙트 넣기.

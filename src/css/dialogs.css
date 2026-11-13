@@ -60,4 +60,7 @@
 .videoEstimate b{color:var(--accent);font-variant-numeric:tabular-nums}
 #videoDialog details{margin:6px 0;padding:0 9px 4px;border:1px solid var(--line);border-radius:4px}
 #videoDialog details>summary{padding:6px 0;font-size:12px;font-weight:700;cursor:pointer}
+.qualityScale{display:flex;justify-content:space-between;margin-top:2px;font-size:11px;color:var(--sub)}
+.videoCustom{display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-width:0}
+.videoCustom input[type=number]{width:72px;min-height:25px;padding:3px 6px;border:1px solid var(--line);border-radius:2px;background:var(--panel);color:var(--ink)}
 .videoWarn{display:block;margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);color:var(--warning);font-size:11px;line-height:1.5}
