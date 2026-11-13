@@ -245,7 +245,8 @@ function fit(){
   const w=Math.max(1,Math.floor(Math.min(maxW,maxH*r))),h=Math.max(1,Math.floor(w/r));
   surface.style.width=w+'px';surface.style.height=h+'px';
   const dpr=Math.min(window.devicePixelRatio||1,2)*qualityScale;
-  const f=Math.min(1,1700/Math.max(w*dpr,h*dpr)),W=Math.max(1,Math.floor(w*dpr*f)),H=Math.max(1,Math.floor(h*dpr*f));
+  const f=Math.min(1,1700/Math.max(w*dpr,h*dpr));let W=Math.max(1,Math.floor(w*dpr*f)),H=Math.max(1,Math.floor(h*dpr*f));
+  if(exportRender){W=exportRender.w;H=exportRender.h}// 3-D: 영상 녹화 중에는 화면 크기와 상관없이 고른 크기로 그린다
   if(view.width!==W||view.height!==H){for(const c of [view,overlay]){c.width=W;c.height=H}}
   if(gl)gl.viewport(0,0,W,H);
   applyZoom();markMask();updateRendererBadge();

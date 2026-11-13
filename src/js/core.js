@@ -3,7 +3,7 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),newId=()=>Math.random().toString(
 const LIMIT=12,TILE=384,COLS=4,ROWS=3;let zones=[],selected=null,mode='brush',imgBlob=null,bitmap=null,renderWidth=900,renderHeight=1100,ready=false,db=null,saveTimer=null,saveError=false;
 let gl=null,program=null,imageTex=null,maskTex=null,baseMaskTex=null,backgroundTex=null,uni={},draw2d=null,maskAtlas=document.createElement('canvas'),maskReady=false,maskDirty=true;
 maskAtlas.width=TILE*COLS;maskAtlas.height=TILE*ROWS;let masks=[];
-let touchPreview=false;
+let touchPreview=false,exportRender=null;// exportRender: 영상 녹화 중 그릴 크기(3-D)
 let baseClipEnabled=false,baseBackgroundExclude=true,baseEdge=1,baseMaskCanvas=null,backgroundPlate=null,lastBaseSignature='',lastBaseEdge=-1,baseForegroundSource=null;
 let pointers=new Map(),gesture=null,brushSize=10,viewerOpen=false,previousMode='brush',last=performance.now(),elapsed=0;
 let undoStack=[],redoStack=[],lastHistoryJSON='',imagePixels=null,edgeScores=null,audioBlob=null,audioName='',audioURL=null,activeAudio=null,audioCtx=null,audioMaster=null,musicTimer=null,musicPlaying=false,musicTick=0,effectMuted=false;
