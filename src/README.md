@@ -32,7 +32,8 @@ node tools/build.js --check  # motionpad.html이 src/와 같은지 확인(커밋
 | image-viewer | 셰이더 컴파일, 그림 불러오기, 예제, 감상 화면 |
 | audio | 효과음·배경음악 |
 | storage | 브라우저 내부 저장(IndexedDB), 자동 저장 |
-| video | 영상으로 저장 |
+| gif | 움짤(GIF) 인코더(3-E). 캔버스 없는 순수 계산 |
+| video | 영상·움짤로 저장(3-D·3-E) |
 | project-file | 프로젝트 파일 저장·열기 |
 | theme | 테마·화질 |
 | render | WebGL 준비, CPU 변형, render() |
