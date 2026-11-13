@@ -1,5 +1,5 @@
 # MotionPad 작업 규칙 (세션 시작 시 이 파일과 docs/BLUEPRINT.md만 먼저 읽는다)
-- **현재 위치: 1-A 완료(알고리즘·새로/더하기/빼기·도형/이동 도구, docs/progress/1-A.md). 다음은 1-B 고해상 마스크(가설, 측정부터) — 사용자 확인 후.** 이어받는 세션은 docs/progress/README.md(진행 현황·개발 방법·검증 도구)를 함께 읽는다.
+- **현재 위치: 1-A 완료(docs/progress/1-A.md). 1-B 측정 완료(docs/progress/1-B.md): 384 저장 손실은 작고(경계 평균 0.8px) 768 전면화는 폰 슬라이더 2.5배 느림·메모리 4배 → 보류 권장. 다음은 사용자 결정(1-B 닫고 2단계 / 대안 먼저).** 이어받는 세션은 docs/progress/README.md(진행 현황·개발 방법·검증 도구)를 함께 읽는다.
 - 최우선 기준: docs/BLUEPRINT.md. 우선순위 = 조작 난이도 > 결과물 완성도 > 경량화.
 - 검토 근거·개발안 상세: docs/REVIEW.md (필요할 때만 읽는다).
 - 배포본은 단일 HTML. 서버 전송 금지. 무거운 AI 모델 금지(별도 허락 시 실험만).
@@ -17,7 +17,7 @@
 - [해결 0-2] feather/spread 드래그 중 매 프레임 updateMasks→updateTailCutout→buildBackgroundPlate 재실행. 결과에 영향 없는 낭비. 마스크 갱신도 전체 영역 일괄.
 - [해결 0-2] previewMotion()이 setMode('play') 호출 → 마술봉/윤곽 미리보기와 editCheckpoint 소실. 해법: 모드 전환 대신 '터치 미리보기' 플래그.
 - outlineCosts: minimax 비용이라 선화 뒤 픽셀이 fg=bg≈255 동점 → threshold 1 미달로 탈락. 해법: 미결정 분류, 구멍 메우기, 선 두께 기반 장벽 감쇠, 외곽 배경색 모델.
-- 선택 결과 768px 계산 후 384 TILE로 다운샘플 저장. RLE runs가 TILE*TILE 전제(포맷 v2). 해상도 변경 시 v3 + 구버전 변환 필요.
+- 선택 결과 768px 계산 후 384 TILE로 다운샘플 저장. RLE runs가 TILE*TILE 전제(포맷 v2). 해상도 변경 시 v3 + 구버전 변환 필요. [측정 1-B] 손실 작음, 저장·undo 크기는 문제 아님, 비용은 마스크 생성 시간·메모리.
 - [해결 0-2] showZoneMenu가 prompt() 사용. 몸체 지정 시 feather/spread 강제 덮어쓰기.
 - [해결 0-3] 영역 속성 ~45개가 clean/sanitize/updateUI/updateValues/바인딩 목록/snap 6곳에 수동 나열.
 - [해결 0-4] CSS 7겹 지층, 브레이크포인트 10종+, 죽은 UI(#motionDialog 진입점 없음, allTestBtn 숨김, teal 테마 잔재), JS가 런타임에 DOM 재조립.

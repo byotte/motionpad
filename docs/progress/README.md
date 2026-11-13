@@ -8,7 +8,7 @@
 | 0-4a CSS 재작성(겉모습 유지) | 완료 | `0-4a.md` |
 | 0-4b 디자인 개선 + 테마 확정 | 완료 | `0-4b.md` |
 | 0-5 파일 분리 + 단일 HTML 합치기 | 완료 | `0-5.md` |
-| **1 선택 엔진** | **진행 중**: 1-A 완료(알고리즘·선택 방식·도형/이동 도구), 다음은 1-B 고해상 마스크(가설) | `1-A.md` |
+| **1 선택 엔진** | **진행 중**: 1-A 완료(알고리즘·선택 방식·도형/이동 도구), 1-B 측정 완료(전면 고해상화는 비용이 커서 권하지 않음, 사용자 결정 대기) | `1-A.md`, `1-B.md` |
 | 2 움직임 / 3 완성도 | 대기 | `docs/REVIEW.md` 개발안 v2 |
 
 ## 개발 방법 (0-5부터)
@@ -24,6 +24,7 @@
 - 선택 방식 동작 시험: `node tools/baseline/selop_check.js` (새로·더하기·빼기 9단계).
 - 실제 그림 비교: `node tools/select/try.js` (`samples/`, `tools/select/real.json`).
 - 선택 엔진 정확도: `node tools/select/bench.js <이름> [--base 이전이름] [--images]` (테스트 세트·정답 마스크 자동 생성, 결과 `tools/select/out/`). 자세히는 `1-A.md`.
+- 마스크 격자 측정(1-B): `node tools/select/grid.js [--images]`(정확도), `python3 tools/select/grid_crops.py`(확대 그림), `node tools/select/grid_cost.js`(시간·크기).
 - 기준 html이 필요하면 `git show <커밋>:motionpad.html > 파일`로 꺼내 쓴다. 0-5 끝 시점 결과물은 0-4b 끝과 바이트까지 같다.
 
 ## 사용자 요청 대기 목록 (해당 단계에서 반영)
