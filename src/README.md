@@ -24,7 +24,7 @@ node tools/build.js --check  # motionpad.html이 src/와 같은지 확인(커밋
 | zone-schema | 영역 속성표 ZONE_FIELDS(0-3), clean·sanitize |
 | zones | 되돌리기, 영역 추가·삭제·복제, 영역 메뉴, 패널 표시(updateUI/updateValues), 붓·래스터 |
 | selection | 마술봉, 윤곽(간략 범위지정), 올가미, 자석 올가미 |
-| pointer | 터치·마우스 입력, 핀치, 축 지정, 이동·변형 |
+| pointer | 터치·마우스 입력, 핀치, 축 지정, 이동, 도형 다듬기(손잡이·두 손가락) |
 | masks | 마스크 만들기·캐시, 배경판, 외곽 흔들기(tailCutout), 마스크 미리보기 |
 | overlay | 편집 오버레이 그리기, 화면 크기 감시 |
 | shaders | WebGL 셰이더 원문(VERT·FRAG) |

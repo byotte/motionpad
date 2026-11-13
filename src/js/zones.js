@@ -56,11 +56,18 @@ $('deleteBtn').onclick=deleteZone;$('quickDeleteBtn').onclick=deleteZone;functio
 function selectOp(){return document.querySelector('input[name="selectOp"]:checked')?.value||'new'}
 function setSelectOp(op){const r=document.querySelector(`input[name="selectOp"][value="${op}"]`);if(r)r.checked=true}
 function editableSelected(){const z=getSelected();return z&&!z.locked?z:null}
-function addEllipse(x,y,rx=.12,ry=.12){
- const z=editableSelected(),op=selectOp();
- if(z&&op==='new'){remember();Object.assign(z,{kind:'ellipse',x,y,rx,ry,rot:0,scale:1,baseX:x,baseY:y,runs:[],strokes:[],polygon:[]});markMask();updateUI();scheduleSave();return}
- if(z||op==='subtract'){const temp=sanitize({kind:'ellipse',x,y,rx,ry},zones.length);return applySelectionBits(rasterize(temp),'영역 '+(zones.length+1))}
- if(zones.length>=LIMIT){setStatus(`영역 최대 ${LIMIT}개`);return}remember();const n=sanitize({id:newId(),name:`영역 ${zones.length+1}`,kind:'ellipse',x,y,rx,ry},zones.length);zones.push(n);selected=n.id;markMask();updateUI();scheduleSave()}
+// 도형 추가(타원·사각형). shape = {kind:'ellipse',x,y,rx,ry} 또는 {kind:'polygon',polygon:[[x,y],...]}(사각형은 꼭짓점 4개)
+function addShape(shape){
+ const z=editableSelected(),op=selectOp(),label=shape.kind==='ellipse'?'영역':'사각형';
+ if(z&&op==='new'){// 모양만 바꾸고 움직임 설정은 유지. 도형 모양 그대로 둬서 나중에 손잡이로 다듬을 수 있게 한다
+  remember();
+  if(shape.kind==='ellipse')Object.assign(z,{kind:'ellipse',x:shape.x,y:shape.y,rx:shape.rx,ry:shape.ry,rot:0,scale:1,baseX:shape.x,baseY:shape.y,runs:[],strokes:[],polygon:[]});
+  else{Object.assign(z,{kind:'polygon',polygon:shape.polygon.map(p=>p.slice()),rot:0,scale:1,runs:[],strokes:[]});recalcPolygon(z);z.baseX=z.x;z.baseY=z.y}
+  markMask();updateUI();scheduleSave();return true}
+ if(z||op==='subtract'){const temp=sanitize(shape,zones.length);return applySelectionBits(rasterize(temp),`${label} ${zones.length+1}`)}
+ if(zones.length>=LIMIT){setStatus(`영역 최대 ${LIMIT}개`);return false}
+ remember();const n=sanitize({id:newId(),name:`${label} ${zones.length+1}`,...shape},zones.length);zones.push(n);selected=n.id;markMask();updateUI();scheduleSave();return true}
+function addEllipse(x,y,rx=.12,ry=.12){return addShape({kind:'ellipse',x,y,rx,ry})}
 function bitsToRuns(bits){const runs=[];let i=0;while(i<bits.length){if(!bits[i]){i++;continue}let st=i;while(i<bits.length&&bits[i])i++;runs.push([st,i-st])}return runs}
 function runsToBits(runs){const bits=new Uint8Array(TILE*TILE);for(const [st,len] of runs||[])bits.fill(1,clamp(st,0,bits.length),clamp(st+len,0,bits.length));return bits}
 function rawMaskCanvas(z){const c=document.createElement('canvas');c.width=c.height=TILE;const g=c.getContext('2d',{willReadFrequently:true});g.fillStyle='white';g.strokeStyle='white';if(z.kind==='ellipse'){g.beginPath();g.ellipse(z.x*TILE,z.y*TILE,Math.max(1,z.rx*TILE),Math.max(1,z.ry*TILE),z.rot||0,0,2*Math.PI);g.fill()}else if(z.kind==='brush'){for(const st of z.strokes)strokePath(g,st,TILE,TILE)}else if(z.kind==='polygon'){if(z.polygon.length){g.beginPath();g.moveTo(z.polygon[0][0]*TILE,z.polygon[0][1]*TILE);for(const p of z.polygon.slice(1))g.lineTo(p[0]*TILE,p[1]*TILE);g.closePath();g.fill()}}else if(z.kind==='raster'){const a=g.createImageData(TILE,TILE);const bits=runsToBits(z.runs);for(let i=0;i<bits.length;i++)if(bits[i]){let j=i*4;a.data[j]=a.data[j+1]=a.data[j+2]=a.data[j+3]=255}const raw=document.createElement('canvas');raw.width=raw.height=TILE;raw.getContext('2d').putImageData(a,0,0);g.save();g.translate(z.x*TILE,z.y*TILE);g.rotate(z.rot||0);g.scale(z.scale||1,z.scale||1);g.translate(-(z.baseX??z.x)*TILE,-(z.baseY??z.y)*TILE);g.drawImage(raw,0,0);g.restore() }return c}

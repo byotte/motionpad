@@ -32,7 +32,8 @@ const TILE = 384;
     await page.mouse.up(); await rafs();
   };
   const box = (x0, y0, x1, y1) => drag([[x0, y0], [x1, y1]]);
-  const tool = async (id) => { if (!(await page.locator(`#${id}.active`).count())) await page.locator('#' + id).click(); await rafs(); };
+  // 다른 도구이거나 터치 미리보기 중이면 도구를 누른다(사용자가 하던 작업으로 돌아가는 방법)
+  const tool = async (id) => { if (!(await page.locator(`#${id}.active`).count()) || (await page.locator('.workspace.touchPreview').count())) await page.locator('#' + id).click(); await rafs(); };
   const op = async (v) => { await page.locator(`#selOp label:has(input[value="${v}"])`).click(); };
   const status = () => page.locator('#status').textContent();
   let saveNo = 0;
