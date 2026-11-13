@@ -3,6 +3,15 @@
 /* Render-independent physics: output positions and displacements in normalized image UV.
    The Canvas fallback and WebGL shader consume the same motion outputs. */
 const MotionPhysics=Object.freeze({
+  // 2-C 쉬는 간격: 움직임(약 2.5초/속도) → 부드럽게 멈춤 → autoRest초 쉼 → 다시. 0이면 늘 1(이전과 같음).
+  restEnvelope(z,t){
+    const rest=clamp(z.autoRest||0,0,6);if(!rest)return 1;
+    const active=2.5/(z.autoSpeed||1),fade=Math.min(.6,active/3),period=active+rest;
+    const u=(((t+(z.phase||0)*.37)%period)+period)%period;
+    if(u>=active)return 0;
+    const s=v=>{v=clamp(v,0,1);return v*v*(3-2*v)};
+    return Math.min(s(u/fade),s((active-u)/fade));
+  },
   wave(t,phase=0){return .78*Math.sin(t+phase)+.22*Math.sin(t*.57+phase*.31+.75)},
   wind(z,t){
     const size=clamp((z.windStrength||0)/100,0,1);
@@ -52,9 +61,10 @@ const MotionPhysics=Object.freeze({
       const lim=pos==='physScale'?.030:.030*(1+1.5*(z.pull??50)/100);
       z[pos]=clamp((z[pos]||0)+z[vel]*dt,-lim,lim);
     }
-    const wind=this.wind(z,t);
+    const env=this.restEnvelope(z,t);z.autoEnv=env;
+    const wind=this.wind(z,t).map(v=>v*env);
     const strength=clamp(z.strength??0,0,80)/80;
-    const idle=z.auto?this.wave(t*1.18*(z.autoSpeed||1),z.phase)*strength:0;
+    const idle=z.auto?this.wave(t*1.18*(z.autoSpeed||1),z.phase)*strength*env:0;
     const [axisX,axisY]=TAP_DIRECTIONS[z.axis]||[.28,1];
     const idleX=z.axis==='pulse'?0:idle*.022*axisX;
     const idleY=z.axis==='pulse'?0:idle*.022*axisY;

@@ -69,12 +69,12 @@ function cpuDeformation(z,x,y){
  const rd=Math.hypot(relX/Math.max(z.rx,.03),relY/Math.max(z.ry,.03));
  const inner=smoothstep(0,.44,rd)*(1-smoothstep(.88,2.2,rd));
  const l=Math.hypot(relX+.0001,relY+.0001);
- const pulse=(z.breath||0)/40*.0105*inhale*inner*pivotWeight;
+ const pulse=(z.breath||0)*(z.autoEnv??1)/40*.0105*inhale*inner*pivotWeight;
  dx+=(relX+.0001)/l*pulse;dy+=(relY+.0001)/l*pulse;
- dx+=Math.sin(relY*42+elapsed*1.9+z.phase)*(z.wave||0)/40*.0036*pivotWeight;
- dy+=Math.sin(relX*38+elapsed*1.5+z.phase)*(z.wave||0)/40*.0022*pivotWeight;
- dx-=relY*Math.sin(elapsed*1.25+z.phase)*(z.twist||0)/35*.023*pivotWeight;
- dy+=relX*Math.sin(elapsed*1.25+z.phase)*(z.twist||0)/35*.023*pivotWeight;
+ dx+=Math.sin(relY*42+elapsed*1.9+z.phase)*(z.wave||0)*(z.autoEnv??1)/40*.0036*pivotWeight;
+ dy+=Math.sin(relX*38+elapsed*1.5+z.phase)*(z.wave||0)*(z.autoEnv??1)/40*.0022*pivotWeight;
+ dx-=relY*Math.sin(elapsed*1.25+z.phase)*(z.twist||0)*(z.autoEnv??1)/35*.023*pivotWeight;
+ dy+=relX*Math.sin(elapsed*1.25+z.phase)*(z.twist||0)*(z.autoEnv??1)/35*.023*pivotWeight;
  if(z.spine?.length>=2){
    const [dist,t]=distSegment(x,y,z.spine[0],z.spine[z.spine.length-1]);
    const influence=(1-smoothstep(.035,.21,dist))*pivotWeight;
@@ -92,7 +92,7 @@ function cpuDeformation(z,x,y){
    const pulse=Math.sin(rad*75-age*23)*Math.exp(-age*3)*(1-smoothstep(0,1.6,age))*(z.ripple/40)*.0036*z.hitPower*pivotWeight;
    dx+=(relX+.0001)/l*pulse;dy+=(relY+.0001)/l*pulse;
  }
- if((z.flow||0)>0){const flow=(z.flow||0)/40*.008,theta=(z.flowAngle||0)*Math.PI/180;dx+=Math.cos(theta)*flow*Math.sin(elapsed*.7);dy+=Math.sin(theta)*flow*Math.sin(elapsed*.7)}
+ if((z.flow||0)>0){const flow=(z.flow||0)*(z.autoEnv??1)/40*.008,theta=(z.flowAngle||0)*Math.PI/180;dx+=Math.cos(theta)*flow*Math.sin(elapsed*.7);dy+=Math.sin(theta)*flow*Math.sin(elapsed*.7)}
  return [clamp(dx,-.065,.065),clamp(dy,-.065,.065)];
 }
 function canvasWarpRegion(g,z,w,h,source=bitmap){
@@ -123,10 +123,11 @@ function render(){
      const z=zones[i],dir=z.flowAngle*Math.PI/180;
      zp.set([z.x,z.y,z.rx,z.ry],i*4);
      mo.set([z.motionX||0,z.motionY||0,z.motionScale||0,z.breathSpeed??1],i*4);
-     fx.set([z.breath/40,z.wave/40,z.twist/35,z.ripple/40],i*4);
+     const env=z.autoEnv??1;
+     fx.set([z.breath/40*env,z.wave/40*env,z.twist/35*env,z.ripple/40],i*4);
      tp.set([z.hitX,z.hitY,elapsed-z.hitAt,z.hitPower],i*4);
      pv.set([z.pivotX??z.x,z.pivotY??z.y,z.pivotEnabled?1:0,(z.pivotStrength??60)/100],i*4);
-     fl.set([(z.flow||0)/40*.014,Math.cos(dir),Math.sin(dir),z.phase],i*4);
+     fl.set([(z.flow||0)/40*.014*env,Math.cos(dir),Math.sin(dir),z.phase],i*4);
      const a=z.spine?.[0]||[z.x,z.y],b=z.spine?.[z.spine.length-1]||[z.x,z.y];
      sp.set([a[0],a[1],b[0],b[1]],i*4);
      sm.set([z.spineTip?.[0]||0,z.spineTip?.[1]||0,z.spine?.length>=2?1:0,0],i*4);

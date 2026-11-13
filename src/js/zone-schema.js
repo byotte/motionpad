@@ -58,6 +58,7 @@ const ZONE_FIELDS=[
  num('holdGain',60,0,200,{input:'holdGainInput',output:'holdGainValue',fmt:pct}),
  num('flickGain',100,0,200,{input:'flickGainInput',output:'flickGainValue',fmt:pct}),
  num('pull',50,0,100,{input:'pullInput',output:'pullValue',fmt:pct}),
+ num('autoRest',0,0,6,{input:'autoRestInput',output:'autoRestValue',fmt:v=>v?`${v.toFixed(1)}초`:'쉬지 않음'}),
  flag('locked',{input:'lockedInput',check:true,noPreview:true}),
 ];
 // 저장하지 않는 실행 중 상태(물리·터치). 불러올 때마다 초기화된다.
