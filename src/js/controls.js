@@ -18,9 +18,11 @@ $('fpsToggle').onclick=()=>{const b=$('fpsToggle');b.dataset.enabled=b.dataset.e
 function readAmbient(){
  const values={enabled:$('ambientOn').checked,breath:Number($('ambientBreath').value),sway:Number($('ambientSway').value),light:Number($('ambientLight').value)};
  if(Object.keys(values).every(key=>ambient[key]===values[key]))return;
+ if(values.enabled!==ambient.enabled)remember();// 켜기·끄기는 여기서, 슬라이더는 잡는 순간(아래) 되돌리기 지점을 만든다
  Object.assign(ambient,values);scheduleSave();previewMotion();
 }
 for(const id of ['ambientOn','ambientBreath','ambientSway','ambientLight'])$(id).addEventListener('input',()=>{readAmbient();updateAmbientLabels();if(id==='ambientOn')refreshBaseUI()});
+for(const id of ['ambientBreath','ambientSway','ambientLight','baseEdgeInput','maskColorInput','maskOpacityInput']){$(id).addEventListener('pointerdown',()=>remember(),{passive:true});$(id).addEventListener('focus',()=>remember())}
 function updateAmbientLabels(){for(const [k,id] of [['breath','ambientBreathVal'],['sway','ambientSwayVal'],['light','ambientLightVal']])$(id).textContent=ambient[k]+'%'}
 // 0-2: 옵션 조작 시 모드를 바꾸지 않는다. '터치 미리보기'만 켜서 선택 미리보기·복원 지점을 보존한다.
 function setTouchPreview(on){
