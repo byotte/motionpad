@@ -39,7 +39,7 @@
   .viewerAudio .btn{font-size:10px}
   #lassobar{gap:4px;padding-inline:4px}
   #blinkPreview{max-height:41dvh}
-  .blinkSettings .blinkControl{flex-basis:100%}
+  .blinkSettings{grid-template-columns:1fr}
   .blinkFooter{flex-wrap:nowrap}
   #blinkHint,#blinkApply{min-width:0}
 }

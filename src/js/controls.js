@@ -153,7 +153,7 @@ function playSfx(power=1){
     n.connect(filter);filter.connect(gain);gain.connect(audioMaster);n.start(t);n.stop(t+length+.005);
   }catch(e){console.warn('효과음 오류',e)}
 }
-function extraState(){return {blink:{eyes:blinkEyes,speed:blinkSpeed},base:{clip:baseClipEnabled,exclude:baseBackgroundExclude,edge:baseEdge},projectName:projectName||'내 프로젝트',maskColor:$('maskColorInput').value,maskOpacity:Number($('maskOpacityInput').value),track:$('trackSelect').value,musicVolume:Number($('musicVolume').value),sfxVolume:Number($('sfxVolume').value),sfxType,playerVisible,ambient:{...ambient},qualityMode}}
+function extraState(){return {blink:{eyes:blinkEyes,speed:blinkSpeed,interval:blinkInterval},base:{clip:baseClipEnabled,exclude:baseBackgroundExclude,edge:baseEdge},projectName:projectName||'내 프로젝트',maskColor:$('maskColorInput').value,maskOpacity:Number($('maskOpacityInput').value),track:$('trackSelect').value,musicVolume:Number($('musicVolume').value),sfxVolume:Number($('sfxVolume').value),sfxType,playerVisible,ambient:{...ambient},qualityMode}}
 function restoreExtra(d){
  restoreBlink(d?.blink);
  baseClipEnabled=!!d?.base?.clip;baseBackgroundExclude=d?.base?.exclude!==false;baseEdge=clamp(Number(d?.base?.edge??1),0,8);lastBaseSignature='';markMask();refreshBaseUI();

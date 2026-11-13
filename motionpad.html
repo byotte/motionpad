@@ -302,9 +302,12 @@ button[data-help]:hover::before{color:var(--ink)}
 .blinkHead{flex-wrap:wrap;padding-block:2px}
 .blinkToolbar,.blinkSettings{background:var(--panel);border-bottom:1px solid var(--line)}
 .blinkToolbar label{display:inline-flex;align-items:center;gap:5px}
-.blinkControl{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:8px;color:var(--ink)}
-.blinkControl input{flex:1;min-width:80px}
-.blinkSettings .blinkControl{flex:1 1 160px;margin:0}
+.blinkControl{display:grid;grid-template-columns:7.2em minmax(60px,1fr) 3.2em;align-items:center;gap:8px;margin-top:8px;color:var(--ink);white-space:nowrap}
+.blinkControl input{width:100%;margin:0}
+.blinkControl output{min-width:3.2em;font-size:12px;color:var(--sub);text-align:right}
+.blinkSettings{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.blinkSettings .blinkControl{margin:0}
+.blinkSettings>.btn{justify-self:start}
 .blinkStage{display:grid;place-items:center;min-height:100px;overflow:hidden;background:repeating-conic-gradient(var(--panel) 0 25%,var(--stageInk) 0 50%) 0/16px 16px}
 #blinkPreview{display:block;width:auto;height:auto;max-width:100%;max-height:54dvh;margin:auto;cursor:crosshair}
 .blinkFooter{position:sticky;bottom:0;justify-content:space-between;background:var(--panel);border-top:1px solid var(--line)}
@@ -379,7 +382,7 @@ button[data-help]:hover::before{color:var(--ink)}
   .viewerAudio .btn{font-size:10px}
   #lassobar{gap:4px;padding-inline:4px}
   #blinkPreview{max-height:41dvh}
-  .blinkSettings .blinkControl{flex-basis:100%}
+  .blinkSettings{grid-template-columns:1fr}
   .blinkFooter{flex-wrap:nowrap}
   #blinkHint,#blinkApply{min-width:0}
 }
@@ -533,6 +536,7 @@ button[data-help]:hover::before{color:var(--ink)}
  <div class="blinkStage" tabindex="-1" autofocus><canvas id="blinkPreview" aria-label="눈 위치 지정 및 깜빡임 미리보기"></canvas></div>
  <div class="blinkSettings">
  <label class="blinkControl">깜빡임 속도 <input id="blinkSpeed" type="range" min="50" max="160" value="100"></label>
+ <label class="blinkControl">깜빡임 간격 <input id="blinkInterval" type="range" min="2" max="10" step="0.5" value="4.5"><output id="blinkIntervalValue">4.5초</output></label>
  <input id="blinkAmount" type="hidden" value="0">
  <label class="blinkControl">감긴 눈 모양 <input id="blinkCurve" type="range" min="-100" max="100" value="0"></label>
  <label class="blinkControl">눈꺼풀 보정 범위 <input id="blinkCover" type="range" min="5" max="65" value="24"></label>
@@ -2712,7 +2716,7 @@ function playSfx(power=1){
     n.connect(filter);filter.connect(gain);gain.connect(audioMaster);n.start(t);n.stop(t+length+.005);
   }catch(e){console.warn('효과음 오류',e)}
 }
-function extraState(){return {blink:{eyes:blinkEyes,speed:blinkSpeed},base:{clip:baseClipEnabled,exclude:baseBackgroundExclude,edge:baseEdge},projectName:projectName||'내 프로젝트',maskColor:$('maskColorInput').value,maskOpacity:Number($('maskOpacityInput').value),track:$('trackSelect').value,musicVolume:Number($('musicVolume').value),sfxVolume:Number($('sfxVolume').value),sfxType,playerVisible,ambient:{...ambient},qualityMode}}
+function extraState(){return {blink:{eyes:blinkEyes,speed:blinkSpeed,interval:blinkInterval},base:{clip:baseClipEnabled,exclude:baseBackgroundExclude,edge:baseEdge},projectName:projectName||'내 프로젝트',maskColor:$('maskColorInput').value,maskOpacity:Number($('maskOpacityInput').value),track:$('trackSelect').value,musicVolume:Number($('musicVolume').value),sfxVolume:Number($('sfxVolume').value),sfxType,playerVisible,ambient:{...ambient},qualityMode}}
 function restoreExtra(d){
  restoreBlink(d?.blink);
  baseClipEnabled=!!d?.base?.clip;baseBackgroundExclude=d?.base?.exclude!==false;baseEdge=clamp(Number(d?.base?.edge??1),0,8);lastBaseSignature='';markMask();refreshBaseUI();
@@ -2850,12 +2854,13 @@ let blinkRect=null,blinkCropStart=null,blinkCropping=false;
 const blinkPrompts=['화면에서 왼쪽 눈꼬리를 찍어 주세요.','같은 눈의 오른쪽 눈꼬리를 찍어 주세요.',
  '윗눈꺼풀 선의 가운데를 찍어 주세요.','아랫눈꺼풀 선의 가운데를 찍어 주세요.'];
 let blinkProtection=[],blinkProtecting=false,blinkStroke=null;
-let blinkEyes=[null,null],blinkPatches=[null,null],blinkSpeed=100,blinkEpoch=0;
+let blinkEyes=[null,null],blinkPatches=[null,null],blinkSpeed=100,blinkInterval=4.5,blinkEpoch=0;
 let blinkLastStep=-1,blinkLastTail=null,blinkScene=null,blinkOriginal=null;
 let blinkComposite=null,blinkTailComposite=null,blinkOverlay=null;
 function restoreBlink(settings){
  const number=(v,fallback,min,max)=>Number.isFinite(v)?clamp(v,min,max):fallback;
  blinkSpeed=number(settings?.speed,100,50,160);
+ blinkInterval=number(settings?.interval,4.5,2,10);
  blinkEyes=[0,1].map(i=>{
   const eye=settings?.eyes?.[i];
   if(!Array.isArray(eye?.points)||eye.points.length!==4||
@@ -2888,7 +2893,8 @@ function uploadBlinkTexture(unit,texture,source){
  gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,gl.RGBA,gl.UNSIGNED_BYTE,source);
 }
 function updateBlinkScene(){
- const t=((elapsed-blinkEpoch+3.5)%4.5)*1000*blinkSpeed/100;
+ // 2-A: 간격(초)마다 한 번. 적용 직후 1초 뒤 첫 깜빡임(기본 4.5초일 때 이전과 같다)
+ const t=((elapsed-blinkEpoch+blinkInterval-1)%blinkInterval)*1000*blinkSpeed/100;
  const open=clamp((t-105)/145,0,1);
  const amount=t<75?1-(1-t/75)**2:1-open*(2-open);
  const step=blinkPatches.some(Boolean)?Math.round(amount*16):0;
@@ -3134,7 +3140,7 @@ function stopBlinkPreview(){
 }
 $('eyeEntry').onclick=()=>{
  if(!ready){setStatus('먼저 그림을 열어 주세요.');return}
- blinkRect=null;blinkCropping=false;$('blinkEye').value='0';$('blinkSpeed').value=blinkSpeed;
+ blinkRect=null;blinkCropping=false;$('blinkEye').value='0';$('blinkSpeed').value=blinkSpeed;paintBlinkInterval();
  loadBlinkEye();
  const scale=Math.min(1,1200/Math.max(renderWidth,renderHeight));
  blinkPreview.width=Math.max(1,Math.round(renderWidth*scale));
@@ -3269,6 +3275,9 @@ $('blinkRemove').onclick=()=>{
  stopBlinkPreview();loadBlinkEye();refreshBlinkSetup();scheduleSave();
 };
 $('blinkSpeed').onchange=()=>{blinkSpeed=Number($('blinkSpeed').value);scheduleSave()};
+function paintBlinkInterval(){$('blinkInterval').value=blinkInterval;$('blinkIntervalValue').textContent=blinkInterval.toFixed(1)+'초'}
+$('blinkInterval').oninput=()=>{blinkInterval=Number($('blinkInterval').value);$('blinkIntervalValue').textContent=blinkInterval.toFixed(1)+'초'};
+$('blinkInterval').onchange=()=>{blinkInterval=Number($('blinkInterval').value);blinkEpoch=elapsed;scheduleSave()};
 $('blinkClose').onclick=()=>blinkDialog.close();
 blinkDialog.addEventListener('close',stopBlinkPreview);
 
