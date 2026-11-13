@@ -35,7 +35,7 @@ const UI_SCENES = [
   ['dlg-mask', () => document.getElementById('maskMenu').click()],
   ['dlg-saveas', () => document.getElementById('saveAsBtn').click()],
   ['dlg-blink', () => document.getElementById('eyeEntry').click()],
-  ['panel-parts', () => { const z = document.getElementById('ellipseMode'); for (const id of ['partsPanel', 'basePanel', 'advanced', 'effects', 'anchorPanel']) { const d = document.getElementById(id); if (d) d.open = true; } }],
+  ['panel-parts', () => { const z = document.getElementById('ellipseMode'); for (const id of ['partsPanel', 'basePanel', 'advanced', 'effects', 'anchorPanel', 'zonesPanel', 'edgePanel', 'presetPanel', 'autoPanel', 'gainPanel']) { const d = document.getElementById(id); if (d) d.open = true; } }],
 ];
 // 레이아웃 치수 기록 대상 [x, y, 너비, 높이]
 const LAYOUT_PARTS = ['.header', '.stagebar', '.stageOptions', '.stage', '#view', '.stagebottom', '.side', '.maskDisplay'];
@@ -270,7 +270,7 @@ function zoneSummary(z) {
     }));
     const before = await state();
     // 영역 1(타원)의 움직임 세기 슬라이더를 조작 — 사용자는 옵션 패널을 연 상태
-    await page.evaluate(() => { for (const id of ['partsPanel', 'advanced']) { const d = document.getElementById(id); if (d) d.open = true; }
+    await page.evaluate(() => { for (const id of ['partsPanel', 'advanced', 'zonesPanel', 'edgePanel', 'presetPanel', 'autoPanel', 'gainPanel']) { const d = document.getElementById(id); if (d) d.open = true; }
       const e = document.getElementById('strengthInput'); e.value = String(Number(e.value) + 5); e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); });
     await rafs(page, 5);
     const after = await state();
@@ -304,7 +304,7 @@ function zoneSummary(z) {
     const zonesAfterMenu = (await page.locator('#zoneCount').textContent()).trim();
     // 몸체 지정: 첫 영역 선택 → 경계값 확인 → 몸체 지정 → 저장 파일에서 값 확인
     await page.locator('#zoneList .chip').first().click();
-    await page.evaluate(() => { document.getElementById('ambientPanel').open = true; document.getElementById('basePanel').open = true; });
+    await page.evaluate(() => { document.getElementById('ambientPanel').open = true; document.getElementById('zonesPanel') && (document.getElementById('zonesPanel').open = true); document.getElementById('basePanel').open = true; });
     const before = await page.evaluate(() => ({ feather: document.getElementById('featherInput').value, spread: document.getElementById('spreadInput').value }));
     await page.locator('#markBaseBtn').click(); await rafs(page, 2);
     const saved = await saveProject(page, path.join(OUT, 'base-check.motionpad.json'));
@@ -346,7 +346,7 @@ function zoneSummary(z) {
       requestAnimationFrame(step);
     }), [id, lo, hi]);
     // 마술봉 영역(마지막)이 선택된 상태 — 세부 패널을 열어 입력을 가능하게 함
-    await page.evaluate(() => { for (const id of ['partsPanel', 'effects']) { const d = document.getElementById(id); if (d) d.open = true; } });
+    await page.evaluate(() => { for (const id of ['partsPanel', 'effects', 'zonesPanel', 'edgePanel', 'presetPanel', 'autoPanel', 'gainPanel']) { const d = document.getElementById(id); if (d) d.open = true; } });
 
     // (가) 일반 영역: 경계 부드러움·바깥 확장 드래그
     const drag1 = await profileDuring(page, async () => [await sliderDrag('featherInput', 0, 45), await sliderDrag('spreadInput', 0, 26)]);

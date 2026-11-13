@@ -18,6 +18,13 @@
   .status{text-align:left}
   .side{max-height:var(--panel-height,36dvh)}
   .side>.maskDisplay{display:none}
+  /* 2-F 폰: 영역 목록은 가로 이름표(효과 이름표는 숨김, 몸체는 별표) */
+  .zoneList{flex-direction:row;flex-wrap:wrap;gap:4px;margin:0}
+  .zoneItem{width:auto;max-width:100%;min-height:28px;padding:2px 10px;border-color:var(--line);border-radius:14px;background:var(--button)}
+  .zoneItem.active{box-shadow:none}
+  .zoneItem.baseChip{border-color:#f0c060}
+  .zoneName{max-width:11em}
+  .zoneTags{display:none}
   .viewerAudio{right:8px;bottom:calc(8px + env(safe-area-inset-bottom))}
   .playerSfx{flex:1 1 100px}
 }

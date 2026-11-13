@@ -36,17 +36,18 @@ function previewMotion(){
 function motionControls(z){
  if(['tail','wind','scarf'].includes(z.preset))return {
   angle:'windAngleInput',strength:'windStrengthInput',speed:'windSpeedInput',
-  hint:'흔들리는 쪽으로 방향을 맞추고, 고정점이 필요하면 아래에서 축을 지정해 주세요.'
+  hint:'바람에 흔들리는 움직임입니다. 흔들리는 쪽으로 방향을 맞추고, 고정점이 필요하면 ‘1. 영역 → 고정점과 가이드’에서 축을 지정해 주세요.'
  };
  if(z.preset==='breathing')return {
   strength:'breathInput',speed:'breathSpeed',
-  hint:'숨 쉬는 움직임은 손을 떼어도 계속됩니다.'
+  hint:'숨 쉬듯 부풀었다 줄어드는 움직임입니다.'
  };
  if(z.preset==='flow')return {
   angle:'flowAngleInput',strength:'flowInput',
-  hint:'텍스처가 흐를 방향을 각도로 조절해 주세요.'
+  hint:'무늬가 흐르는 움직임입니다. 흐를 방향을 각도로 정해 주세요.'
  };
- return {axis:true,strength:'strengthInput',speed:'springInput',hint:'그림을 누르거나 끌어 반응을 확인해 주세요.'};
+ // 2-F: 3-1의 세기·속도는 자동 움직임의 것. 이 종류의 자동 움직임은 터치 반응을 스스로 되풀이하므로 세기는 3-2 '반응 세기'와 같은 값이다.
+ return {axis:true,strength:'strengthInput',speed:'autoSpeedInput',hint:'‘자동으로 움직이기’를 켜면 이 세기·속도로 계속 흔들립니다. 세기는 터치 움직임의 ‘반응 세기’와 같은 값입니다.'};
 }
 $('tailCutoutInput').onchange=e=>{
  const z=getSelected();
@@ -82,10 +83,11 @@ function updateQuickMotion(z){
    const advanced=$(name);
    input.min=advanced.min;input.max=advanced.max;input.step=advanced.step;input.value=advanced.value;
   }
-  const unit=name==='windStrengthInput'?'%':['windSpeedInput','breathSpeed'].includes(name)?'×':'';
-  $(id+'Value').textContent=input.value+unit;
+  const unit=name==='windStrengthInput'?'%':['windSpeedInput','breathSpeed','autoSpeedInput'].includes(name)?'×':'';
+  $(id+'Value').textContent=(name==='autoSpeedInput'?Number(input.value).toFixed(1):input.value)+unit;
  }
  $('quickSpeedRow').hidden=!controls.speed;
+ $('autoSpeedRow').hidden=controls.speed==='autoSpeedInput';
  $('quickMotionHint').textContent=controls.hint;
 }
 for(const [id,key] of [['quickDirection','axis'],['quickAngle','angle'],['quickStrength','strength'],['quickSpeed','speed']]){

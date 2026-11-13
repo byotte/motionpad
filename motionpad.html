@@ -221,20 +221,23 @@ button[data-help]:hover::before{color:var(--ink)}
 /* 패널 머리줄 */
 .side>details>summary{margin:0 -10px;padding:6px 10px;background:color-mix(in srgb,var(--ink) 7%,var(--panel));border-bottom:1px solid transparent}
 .side>details[open]>summary{margin-bottom:6px;border-bottom-color:var(--line)}
-#ambientPanel{background:var(--panel)}
-#ambientPanel>summary{background:color-mix(in srgb,var(--accent) 15%,var(--panel))}
-#ambientPanel>summary:hover{background:color-mix(in srgb,var(--accent) 23%,var(--panel))}
+/* 2-F: 머리줄 오른쪽 작은 정보(영역 수·몸체 이름·선택 영역 이름) */
+.side summary>.count{margin-left:auto;min-width:0;overflow:hidden;font-size:11px;font-weight:400;color:var(--sub);text-overflow:ellipsis;white-space:nowrap}
 /* 패널 안쪽 묶음: 테두리 상자 + 작은 제목 */
 .side details details{margin:10px 0 4px;padding:0 9px 6px;border:1px solid var(--line);border-radius:4px}
 .side details details>summary{margin:0 -9px;padding:5px 9px;font-size:11px;color:var(--sub)}
 .side details details[open]>summary{margin-bottom:4px;border-bottom:1px solid var(--line);color:var(--ink)}
 .side :is(summary,button):not(:disabled):is(:hover,:focus-visible){background:color-mix(in srgb,var(--ink) 13%,var(--panel))}
-.side>.eyeEntry{display:block;align-self:stretch;width:100%;margin:0;border:0 none transparent;border-bottom:1px solid transparent;background:color-mix(in srgb,var(--ink) 6%,var(--panel));text-align:left}
+.side>.eyeEntry{display:flex;align-items:center;gap:7px;align-self:stretch;width:100%;margin:0;padding:6px 10px;border:0;border-bottom:1px solid var(--line);border-radius:0;background:color-mix(in srgb,var(--ink) 7%,var(--panel));color:var(--ink);font:inherit;font-size:12px;font-weight:700;line-height:1.45;text-align:left;cursor:pointer}
+/* 눈 깜빡임은 창으로 열린다: 꺾쇠를 오른쪽 방향으로 고정 */
+.side>.eyeEntry::before{content:"";flex:none;width:5px;height:5px;margin:0 2px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:rotate(-45deg);opacity:.7}
+.side .lead{margin:6px 0 2px}
+.side .groupLabel{margin:14px 0 2px;padding-top:8px;border-top:1px dashed var(--line);font-size:11px;font-weight:700;color:var(--sub)}
+.side details>.toggle{margin:8px 0}
 .side .mini{overflow-wrap:anywhere}
 .side select{min-width:0}
 .side .toggle{align-items:flex-start;white-space:normal;overflow-wrap:anywhere}
 .side .toggle input{flex:0 0 auto;margin-top:3px}
-#ambientPanel .toggle{margin:8px 0}
 /* 옵션 패널 안의 '그림에서 지정' 버튼들 */
 .side .mode{font-size:11px;font-weight:600;color:var(--sub);text-align:left;white-space:normal}
 .side .mode.active{background:var(--accentSoft);color:var(--ink);box-shadow:inset 2px 0 var(--accent)}
@@ -252,12 +255,19 @@ button[data-help]:hover::before{color:var(--ink)}
 .field input[type=text]{width:100%;min-height:25px;padding:3px 6px;border:1px solid var(--line);border-radius:2px;background:var(--panel);color:var(--ink)}
 :root[data-theme="light"] .field input[type=text]{color:#151929}
 .empty{padding:5px 0;font-size:12px;color:var(--sub)}
-#zoneList{display:flex;flex-wrap:wrap;gap:4px;margin:0;padding:6px 0}
+/* 2-F 영역 목록. PC: 세로 목록(이름 · 켜진 효과 이름표 · 잠금). 이름표가 넘치면 뒤쪽(덜 중요한 것)부터 다음 줄로 밀려 숨는다 */
+.zoneList{display:flex;flex-direction:column;gap:2px;margin:0 -4px;padding:4px 0 6px}
 .chip{background:var(--button);color:var(--ink);font-size:11px;border-color:var(--line);border-radius:3px}
 .chip.active{background:var(--accentSoft);border-color:var(--accent);font-weight:750}
-.chip.baseChip{border-style:dashed}
-.chip.baseChip{order:-1000}
-.regionActionRow{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:3px 0}
+.zoneItem{display:flex;align-items:center;gap:6px;width:100%;min-height:30px;padding:3px 7px;border-color:transparent;background:transparent;text-align:left;font-weight:500}
+.zoneItem.active{box-shadow:inset 3px 0 var(--accent)}
+.zoneName{flex:1 1 auto;min-width:3em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.baseMark{color:#f0c060}
+.zoneTags{display:flex;flex-wrap:wrap;justify-content:flex-end;flex:0 1 auto;gap:3px;max-width:62%;height:18px;overflow:hidden}
+.zoneTag{padding:0 5px;border-radius:2px;background:color-mix(in srgb,var(--ink) 11%,var(--panel));color:var(--sub);font-size:10px;font-weight:600;line-height:18px;white-space:nowrap}
+.zoneItem.active .zoneTag{background:color-mix(in srgb,var(--ink) 14%,var(--accentSoft));color:var(--ink)}
+.zoneLock{width:13px;height:13px;color:var(--sub)}
+.regionActionRow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:0 0 6px}
 .settingActions{display:flex;gap:6px;margin-top:12px}
 .settingActions .btn{flex:1;font-size:12px}
 .side .settingActions{flex-wrap:wrap}
@@ -369,6 +379,13 @@ button[data-help]:hover::before{color:var(--ink)}
   .status{text-align:left}
   .side{max-height:var(--panel-height,36dvh)}
   .side>.maskDisplay{display:none}
+  /* 2-F 폰: 영역 목록은 가로 이름표(효과 이름표는 숨김, 몸체는 별표) */
+  .zoneList{flex-direction:row;flex-wrap:wrap;gap:4px;margin:0}
+  .zoneItem{width:auto;max-width:100%;min-height:28px;padding:2px 10px;border-color:var(--line);border-radius:14px;background:var(--button)}
+  .zoneItem.active{box-shadow:none}
+  .zoneItem.baseChip{border-color:#f0c060}
+  .zoneName{max-width:11em}
+  .zoneTags{display:none}
   .viewerAudio{right:8px;bottom:calc(8px + env(safe-area-inset-bottom))}
   .playerSfx{flex:1 1 100px}
 }
@@ -418,7 +435,7 @@ button[data-help]:hover::before{color:var(--ink)}
 </style>
 </head>
 <body>
-<svg class="iconSprite" aria-hidden="true"><defs><symbol id="i-brush" viewBox="0 0 24 24"><path d="M4 20c2.6 0 4.5-1.3 4.5-3.4a2.2 2.2 0 0 0-4.4 0c0 1.5-.4 2.6-.1 3.4z"/><path d="M8 15.4 18.6 4.8a1.7 1.7 0 0 1 2.4 2.4L10.4 17.8"/></symbol><symbol id="i-erase" viewBox="0 0 24 24"><path d="M9 20h11"/><path d="M5.2 15.3 13.6 6.9a2 2 0 0 1 2.8 0l2.4 2.4a2 2 0 0 1 0 2.8L11 20H8.2l-3-3a1.2 1.2 0 0 1 0-1.7z"/><path d="m9.5 11 5 5"/></symbol><symbol id="i-wand" viewBox="0 0 24 24"><path d="m4 20 11-11"/><path d="m13.5 7.5 3 3"/><path d="M18 3v4M16 5h4M20 11v2.5M18.8 12.2h2.5M10 3v2.5M8.8 4.2h2.5"/></symbol><symbol id="i-lasso" viewBox="0 0 24 24"><path d="M12 4c4.7 0 8 2.3 8 5.3s-3.3 5.2-8 5.2-8-2.3-8-5.2S7.3 4 12 4z" stroke-dasharray="2.6 2.4"/><path d="M8.5 14c-1.4 1.6-1 3.6.8 3.9 1.6.3 2 1.5 1 3.1"/></symbol><symbol id="i-ellipse" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8.5" ry="6.5" stroke-dasharray="2.6 2.4"/></symbol><symbol id="i-move" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/><path d="m9 6 3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></symbol><symbol id="i-pan" viewBox="0 0 24 24"><path d="M8 13V6a1.5 1.5 0 0 1 3 0v5.5M11 11V4.5a1.5 1.5 0 0 1 3 0v7M14 11.5V6a1.5 1.5 0 0 1 3 0v8.5c0 3.8-2.4 6.5-5.8 6.5-2.4 0-3.9-1.1-5.3-3.3L4.2 15.4a1.5 1.5 0 0 1 2.5-1.7L8 15.4"/></symbol><symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol><symbol id="i-redo" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></symbol><symbol id="i-minus" viewBox="0 0 24 24"><path d="M6 12h12"/></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></symbol><symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="1.5"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/></symbol><symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m11 18-6-6 6-6"/></symbol></defs></svg>
+<svg class="iconSprite" aria-hidden="true"><defs><symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol><symbol id="i-brush" viewBox="0 0 24 24"><path d="M4 20c2.6 0 4.5-1.3 4.5-3.4a2.2 2.2 0 0 0-4.4 0c0 1.5-.4 2.6-.1 3.4z"/><path d="M8 15.4 18.6 4.8a1.7 1.7 0 0 1 2.4 2.4L10.4 17.8"/></symbol><symbol id="i-erase" viewBox="0 0 24 24"><path d="M9 20h11"/><path d="M5.2 15.3 13.6 6.9a2 2 0 0 1 2.8 0l2.4 2.4a2 2 0 0 1 0 2.8L11 20H8.2l-3-3a1.2 1.2 0 0 1 0-1.7z"/><path d="m9.5 11 5 5"/></symbol><symbol id="i-wand" viewBox="0 0 24 24"><path d="m4 20 11-11"/><path d="m13.5 7.5 3 3"/><path d="M18 3v4M16 5h4M20 11v2.5M18.8 12.2h2.5M10 3v2.5M8.8 4.2h2.5"/></symbol><symbol id="i-lasso" viewBox="0 0 24 24"><path d="M12 4c4.7 0 8 2.3 8 5.3s-3.3 5.2-8 5.2-8-2.3-8-5.2S7.3 4 12 4z" stroke-dasharray="2.6 2.4"/><path d="M8.5 14c-1.4 1.6-1 3.6.8 3.9 1.6.3 2 1.5 1 3.1"/></symbol><symbol id="i-ellipse" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8.5" ry="6.5" stroke-dasharray="2.6 2.4"/></symbol><symbol id="i-move" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/><path d="m9 6 3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></symbol><symbol id="i-pan" viewBox="0 0 24 24"><path d="M8 13V6a1.5 1.5 0 0 1 3 0v5.5M11 11V4.5a1.5 1.5 0 0 1 3 0v7M14 11.5V6a1.5 1.5 0 0 1 3 0v8.5c0 3.8-2.4 6.5-5.8 6.5-2.4 0-3.9-1.1-5.3-3.3L4.2 15.4a1.5 1.5 0 0 1 2.5-1.7L8 15.4"/></symbol><symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol><symbol id="i-redo" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></symbol><symbol id="i-minus" viewBox="0 0 24 24"><path d="M6 12h12"/></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></symbol><symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="1.5"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/></symbol><symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m11 18-6-6 6-6"/></symbol></defs></svg>
 <div class="app">
 <header class="header starting"><div class="brand"><div class="logo" aria-hidden="true">∿</div><h1>MotionPad <span>0.5 RC 23</span></h1></div>
 <nav class="toolbar"><details class="topMenu"><summary>파일</summary><div class="topMenuItems"><button class="btn" id="menuNew">새 그림 열기…</button><button class="btn" id="menuOpen">프로젝트 열기…</button><hr class="menuSep"><button class="btn" id="backupBtn" type="button" title="다시 열어 편집할 프로젝트 저장">프로젝트 저장</button><button class="btn" id="saveAsBtn" type="button" aria-haspopup="dialog" >다른 이름으로 저장…</button><hr class="menuSep"><button class="btn" data-dialog="videoDialog">영상으로 내보내기…</button><button class="btn" id="legacyMenu" data-dialog="filesDialog" hidden>기기에 보관한 프로젝트…</button></div></details><details class="topMenu"><summary>소리</summary><div class="topMenuItems"><button class="btn" id="openMusic" data-dialog="soundDialog">배경음악…</button><button class="btn" id="openEffects" data-dialog="soundDialog">터치 효과음…</button></div></details><details class="topMenu"><summary>설정</summary><div class="topMenuItems"><button class="btn" data-dialog="layoutSettings">색상 테마 · 화면 표시 품질…</button><hr class="menuSep"><button class="btn" id="maskMenu">선택 영역 표시…</button></div></details><button class="btn primary" id="viewerBtn">플레이</button></nav></header>
@@ -437,86 +454,101 @@ button[data-help]:hover::before{color:var(--ink)}
 <div class="stagebottom"><div class="quick"><button class="btn iconBtn" id="undoBtn" title="실행 취소" aria-label="실행 취소" disabled><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button><button class="btn iconBtn" id="redoBtn" title="다시 실행" aria-label="다시 실행" disabled><svg class="ic" aria-hidden="true"><use href="#i-redo"/></svg></button><button class="btn iconBtn" id="zoomOutBtn" title="화면 축소" aria-label="화면 축소"><svg class="ic" aria-hidden="true"><use href="#i-minus"/></svg></button><button class="btn" id="zoomResetBtn" title="화면 원래 크기">100%</button><button class="btn iconBtn" id="zoomInBtn" title="화면 확대" aria-label="화면 확대"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></button><label class="toggle precisionSwitch"><input id="loupeInput" type="checkbox">돋보기</label><label class="toggle precisionSwitch"><input id="offsetInput" type="checkbox" aria-label="손가락 위에 그리기">손가락 보정</label></div><label class="toggle"><input type="checkbox" id="showZones" checked>영역선</label><span class="status" id="status" role="status">준비 중</span></div></section>
 <aside class="side">
 
-<details id="ambientPanel" open><summary>전체 그림 · 호흡과 흔들림</summary>
+<details id="zonesPanel"><summary>1. 영역 <span class="count" id="zoneCount">0개</span></summary>
+<div class="zoneList" id="zoneList" role="listbox" aria-label="영역 목록"></div>
+<div class="empty" id="noZone">그림에서 영역을 선택하거나 그려 주세요. ‘도형’에서는 두 손가락으로 선택한 도형의 크기·비율·기울기를, 그 외 도구에서는 화면 확대·이동을 할 수 있습니다.</div>
+<div id="editFields" hidden>
+<div class="field"><div class="fieldhead"><label for="nameInput">영역 이름</label></div><input type="text" id="nameInput" maxlength="26" autocomplete="off"></div>
+<div class="regionActionRow"><label class="toggle"><input type="checkbox" id="lockedInput">잠금</label><button class="btn" id="refineRegion" title="붓으로 선택 영역을 다듬습니다">범위 다듬기</button></div>
+</div>
+<details id="basePanel"><summary>움직일 몸체 지정</summary>
+ <p class="mini lead">몸체는 그림에서 크게 움직일 바탕(예: 인물 전체)입니다. ‘2. 몸체 움직이기’가 몸체에 적용됩니다.</p>
+ <div class="baseButtons"><button class="btn" id="markBaseBtn" type="button">선택한 영역을 몸체로 지정</button><span id="baseHint" class="micro">몸체 영역이 없습니다.</span></div>
+ <label class="toggle"><input id="baseExcludeInput" type="checkbox" checked>배경 제외 (몸체만 움직임)</label>
+ <label class="toggle"><input id="baseClipInput" type="checkbox">자동 크롭 · 다른 영역을 몸체 안으로 제한</label>
+ <div class="field"><div class="fieldhead"><label for="baseEdgeInput">몸체 경계 흐림</label><output id="baseEdgeVal">1</output></div><input id="baseEdgeInput" type="range" min="0" max="8" value="1" step="1"></div>
+ <p class="mini">몸체는 터치 우선순위가 가장 낮습니다. 자동 크롭은 원래 모양을 지우지 않으며, 끄면 되돌아옵니다. 비워진 부분은 가까운 배경을 바탕으로 자동으로 채웁니다. 가려져 있던 무늬는 단순해질 수 있습니다.</p>
+</details>
+<div id="zoneDetail" hidden>
+<details id="edgePanel"><summary>경계</summary>
+<div class="field"><div class="fieldhead"><label for="featherInput">경계 부드러움</label><output id="featherValue">8</output></div><input id="featherInput" type="range" min="0" max="45" step="1"></div>
+<div class="field"><div class="fieldhead"><label for="spreadInput">경계 바깥 확장</label><output id="spreadValue">9</output></div><input id="spreadInput" type="range" min="0" max="26" step="1" value="9"></div>
+<div id="tailCutoutRow" class="field" hidden>
+ <label class="toggle"><input id="tailCutoutInput" type="checkbox">외곽까지 흔들기</label>
+ <p class="mini">크게 흔들리는 부위(꼬리·긴 머리)를 그림 위로 올려 움직이고, 비는 자리는 주변 배경으로 채웁니다. 영역 4개까지 켤 수 있습니다. 몸에 붙은 부위라면 연결부에 축을 지정해 보세요.</p>
+</div>
+</details>
+<details id="anchorPanel"><summary>고정점과 가이드</summary>
+<p class="mini lead">축은 ‘고정한 곳’입니다. 축은 움직이지 않고, 축에서 멀수록 많이 움직입니다.</p>
+<div class="settingActions"><button class="btn mode" id="pivotMode" data-mode="pivot">축 지정</button><button class="btn mode" id="extraPivotMode" data-mode="extraPivot">축 추가</button><button class="btn mode" id="spineMode" data-mode="spine">움직임 가이드 선</button></div>
+<label class="toggle"><input type="checkbox" id="pivotEnabledInput">선택 축 활성화</label>
+<div class="field"><div class="fieldhead"><label for="pivotStrengthInput">축 영향 범위</label><output id="pivotStrengthValue">60%</output></div><input id="pivotStrengthInput" type="range" min="0" max="100" value="60"></div>
+<div class="settingActions"><button class="btn" id="clearExtraPivotsBtn" type="button">추가 축 삭제</button><button class="btn" id="clearBranchBtn" type="button" hidden>가지 선 삭제</button></div>
+<p class="mini">‘축 지정’을 누르고 그림을 누르면 고정점이 옮겨집니다. ‘축 추가’는 고정점을 하나 더 놓습니다(2개까지). 움직임 가이드 선은 뿌리에서 끝까지 한 획으로 그려 주세요. 꼬리처럼 휘는 부위가 선을 따라 움직입니다.</p>
+</details>
+</div>
+</details>
+
+<details id="ambientPanel" open><summary>2. 몸체 움직이기 <span class="count" id="bodyState">몸체 미지정 · 그림 전체</span></summary>
  <label class="toggle"><input id="ambientOn" type="checkbox" checked>전체 움직임 켜기</label>
  <div class="field"><div class="fieldhead"><label for="ambientBreath">부드러운 호흡</label><output id="ambientBreathVal">35%</output></div><input id="ambientBreath" type="range" min="0" max="100" value="35"></div>
  <div class="field"><div class="fieldhead"><label for="ambientSway">미세 흔들림</label><output id="ambientSwayVal">30%</output></div><input id="ambientSway" type="range" min="0" max="100" value="30"></div>
  <div class="field"><div class="fieldhead"><label for="ambientLight">조명 숨쉬기</label><output id="ambientLightVal">25%</output></div><input id="ambientLight" type="range" min="0" max="100" value="25"></div>
- 
- <p class="mini">베이스 영역을 지정하고 배경 제외를 켜면 배경을 고정한 채 베이스에만 적용됩니다.</p>
- <details id="basePanel"><summary>움직일 몸체 지정</summary>
- <div class="baseButtons"><button class="btn" id="markBaseBtn" type="button">선택한 영역을 몸체로 지정</button><span id="baseHint" class="micro">베이스 영역이 없습니다.</span></div>
- <label class="toggle" style="margin:8px 0"><input id="baseExcludeInput" type="checkbox" checked>배경 제외 (베이스만 기본 움직임)</label>
- <label class="toggle" style="margin:8px 0"><input id="baseClipInput" type="checkbox">자동 크롭 · 일반 영역을 베이스 안으로 제한</label>
- <div class="field"><div class="fieldhead"><label for="baseEdgeInput">베이스 경계 흐림</label><output id="baseEdgeVal">1</output></div><input id="baseEdgeInput" type="range" min="0" max="8" value="1" step="1"></div>
- <p class="mini">베이스는 터치 우선순위 최하위입니다. 자동 크롭은 비파괴 방식이며, 해제하면 원래 마스크가 복원됩니다. 비워진 부분은 가까운 배경을 바탕으로 자동으로 채웁니다. 가려져 있던 무늬는 단순화될 수 있습니다.</p>
-</details></details><details id="partsPanel"><summary>부분 움직임 · 터치 반응 <span class="count" id="zoneCount">0개</span></summary><div class="chips" id="zoneList"></div><div id="settingsPanel">
+ <p class="mini">몸체를 지정하고 ‘배경 제외’를 켜면 배경은 고정되고 몸체만 움직입니다(1. 영역 → 움직일 몸체 지정).</p>
+</details>
 
-<div class="empty" id="noZone">그림에서 영역을 선택하거나 그려 주세요. ‘도형’에서는 두 손가락으로 선택한 도형의 크기·비율·기울기를, 그 외 도구에서는 화면 확대·이동을 할 수 있습니다.</div>
-<div id="editFields" hidden>
-<div class="field"><div class="fieldhead"><label for="nameInput">영역 이름</label></div><input type="text" id="nameInput" maxlength="26" autocomplete="off"></div>
-<details class="regionActions"><summary>영역 관리</summary><div class="regionActionRow"><label class="toggle"><input type="checkbox" id="lockedInput">잠금</label><button class="btn" id="refineRegion" title="붓으로 선택 영역을 다듬습니다">범위 다듬기</button><button class="btn" id="duplicateBtn">복제</button><button class="btn warn" id="quickDeleteBtn">삭제</button></div></details><div class="field"><div class="fieldhead"><label for="presetInput">움직임 종류</label></div><select id="presetInput"><option value="custom">직접 설정</option><option value="soft">부드러운 반응</option><option value="breathing">부분 호흡</option><option value="jelly">볼 탄성 · 젤리</option><option value="tail">꼬리 흔들림</option><option value="flow">흐름·물결</option><option value="wind">긴 머리 흔들림</option><option value="scarf">목도리·옷자락</option></select></div>
+<details id="partsPanel"><summary>3. 부분 움직이기 <span class="count" id="partsName"></span></summary>
+<div class="empty" id="noZoneMotion">먼저 영역을 만들거나 선택해 주세요.</div>
+<div id="motionFields" hidden>
+<details id="presetPanel"><summary>움직임 프리셋</summary>
+<div class="field"><div class="fieldhead"><label for="presetInput">움직임 종류</label></div><select id="presetInput"><option value="custom">직접 설정</option><option value="soft">부드러운 반응</option><option value="breathing">부분 호흡</option><option value="jelly">볼 탄성 · 젤리</option><option value="tail">꼬리 흔들림</option><option value="flow">흐름·물결</option><option value="wind">긴 머리 흔들림</option><option value="scarf">목도리·옷자락</option></select></div>
+<p class="mini">고르면 아래 연속 움직임·터치 움직임 값이 함께 채워집니다. 채운 뒤 자유롭게 고쳐도 됩니다.</p>
+</details>
+<details id="autoPanel"><summary>3-1. 연속 움직임</summary>
+<p class="mini lead">손대지 않아도 계속 움직입니다.</p>
+<label class="toggle"><input type="checkbox" id="autoInput">자동으로 움직이기</label>
 <div id="quickMotion">
-<div class="field" id="quickDirectionRow"><label for="quickDirection">방향</label><select id="quickDirection"><option value="follow">터치 이동 방향 자동</option><option value="y">고정: 위아래</option><option value="x">고정: 좌우</option><option value="diag">고정: ↘↖ 대각선</option><option value="diagBack">고정: ↙↗ 대각선</option><option value="pulse">고정: 확대·축소</option></select><input id="quickAngle" type="range" min="-180" max="180" step="1" aria-label="방향 각도" hidden><output id="quickAngleValue" hidden></output></div>
+<div class="field" id="quickDirectionRow"><div class="fieldhead"><label for="quickDirection">방향</label><output id="quickAngleValue" hidden></output></div><select id="quickDirection"><option value="follow">터치 이동 방향 자동</option><option value="y">고정: 위아래</option><option value="x">고정: 좌우</option><option value="diag">고정: ↘↖ 대각선</option><option value="diagBack">고정: ↙↗ 대각선</option><option value="pulse">고정: 확대·축소</option></select><input id="quickAngle" type="range" min="-180" max="180" step="1" aria-label="방향 각도" hidden></div>
 <div class="field"><div class="fieldhead"><label for="quickStrength">세기</label><output id="quickStrengthValue"></output></div><input id="quickStrength" type="range"></div>
 <div class="field" id="quickSpeedRow"><div class="fieldhead"><label for="quickSpeed">속도</label><output id="quickSpeedValue"></output></div><input id="quickSpeed" type="range"></div>
 <p class="mini" id="quickMotionHint"></p>
-<div id="tailCutoutRow" class="field" hidden>
- <label class="toggle"><input id="tailCutoutInput" type="checkbox">외곽까지 흔들기</label>
- <p class="mini">한 프로젝트에서 한 영역에 적용할 수 있습니다. 몸에 붙은 부위라면 연결부에 축을 지정해 보세요.</p>
 </div>
-</div>
-<label class="toggle" style="margin-top:10px"><input type="checkbox" id="autoInput">자동으로 움직이기</label>
-<div class="settingActions" hidden><button id="testBtn" class="btn primary">선택 영역 반응</button><button id="deleteBtn" class="btn warn">삭제</button></div>
-<details id="advanced"><summary>세부 설정 (탄성·각도·크기)</summary>
-<div class="field"><div class="fieldhead"><label for="axisInput">터치 반응 방향</label></div><select id="axisInput"><option value="follow">터치 이동 방향 자동</option><option value="y">고정: 위아래</option><option value="x">고정: 좌우</option><option value="diag">고정: ↘↖ 대각선</option><option value="diagBack">고정: ↙↗ 대각선</option><option value="pulse">고정: 확대·축소</option></select></div>
-<div class="field"><div class="fieldhead"><label for="strengthInput">움직임 강도</label><output id="strengthValue">26</output></div><input id="strengthInput" type="range" min="0" max="80" step="1"></div>
-
-<div class="field"><div class="fieldhead"><label for="springInput">반발 속도</label><output id="springValue">14</output></div><input id="springInput" type="range" min="3" max="30" step="1"></div>
-<div class="field"><div class="fieldhead"><label for="dampingInput">잔진동 길이</label><output id="dampingValue">62%</output></div><input id="dampingInput" type="range" min="0" max="100" step="1"></div>
-<div class="field"><div class="fieldhead"><label for="pullInput">잡아당김 (0%: 영역 전체가 함께 이동)</label><output id="pullValue">50%</output></div><input id="pullInput" type="range" min="0" max="100" step="1"></div>
-<div class="field" id="widthRow"><div class="fieldhead"><label for="widthInput">타원 너비</label><output id="widthValue">20%</output></div><input id="widthInput" type="range" min="4" max="88" step="1"></div>
-<div class="field" id="heightRow"><div class="fieldhead"><label for="heightInput">타원 높이</label><output id="heightValue">20%</output></div><input id="heightInput" type="range" min="4" max="88" step="1"></div>
-<div class="field"><div class="fieldhead"><label for="autoSpeedInput">자동 움직임 속도</label><output id="autoSpeedValue">1.0</output></div><input id="autoSpeedInput" type="range" min="0.2" max="3" step="0.1"></div>
-<div class="field"><div class="fieldhead"><label for="autoRestInput">움직임 사이 쉬는 간격</label><output id="autoRestValue">쉬지 않음</output></div><input id="autoRestInput" type="range" min="0" max="6" step="0.5"></div>
-<div class="field" id="rotationRow"><div class="fieldhead"><label for="rotationInput">타원 각도</label><output id="rotationValue">0°</output></div><input id="rotationInput" type="range" min="-180" max="180" step="1"></div>
-<p class="mini">‘도형’ 도구에서 손잡이나 두 손가락으로 크기·비율·기울기를 바꿀 수 있습니다. 잠근 영역은 이동되지 않습니다.</p></details>
-<details id="effects"><summary>효과 조합 · 마스크 세부 설정</summary>
-<div class="field"><div class="fieldhead"><label for="spreadInput">마스크 바깥 확장</label><output id="spreadValue">9</output></div><input id="spreadInput" type="range" min="0" max="26" step="1" value="9"></div>
-<div class="field"><div class="fieldhead"><label for="featherInput">경계 부드러움 / 선명도</label><output id="featherValue">8</output></div><input id="featherInput" type="range" min="0" max="45" step="1"></div>
-<div class="field"><div class="fieldhead"><label for="breathInput">호흡 (상시)</label><output id="breathValue">0</output></div><input id="breathInput" type="range" min="0" max="40" step="1"></div>
-<div class="field"><div class="fieldhead"><label for="waveInput">물결 흐름</label><output id="waveValue">0</output></div><input id="waveInput" type="range" min="0" max="40" step="1"></div>
+<div class="field" id="autoSpeedRow"><div class="fieldhead"><label for="autoSpeedInput">자동 움직임 속도</label><output id="autoSpeedValue">1.0</output></div><input id="autoSpeedInput" type="range" min="0.2" max="3" step="0.1"></div>
+<div class="field"><div class="fieldhead"><label for="autoRestInput">쉬는 간격</label><output id="autoRestValue">쉬지 않음</output></div><input id="autoRestInput" type="range" min="0" max="6" step="0.5"></div>
+<details id="effects"><summary>세부 · 부분 호흡 · 물결 · 비틀림 · 흐름 · 바람</summary>
+<div class="field"><div class="fieldhead"><label for="breathInput">부분 호흡</label><output id="breathValue">0</output></div><input id="breathInput" type="range" min="0" max="40" step="1"></div>
+<div class="field"><div class="fieldhead"><label for="waveInput">물결</label><output id="waveValue">0</output></div><input id="waveInput" type="range" min="0" max="40" step="1"></div>
 <div class="field"><div class="fieldhead"><label for="twistInput">비틀림</label><output id="twistValue">0</output></div><input id="twistInput" type="range" min="0" max="35" step="1"></div>
-<div class="field"><div class="fieldhead"><label for="flowInput">연속 흐름 (Flow)</label><output id="flowValue">0</output></div><input id="flowInput" type="range" min="0" max="40" step="1"></div>
-<div class="field"><div class="fieldhead"><label for="flowAngleInput">텍스처 흐름 방향</label><output id="flowAngleValue">0°</output></div><input id="flowAngleInput" type="range" min="-180" max="180" step="1" value="0"></div>
-<button class="btn mode" id="flowDirMode" data-mode="flowdir">그림에서 흐름 방향 지정</button><details id="windPanel"><summary>바람 · 머리카락 · 옷자락</summary>
+<div class="field"><div class="fieldhead"><label for="flowInput">흐름</label><output id="flowValue">0</output></div><input id="flowInput" type="range" min="0" max="40" step="1"></div>
+<div class="field"><div class="fieldhead"><label for="flowAngleInput">흐름 방향</label><output id="flowAngleValue">0°</output></div><input id="flowAngleInput" type="range" min="-180" max="180" step="1" value="0"></div>
+<button class="btn mode" id="flowDirMode" data-mode="flowdir">그림에서 흐름 방향 지정</button>
+<p class="groupLabel">바람 · 머리카락 · 옷자락</p>
 <div class="field"><div class="fieldhead"><label for="windStrengthInput">바람 강도</label><output id="windStrengthValue">0%</output></div><input id="windStrengthInput" type="range" min="0" max="100" step="1" value="0"></div>
 <div class="field"><div class="fieldhead"><label for="windAngleInput">바람 방향</label><output id="windAngleValue">0°</output></div><input id="windAngleInput" type="range" min="-180" max="180" step="1" value="0"></div>
 <div class="field"><div class="fieldhead"><label for="windSpeedInput">바람 속도</label><output id="windSpeedValue">1.0×</output></div><input id="windSpeedInput" type="range" min="0.2" max="3" step="0.1" value="1"></div>
 <div class="field"><div class="fieldhead"><label for="windNoiseInput">불규칙한 흔들림</label><output id="windNoiseValue">30%</output></div><input id="windNoiseInput" type="range" min="0" max="100" value="30"></div>
 <div class="field"><div class="fieldhead"><label for="windDelayInput">끝부분 지연</label><output id="windDelayValue">50%</output></div><input id="windDelayInput" type="range" min="0" max="100" value="50"></div>
-
-<p class="mini">바람의 방향과 흔들리는 속도를 조절할 수 있습니다.</p>
+<p class="mini">강도를 과하게 올리면 그림이 왜곡될 수 있습니다. WebGL이 없는 브라우저에서는 일부 효과가 단순해집니다.</p>
 </details>
+</details>
+<details id="advanced"><summary>3-2. 터치 움직임</summary>
+<p class="mini lead">그림을 누르거나 끌 때의 반응입니다. 잡아당김은 ‘누른 곳’이 가장 많이 움직입니다.</p>
+<div class="field"><div class="fieldhead"><label for="axisInput">방향</label></div><select id="axisInput"><option value="follow">터치 이동 방향 자동</option><option value="y">고정: 위아래</option><option value="x">고정: 좌우</option><option value="diag">고정: ↘↖ 대각선</option><option value="diagBack">고정: ↙↗ 대각선</option><option value="pulse">고정: 확대·축소</option></select></div>
+<div class="field"><div class="fieldhead"><label for="strengthInput">반응 세기</label><output id="strengthValue">26</output></div><input id="strengthInput" type="range" min="0" max="80" step="1"></div>
+<div class="field"><div class="fieldhead"><label for="springInput">반발 속도</label><output id="springValue">14</output></div><input id="springInput" type="range" min="3" max="30" step="1"></div>
+<div class="field"><div class="fieldhead"><label for="dampingInput">잔진동 길이</label><output id="dampingValue">62%</output></div><input id="dampingInput" type="range" min="0" max="100" step="1"></div>
+<div class="field"><div class="fieldhead"><label for="pullInput">잡아당김 (0%: 영역 전체가 함께 이동)</label><output id="pullValue">50%</output></div><input id="pullInput" type="range" min="0" max="100" step="1"></div>
 <div class="field"><div class="fieldhead"><label for="rippleInput">터치 파동</label><output id="rippleValue">0</output></div><input id="rippleInput" type="range" min="0" max="40" step="1"></div>
-
-<p class="mini">강도를 과하게 올리면 그림이 왜곡될 수 있습니다. WebGL이 없는 브라우저에서는 일부 효과가 단순화됩니다.</p></details>
-<details id="anchorPanel"><summary>축·스프링·터치 세부 설정</summary>
-<div class="settingActions"><button class="btn mode" id="pivotMode" data-mode="pivot">축 지정</button><button class="btn mode" id="extraPivotMode" data-mode="extraPivot">축 추가</button><button class="btn mode" id="spineMode" data-mode="spine">스프링 선</button></div>
-<label class="toggle"><input type="checkbox" id="pivotEnabledInput">선택 축 활성화 (캔버스의 '축 지정'으로 이동)</label>
-<div class="field"><div class="fieldhead"><label for="pivotStrengthInput">축으로부터 움직임 증가량</label><output id="pivotStrengthValue">60%</output></div><input id="pivotStrengthInput" type="range" min="0" max="100" value="60"></div>
-<div class="field"><div class="fieldhead"><label for="tapGainInput">짧게 터치 강도</label><output id="tapGainValue">100%</output></div><input id="tapGainInput" type="range" min="0" max="200" value="100"></div>
-<div class="field"><div class="fieldhead"><label for="dragGainInput">드래그 반응</label><output id="dragGainValue">100%</output></div><input id="dragGainInput" type="range" min="0" max="200" value="100"></div>
-<div class="field"><div class="fieldhead"><label for="holdGainInput">길게 누름 압축</label><output id="holdGainValue">60%</output></div><input id="holdGainInput" type="range" min="0" max="200" value="60"></div>
-<div class="field"><div class="fieldhead"><label for="flickGainInput">빠른 튕김 반응</label><output id="flickGainValue">100%</output></div><input id="flickGainInput" type="range" min="0" max="200" value="100"></div>
-<div class="settingActions"><button class="btn" id="clearExtraPivotsBtn" type="button">추가 축 삭제</button><button class="btn" id="clearBranchBtn" type="button" hidden>가지 선 삭제</button></div>
-<p class="mini">축 지정으로 고정점을 옮길 수 있습니다. 축 추가를 누르면 영역 안에 고정점 하나를 더 놓습니다. 스프링 선은 뿌리에서 끝까지 한 획으로 그려 주세요.</p></details>
+<details id="gainPanel"><summary>터치 종류별 배율</summary>
+<div class="field"><div class="fieldhead"><label for="tapGainInput">짧게 누름</label><output id="tapGainValue">100%</output></div><input id="tapGainInput" type="range" min="0" max="200" value="100"></div>
+<div class="field"><div class="fieldhead"><label for="dragGainInput">드래그</label><output id="dragGainValue">100%</output></div><input id="dragGainInput" type="range" min="0" max="200" value="100"></div>
+<div class="field"><div class="fieldhead"><label for="holdGainInput">길게 누름 (눌림)</label><output id="holdGainValue">60%</output></div><input id="holdGainInput" type="range" min="0" max="200" value="60"></div>
+<div class="field"><div class="fieldhead"><label for="flickGainInput">빠른 튕김</label><output id="flickGainValue">100%</output></div><input id="flickGainInput" type="range" min="0" max="200" value="100"></div>
+</details>
+</details>
 </div>
-<p class="mini">붓은 손가락을 뗄 때 한 획이 완료됩니다. 마술봉은 비슷한 색상의 연결된 부분을 선택합니다. 자석 올가미는 뚜렷한 경계를 따라갑니다.</p>
-</div>
-
-
-</details><button type="button" class="btn eyeEntry" id="eyeEntry">▸ 눈 깜빡임 설정</button><div class="maskDisplay"><label>선택 영역 색상 <input id="maskColorInput" type="color" value="#45d8a9"></label><label>투명도 <input id="maskOpacityInput" type="range" min="0" max="85" value="32"><output id="maskOpacityValue">32%</output></label></div></aside></main>
+</details>
+<button type="button" class="eyeEntry" id="eyeEntry">4. 눈 깜빡임</button><div class="maskDisplay"><label>선택 영역 색상 <input id="maskColorInput" type="color" value="#45d8a9"></label><label>투명도 <input id="maskOpacityInput" type="range" min="0" max="85" value="32"><output id="maskOpacityValue">32%</output></label></div></aside></main>
 
 </div>
 <dialog id="filesDialog" class="saveDialog layoutDialog"><header class="dlgHead"><h2>파일</h2><button type="button" class="dlgX" aria-label="닫기">×</button></header><div class="dlgBody" tabindex="-1" autofocus><div class="settingActions"><button class="btn" id="imageBtn">그림으로 시작</button><button class="btn" id="restoreBtn">프로젝트 열기</button></div><details id="legacyProjects"><summary>이전 브라우저 저장 프로젝트 열기</summary><div class="field"><label for="projectSelect">과거에 기기 저장한 프로젝트</label><select id="projectSelect"><option value="">저장된 프로젝트 없음</option></select></div><div class="settingActions"><button id="loadNamedBtn" class="btn">선택 불러오기</button><button id="deleteNamedBtn" class="btn warn">삭제</button></div><button id="saveNamedBtn" class="btn" hidden>이전 방식으로 기기에 저장</button><p class="mini">이 목록은 과거 버전에서 만든 브라우저 저장본을 복구하기 위한 기능입니다. 복구 후에는 위의 ‘프로젝트 파일 저장’을 사용해 주세요. 브라우저 자동 복구는 계속 지원합니다.</p></details></div><footer class="dlgFoot"><button type="button" class="btn dlgClose">닫기</button></footer></dialog><dialog id="videoDialog" class="saveDialog layoutDialog"><header class="dlgHead"><h2>영상 저장</h2><button type="button" class="dlgX" aria-label="닫기">×</button></header><div class="dlgBody" tabindex="-1" autofocus><details id="videoExportPanel" open><summary>반복 애니메이션 영상으로 내보내기</summary>
@@ -619,9 +651,9 @@ const ZONE_FIELDS=[
  {key:'kind',save:z=>z.kind,read:(z,c)=>c.kind},
  {key:'x',save:z=>z.x,read:z=>clamp(zNum(z.x,.5),.001,.999),snap:z=>z.x},
  {key:'y',save:z=>z.y,read:z=>clamp(zNum(z.y,.5),.001,.999),snap:z=>z.y},
- {key:'rx',save:z=>z.rx,read:z=>clamp(zNum(z.rx,.12),.009,.5),snap:z=>z.rx,ui:{input:'widthInput',output:'widthValue',fmt:v=>`${Math.round(v*200)}%`,toInput:v=>Math.round(v*200),fromInput:x=>Number(x)/200,mask:true,noPreview:true}},
- {key:'ry',save:z=>z.ry,read:z=>clamp(zNum(z.ry,.12),.009,.5),snap:z=>z.ry,ui:{input:'heightInput',output:'heightValue',fmt:v=>`${Math.round(v*200)}%`,toInput:v=>Math.round(v*200),fromInput:x=>Number(x)/200,mask:true,noPreview:true}},
- {key:'rot',save:z=>z.rot||0,read:z=>zNum(z.rot,0),snap:z=>z.rot||0,ui:{input:'rotationInput',output:'rotationValue',fmt:v=>`${Math.round(v*180/Math.PI)}°`,toInput:v=>Math.round(v*180/Math.PI),fromInput:x=>Number(x)*Math.PI/180,mask:true,noPreview:true}},
+ {key:'rx',save:z=>z.rx,read:z=>clamp(zNum(z.rx,.12),.009,.5),snap:z=>z.rx},
+ {key:'ry',save:z=>z.ry,read:z=>clamp(zNum(z.ry,.12),.009,.5),snap:z=>z.ry},
+ {key:'rot',save:z=>z.rot||0,read:z=>zNum(z.rot,0),snap:z=>z.rot||0},
  {key:'scale',save:z=>z.scale||1,read:z=>clamp(zNum(z.scale,1),.15,5),snap:z=>z.scale||1},
  {key:'baseX',save:z=>z.baseX,read:z=>clamp(zNum(z.baseX,z.x??.5),0,1),snap:z=>z.baseX},
  {key:'baseY',save:z=>z.baseY,read:z=>clamp(zNum(z.baseY,z.y??.5),0,1),snap:z=>z.baseY},
@@ -686,7 +718,7 @@ function radiusXY(r){const m=Math.min(renderWidth,renderHeight);return [r*m/rend
 function recalcBounds(z){if(z.kind!=='brush'||!z.strokes.length)return;let x0=1,y0=1,x1=0,y1=0;for(const st of z.strokes){const [rx,ry]=radiusXY(st.r);for(const p of st.points){x0=Math.min(x0,p[0]-rx);y0=Math.min(y0,p[1]-ry);x1=Math.max(x1,p[0]+rx);y1=Math.max(y1,p[1]+ry)}}z.x=(x0+x1)/2;z.y=(y0+y1)/2;z.rx=Math.max(.009,(x1-x0)/2);z.ry=Math.max(.009,(y1-y0)/2)}
 function markMask(){maskDirty=true}
 function refreshBaseUI(){
- const z=getBase(),sel=getSelected();$('baseHint').textContent=z?`베이스: ${z.name}`:'베이스 영역이 없습니다.';
+ const z=getBase(),sel=getSelected();$('baseHint').textContent=z?`몸체: ${z.name}`:'몸체 영역이 없습니다.';
  $('markBaseBtn').textContent=sel?.isBase?'몸체 지정 해제':'선택한 영역을 몸체로 지정';
  $('markBaseBtn').disabled=!sel;
  $('baseClipInput').checked=baseClipEnabled;$('baseExcludeInput').checked=baseBackgroundExclude;
@@ -704,16 +736,34 @@ $('markBaseBtn').onclick=()=>{
 $('baseClipInput').onchange=e=>{remember();baseClipEnabled=e.target.checked;markMask();scheduleSave();setStatus(baseClipEnabled?'자동 크롭을 적용했습니다. 원본 마스크는 유지됩니다.':'자동 크롭을 해제해 원본 영역을 복원했습니다.')};
 $('baseExcludeInput').onchange=e=>{remember();baseBackgroundExclude=e.target.checked;markMask();scheduleSave();setStatus(baseBackgroundExclude?'베이스 외부 배경은 고정됩니다.':'이미지 전체 기본 움직임이 적용됩니다.')};
 $('baseEdgeInput').oninput=e=>{baseEdge=Number(e.target.value);$('baseEdgeVal').textContent=String(baseEdge);markMask();scheduleSave()};
-function updateValues(){const z=getSelected();if(!z)return;for(const {key,ui} of ZONE_UI)if(ui.output)$(ui.output).textContent=(ui.fmt||String)(z[key]);updateQuickMotion(z);$('widthRow').hidden=$('heightRow').hidden=$('rotationRow').hidden=z.kind!=='ellipse'}
-function updateUI(){const z=getSelected();$('zoneCount').textContent=`${zones.length}개`;const list=$('zoneList');list.replaceChildren();for(const item of zones){const b=document.createElement('button');b.className='chip'+(item.id===selected?' active':'')+(item.isBase?' baseChip':'');b.textContent=(item.isBase?'몸체 · ':'')+item.name+(item.locked?' (잠금)':'');b.onclick=()=>{selected=item.id;updateUI()};b.oncontextmenu=e=>{e.preventDefault();clearTimeout(pressTimer);selected=item.id;updateUI();showZoneMenu(item)};let pressTimer=null;b.addEventListener('pointerdown',()=>{clearTimeout(pressTimer);pressTimer=setTimeout(()=>{selected=item.id;updateUI();showZoneMenu(item)},620)});for(const ev of ['pointerup','pointercancel','pointerleave'])b.addEventListener(ev,()=>clearTimeout(pressTimer));list.append(b)}$('noZone').hidden=!!z;$('editFields').hidden=!z;refreshBaseUI();if(!z)return;for(const {key,ui} of ZONE_UI){const node=$(ui.input),val=ui.toInput?ui.toInput(z[key]):z[key];if(ui.check)node.checked=val;else node.value=val}updateValues()}
+function updateValues(){const z=getSelected();if(!z)return;$('zoneList').replaceChildren(...zones.map(zoneItem));for(const {key,ui} of ZONE_UI)if(ui.output)$(ui.output).textContent=(ui.fmt||String)(z[key]);updateQuickMotion(z)}
+// 2-F: 영역 목록. PC는 세로 목록(이름 + 켜진 효과 이름표 + 잠금), 폰은 가로 이름표(CSS). 몸체는 늘 맨 앞.
+function zoneTags(z){const t=[],pc=v=>`${Math.round(v)}%`;
+ if(z.isBase)t.push(['몸체','움직일 몸체']);
+ if(z.tailCutout)t.push(['외곽','외곽까지 흔들기']);
+ if(z.auto)t.push(['자동',`자동으로 움직이기 · 속도 ${Number(z.autoSpeed).toFixed(1)}`]);
+ if(z.windStrength>0)t.push(['바람',`바람 강도 ${pc(z.windStrength)}`]);
+ if(z.flow>0)t.push(['흐름',`흐름 ${z.flow}`]);
+ if(z.breath>8||z.preset==='breathing')t.push(['호흡',`부분 호흡 ${z.breath}`]);// 기본값(8) 이하의 약한 호흡은 모든 영역에 있어 표시하지 않는다
+ if(z.wave>0)t.push(['물결',`물결 ${z.wave}`]);
+ if(z.twist>0)t.push(['비틀림',`비틀림 ${z.twist}`]);
+ if(z.ripple>0)t.push(['파동',`터치 파동 ${z.ripple}`]);
+ if(!z.isBase&&z.strength>0&&z.pull>0)t.push(['당김',`잡아당김 ${pc(z.pull)} · 반응 세기 ${z.strength}`]);
+ return t}
+function zoneItem(item){const b=document.createElement('button');b.type='button';b.className='chip zoneItem'+(item.id===selected?' active':'')+(item.isBase?' baseChip':'');b.setAttribute('role','option');b.setAttribute('aria-selected',String(item.id===selected));
+ const name=document.createElement('span');name.className='zoneName';name.textContent=item.name;if(item.isBase){const star=document.createElement('span');star.className='baseMark';star.textContent='★ ';star.setAttribute('aria-label','몸체');name.prepend(star)}
+ const tags=document.createElement('span');tags.className='zoneTags';const list=zoneTags(item);for(const [label,tip] of list){const s=document.createElement('span');s.className='zoneTag';s.textContent=label;s.title=tip;tags.append(s)}
+ b.title=[item.name,...list.map(t=>t[1]),...(item.locked?['잠금']:[])].join('\n');
+ b.append(name,tags);if(item.locked){const lock=document.createElementNS('http://www.w3.org/2000/svg','svg');lock.setAttribute('class','ic zoneLock');lock.setAttribute('aria-label','잠금');const u=document.createElementNS('http://www.w3.org/2000/svg','use');u.setAttribute('href','#i-lock');lock.append(u);b.append(lock)}
+ b.onclick=()=>{selected=item.id;updateUI()};b.oncontextmenu=e=>{e.preventDefault();clearTimeout(pressTimer);selected=item.id;updateUI();showZoneMenu(item)};let pressTimer=null;b.addEventListener('pointerdown',()=>{clearTimeout(pressTimer);pressTimer=setTimeout(()=>{selected=item.id;updateUI();showZoneMenu(item)},620)});for(const ev of ['pointerup','pointercancel','pointerleave'])b.addEventListener(ev,()=>clearTimeout(pressTimer));return b}
+function updateUI(){const z=getSelected(),base=getBase();$('zoneCount').textContent=`${zones.length}개`;$('zoneList').replaceChildren(...zones.map(zoneItem));$('zoneList').hidden=!zones.length;
+ $('bodyState').textContent=base?`몸체: ${base.name}`:'몸체 미지정 · 그림 전체';$('partsName').textContent=z?z.name:'';
+ $('noZone').hidden=!!z;$('editFields').hidden=$('zoneDetail').hidden=$('motionFields').hidden=!z;$('noZoneMotion').hidden=!!z;refreshBaseUI();if(!z)return;for(const {key,ui} of ZONE_UI){const node=$(ui.input),val=ui.toInput?ui.toInput(z[key]):z[key];if(ui.check)node.checked=val;else node.value=val}updateValues()}
 // 0-2: prompt() 대신 앱 자체 메뉴
 let zoneMenuTarget=null;
 function showZoneMenu(z){if(!z||$('zoneMenuDialog').open)return;zoneMenuTarget=z.id;$('zoneMenuTitle').textContent=`‘${z.name}’ 영역`;$('zoneMenuLock').textContent=z.locked?'잠금 해제':'잠금';$('zoneMenuDialog').showModal()}
 function zoneMenuAction(action){const z=zones.find(a=>a.id===zoneMenuTarget);$('zoneMenuDialog').close();zoneMenuTarget=null;if(!z)return;selected=z.id;if(action==='duplicate')duplicateZone();else if(action==='delete')deleteZone();else if(action==='lock'){remember();z.locked=!z.locked;updateUI();scheduleSave()}}
 $('zoneMenuDuplicate').onclick=()=>zoneMenuAction('duplicate');$('zoneMenuDelete').onclick=()=>zoneMenuAction('delete');$('zoneMenuLock').onclick=()=>zoneMenuAction('lock');$('zoneMenuCancel').onclick=()=>$('zoneMenuDialog').close();
-for(const activePanel of ['ambientPanel','partsPanel']){
- $(activePanel).addEventListener('toggle',()=>{if(!$(activePanel).open)return;for(const another of ['ambientPanel','partsPanel'])if(another!==activePanel&&matchMedia('(max-width:779px),(orientation:portrait) and (max-width:990px)').matches)$(another).open=false});
-}
 $('effects').open=false;
 $('clearBranchBtn').onclick=()=>{const z=getSelected();if(!z||z.locked)return;remember();z.branch=[];z.branchNodes=null;updateUI();scheduleSave();setStatus('가지 선을 삭제했습니다.')};
 $('clearExtraPivotsBtn').onclick=async()=>{const z=getSelected();if(!z||z.locked||!z.extraPivots?.length)return;if(!await askConfirm({title:'추가 축 삭제',message:`‘${z.name}’ 영역에 놓은 추가 축 ${z.extraPivots.length}개를 모두 지울까요?`,ok:'추가 축 삭제'}))return;remember();z.extraPivots=[];updateUI();scheduleSave();setStatus('추가 축을 삭제했습니다.')};
@@ -725,7 +775,7 @@ $('brushInput').oninput=e=>{brushSize=Number(e.target.value);$('brushValue').tex
 for(const {key,ui} of ZONE_UI){const id=ui.input,conv=ui.fromInput||(ui.check?x=>x:Number);$(id).addEventListener(ui.event||'input',e=>{const z=getSelected();if(!z)return;const value=conv(ui.check?e.target.checked:e.target.value);if(z[key]===value)return;z[key]=value;if(ui.mask)markMask();if(key==='name')updateUI();else updateValues();scheduleSave();if(!ui.noPreview)previewMotion()})}
 for(const {ui} of ZONE_UI){const e=$(ui.input);e.addEventListener('pointerdown',()=>{if(getSelected())remember()},{passive:true});e.addEventListener('focus',()=>{if(getSelected())remember()})}
 async function deleteZone(){const z=getSelected();if(!z)return;if(!await askConfirm({title:'영역 삭제',message:`‘${z.name}’ 영역과 그 움직임 설정을 지울까요? 실행 취소로 되돌릴 수 있습니다.`,ok:'영역 삭제'}))return;if(!zones.includes(z))return;remember();zones=zones.filter(a=>a.id!==z.id);if(z.isBase){baseClipEnabled=false;lastBaseSignature=''}selected=zones[0]?.id||null;updateUI();markMask();scheduleSave()}
-$('deleteBtn').onclick=deleteZone;$('quickDeleteBtn').onclick=deleteZone;$('toolDeleteBtn').onclick=()=>{if(!getSelected()){setStatus('지울 영역을 먼저 선택해 주세요.');return}deleteZone()};$('toolDuplicateBtn').onclick=()=>{if(!getSelected()){setStatus('복제할 영역을 먼저 선택해 주세요.');return}duplicateZone()};function duplicateZone(){const z=getSelected();if(!z)return;if(zones.length>=LIMIT){setStatus('영역 개수 제한입니다.');return}remember();const copy=structuredClone(clean(z));copy.tailCutout=false;copy.isBase=false;copy.id=newId();copy.name=z.name+' 복사';copy.x=clamp(copy.x+.03,0,1);copy.y=clamp(copy.y+.03,0,1);if(copy.pivotX!=null)copy.pivotX=clamp(copy.pivotX+.03,0,1);if(copy.pivotY!=null)copy.pivotY=clamp(copy.pivotY+.03,0,1);if(Array.isArray(copy.spine))copy.spine.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)});if(Array.isArray(copy.branch))copy.branch.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)});if(Array.isArray(copy.extraPivots))copy.extraPivots.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)});if(copy.kind==='brush')copy.strokes.forEach(st=>st.points.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)}));if(copy.kind==='polygon')copy.polygon.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)});const zz=sanitize(copy,zones.length);if(zz.kind==='raster'){rasterize(zz);recalcRaster(zz)}zones.push(zz);selected=zz.id;markMask();updateUI();scheduleSave();setMode('edit')} $('duplicateBtn').onclick=duplicateZone;
+$('toolDeleteBtn').onclick=()=>{if(!getSelected()){setStatus('지울 영역을 먼저 선택해 주세요.');return}deleteZone()};$('toolDuplicateBtn').onclick=()=>{if(!getSelected()){setStatus('복제할 영역을 먼저 선택해 주세요.');return}duplicateZone()};function duplicateZone(){const z=getSelected();if(!z)return;if(zones.length>=LIMIT){setStatus('영역 개수 제한입니다.');return}remember();const copy=structuredClone(clean(z));copy.tailCutout=false;copy.isBase=false;copy.id=newId();copy.name=z.name+' 복사';copy.x=clamp(copy.x+.03,0,1);copy.y=clamp(copy.y+.03,0,1);if(copy.pivotX!=null)copy.pivotX=clamp(copy.pivotX+.03,0,1);if(copy.pivotY!=null)copy.pivotY=clamp(copy.pivotY+.03,0,1);if(Array.isArray(copy.spine))copy.spine.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)});if(Array.isArray(copy.branch))copy.branch.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)});if(Array.isArray(copy.extraPivots))copy.extraPivots.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)});if(copy.kind==='brush')copy.strokes.forEach(st=>st.points.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)}));if(copy.kind==='polygon')copy.polygon.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)});const zz=sanitize(copy,zones.length);if(zz.kind==='raster'){rasterize(zz);recalcRaster(zz)}zones.push(zz);selected=zz.id;markMask();updateUI();scheduleSave();setMode('edit')}
 // 선택 방식(1-A): 교체(값 new) = 선택한 영역의 모양을 바꿈(움직임 설정은 유지), 더하기, 빼기. 선택한 영역이 없으면 새 영역.
 function selectOp(){return document.querySelector('input[name="selectOp"]:checked')?.value||'new'}
 function setSelectOp(op){const r=document.querySelector(`input[name="selectOp"][value="${op}"]`);if(r)r.checked=true}
@@ -1232,7 +1282,6 @@ function hit(x,y){
  return null;
 }
 
-$('testBtn').onclick=()=>impulse(getSelected());
 function placePivot(z,p,additional){
  if(!z){setStatus('먼저 영역을 선택해 주세요.');return false}
  if(z.locked){setStatus('잠긴 영역은 수정할 수 없습니다.');return false}
@@ -2929,17 +2978,18 @@ function previewMotion(){
 function motionControls(z){
  if(['tail','wind','scarf'].includes(z.preset))return {
   angle:'windAngleInput',strength:'windStrengthInput',speed:'windSpeedInput',
-  hint:'흔들리는 쪽으로 방향을 맞추고, 고정점이 필요하면 아래에서 축을 지정해 주세요.'
+  hint:'바람에 흔들리는 움직임입니다. 흔들리는 쪽으로 방향을 맞추고, 고정점이 필요하면 ‘1. 영역 → 고정점과 가이드’에서 축을 지정해 주세요.'
  };
  if(z.preset==='breathing')return {
   strength:'breathInput',speed:'breathSpeed',
-  hint:'숨 쉬는 움직임은 손을 떼어도 계속됩니다.'
+  hint:'숨 쉬듯 부풀었다 줄어드는 움직임입니다.'
  };
  if(z.preset==='flow')return {
   angle:'flowAngleInput',strength:'flowInput',
-  hint:'텍스처가 흐를 방향을 각도로 조절해 주세요.'
+  hint:'무늬가 흐르는 움직임입니다. 흐를 방향을 각도로 정해 주세요.'
  };
- return {axis:true,strength:'strengthInput',speed:'springInput',hint:'그림을 누르거나 끌어 반응을 확인해 주세요.'};
+ // 2-F: 3-1의 세기·속도는 자동 움직임의 것. 이 종류의 자동 움직임은 터치 반응을 스스로 되풀이하므로 세기는 3-2 '반응 세기'와 같은 값이다.
+ return {axis:true,strength:'strengthInput',speed:'autoSpeedInput',hint:'‘자동으로 움직이기’를 켜면 이 세기·속도로 계속 흔들립니다. 세기는 터치 움직임의 ‘반응 세기’와 같은 값입니다.'};
 }
 $('tailCutoutInput').onchange=e=>{
  const z=getSelected();
@@ -2975,10 +3025,11 @@ function updateQuickMotion(z){
    const advanced=$(name);
    input.min=advanced.min;input.max=advanced.max;input.step=advanced.step;input.value=advanced.value;
   }
-  const unit=name==='windStrengthInput'?'%':['windSpeedInput','breathSpeed'].includes(name)?'×':'';
-  $(id+'Value').textContent=input.value+unit;
+  const unit=name==='windStrengthInput'?'%':['windSpeedInput','breathSpeed','autoSpeedInput'].includes(name)?'×':'';
+  $(id+'Value').textContent=(name==='autoSpeedInput'?Number(input.value).toFixed(1):input.value)+unit;
  }
  $('quickSpeedRow').hidden=!controls.speed;
+ $('autoSpeedRow').hidden=controls.speed==='autoSpeedInput';
  $('quickMotionHint').textContent=controls.hint;
 }
 for(const [id,key] of [['quickDirection','axis'],['quickAngle','angle'],['quickStrength','strength'],['quickSpeed','speed']]){

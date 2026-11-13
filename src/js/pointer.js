@@ -8,7 +8,6 @@ function hit(x,y){
  return null;
 }
 
-$('testBtn').onclick=()=>impulse(getSelected());
 function placePivot(z,p,additional){
  if(!z){setStatus('먼저 영역을 선택해 주세요.');return false}
  if(z.locked){setStatus('잠긴 영역은 수정할 수 없습니다.');return false}
