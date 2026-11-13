@@ -263,7 +263,7 @@ function tick(now){
       z.dragging=true;z.desiredX=0;z.desiredY=0;z.desiredScale=-max*.65*(z.holdGain??60)/100;
     }
   }
-  try{updateMasks();render();drawOverlay()}catch(e){console.error('모션 렌더 오류',e)}
+  try{updateMasks();render();drawOverlay();drawTouchFx()}catch(e){console.error('모션 렌더 오류',e)}
   frames++;if(now-fpsLast>=1000){fps=frames*1000/(now-fpsLast);frames=0;fpsLast=now;
     const b=$('fpsToggle');if(b.dataset.enabled==='true')b.textContent=Math.round(fps)+' FPS';
     updateRendererBadge();

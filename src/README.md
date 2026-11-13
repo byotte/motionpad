@@ -38,6 +38,7 @@ node tools/build.js --check  # motionpad.html이 src/와 같은지 확인(커밋
 | theme | 테마·화질 |
 | render | WebGL 준비, CPU 변형, render() |
 | physics | 물리(MotionPhysics), 터치 반응, 마스크 확장(dilateMask) |
+| touchfx | 플레이 화면 터치 이펙트(반짝임, 3-F) |
 | controls | 전체 움직임·소리 UI, 터치 미리보기, 움직임 조작, 모드 전환, fit·tick |
 | blink | 눈 깜빡임 |
 | dialogs | 도움말 말풍선, 대화창 공통 동작 |

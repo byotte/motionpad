@@ -72,6 +72,7 @@ button[data-help]:hover::before{color:var(--ink)}
 .surface{position:relative;flex:none;overflow:hidden;box-shadow:0 2px 25px #0008}
 .surface canvas{position:absolute;inset:0;display:block;width:100%;height:100%}
 #overlay{touch-action:none}
+#fxLayer{pointer-events:none}
 .loupe{position:absolute;top:10px;right:12px;z-index:20;width:152px;height:152px;pointer-events:none;border:2px solid var(--accent);border-radius:12px;box-shadow:0 7px 26px #000a;background:var(--panel);image-rendering:pixelated}
 
 /* 캔버스 아래 줄 */

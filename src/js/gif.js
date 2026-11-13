@@ -2,7 +2,8 @@
 // 팔레트는 첫 프레임에서 한 번 만든다(움직임만 있고 색은 거의 그대로라서). 각 프레임은 앞 프레임과 달라진 사각형만 저장한다.
 // 쓰는 법: const gif=createGifEncoder(W,H,{colors}); gif.addFrame(rgba,보여줄시간_1/100초); ... const bytes=gif.finish();
 const BAYER4=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5];
-function createGifEncoder(W,H,{colors=256,dither=1}={}){
+// extra: 첫 프레임에 없어도 꼭 필요한 색(터치 이펙트 색 등)을 팔레트에 미리 넣는다.
+function createGifEncoder(W,H,{colors=256,dither=1,extra=[]}={}){
  const out=[];let pos=0;
  const byte=b=>{out.push(b&255)},word=w=>{byte(w);byte(w>>8)},str=s=>{for(const ch of s)byte(ch.charCodeAt(0))};
  let palette=null,bits=8,lookup=null,prev=null;
@@ -52,7 +53,7 @@ function createGifEncoder(W,H,{colors=256,dither=1}={}){
  }
  return {
   addFrame(rgba,delay=4){
-   if(!palette){palette=buildPalette(rgba,Math.max(2,Math.min(256,colors)));bits=Math.max(1,Math.ceil(Math.log2(palette.length)));lookup=new Uint16Array(32768).fill(65535);header()}
+   if(!palette){palette=buildPalette(rgba,Math.max(2,Math.min(256,colors)-extra.length)).concat(extra);bits=Math.max(1,Math.ceil(Math.log2(palette.length)));lookup=new Uint16Array(32768).fill(65535);header()}
    const idx=new Uint8Array(W*H);
    // 4×4 순서 디더링: 자리마다 같은 무늬라 가만히 있는 부분은 프레임 사이에 그대로다(용량 유지). 그라데이션 줄무늬를 줄인다.
    const amp=dither;
