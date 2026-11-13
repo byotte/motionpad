@@ -208,7 +208,7 @@ function setMode(m){
   $('editGuide').hidden=!workspace.classList.contains('placing');
   for(const b of document.querySelectorAll('.mode'))b.setAttribute('aria-pressed',String(b.dataset.mode===m));
   $('leaveEdit').hidden=!editCheckpoint;
-  $('finishEdit').textContent=workspace.classList.contains('placing')?'완료':'선택 완료';
+  $('finishEdit').textContent='완료';
   $('editInstruction').textContent=({pivot:'고정할 곳을 눌러 주세요.',extraPivot:'고정점을 더 놓을 곳을 눌러 주세요.',spine:'붙어 있는 곳에서 끝까지 그어 주세요.',flowdir:'흐를 방향으로 그어 주세요.'})[m]||'그림에서 부분을 선택하거나 다듬어 주세요.';
   if(ready&&!viewerOpen)requestAnimationFrame(fit);
   for(const b of document.querySelectorAll('.mode'))b.classList.toggle('active',b.dataset.mode===m);
