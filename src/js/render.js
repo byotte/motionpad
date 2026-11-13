@@ -143,7 +143,8 @@ function render(){
    gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,baseMaskTex);
    gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,backgroundTex);
    for(const [name,data] of [['zone',zp],['motion',mo],['fx',fx],['tap',tp],['pivot',pv],['flow',fl],['spine',sp],['spinemotion',sm],['chainMid',cm],['branchLine',bl],['branchMotion',bm],['pivotExtra',pe],['pull',pu]])if(uni[name])gl.uniform4fv(uni[name],data);
-   gl.uniform1f(uni.tailCutout,tailPlate?zones.indexOf(tailCutoutZone()):-1);
+   const tl=tailPlate?tailCutoutZones().map(z=>zones.indexOf(z)):[];
+   gl.uniform4f(uni.tailCutout,tl[0]??-1,tl[1]??-1,tl[2]??-1,tl[3]??-1);
    gl.uniform1f(uni.baseExclude,baseBackgroundExclude&&backgroundPlate?1:0);
    gl.uniform4f(uni.ambient,ambient.enabled?1:0,ambient.enabled?ambient.breath/100:0,ambient.enabled?ambient.sway/100:0,ambient.enabled?ambient.light/100:0);
    gl.uniform1f(uni.time,elapsed);gl.uniform1i(uni.count,zones.length);
@@ -153,7 +154,7 @@ function render(){
  if(!draw2d)return;
  const w=view.width,h=view.height;
  draw2d.clearRect(0,0,w,h);
- const cutout=tailPlate?tailCutoutZone():null;
+ const cutouts=tailPlate?tailCutoutZones():[];
  const scene=blinkScene||tailPlate||bitmap;
  const b=ambient.enabled?ambient.breath/100:0,s=ambient.enabled?ambient.sway/100:0;
  const scale=1+MotionPhysics.wave(elapsed*1.40,-.30)*b*.0073;
@@ -189,7 +190,7 @@ function render(){
 
  for(let i=0;i<zones.length;i++){
    const z=zones[i];
-   if(z===base||z===cutout||!hasLocalMotion(z))continue;
+   if(z===base||cutouts.includes(z)||!hasLocalMotion(z))continue;
    let f=fallbacks[i];if(!f||f.width!==w||f.height!==h){f=document.createElement('canvas');f.width=w;f.height=h;fallbacks[i]=f}
    const g=f.getContext('2d');g.clearRect(0,0,w,h);
    canvasWarpRegion(g,z,w,h,scene);
@@ -197,12 +198,12 @@ function render(){
    g.globalCompositeOperation='source-over';draw2d.drawImage(f,0,0);
  }
 
- if(cutout){
+ for(const cutout of cutouts){
    draw2d.save();
    draw2d.translate(w/2+MotionPhysics.wave(elapsed*.98)*s*w*.0036,h);
    draw2d.scale(scale,scale);
    draw2d.translate(-w/2,-h);
-   canvasWarpRegion(draw2d,cutout,w,h,getTailSource(blinkOriginal||bitmap));
+   canvasWarpRegion(draw2d,cutout,w,h,getTailSource(blinkOriginal||bitmap,cutout));
    draw2d.restore();
  }
  if(!base)applyCanvasLight(draw2d,w,h);

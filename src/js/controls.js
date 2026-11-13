@@ -52,7 +52,7 @@ $('tailCutoutInput').onchange=e=>{
  const z=getSelected();
  if(!z||z.isBase)return;
  remember();
- if(e.target.checked)for(const other of zones)other.tailCutout=false;
+ if(e.target.checked&&tailCutoutZones().length>=TAIL_MAX){e.target.checked=false;setStatus(`외곽까지 흔들기는 영역 ${TAIL_MAX}개까지 켤 수 있습니다.`);return}
  z.tailCutout=e.target.checked;
  markMask();
  scheduleSave();

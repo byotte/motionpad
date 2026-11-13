@@ -1639,7 +1639,7 @@ function syncBaseTexturesGL(){
   gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D,tailOriginalTex);
   gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,bitmap);
   gl.activeTexture(gl.TEXTURE5);gl.bindTexture(gl.TEXTURE_2D,tailMaskTex);
-  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,tailMask);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,tailChannels||tailMask);
  }
 }
 const emptyBaseMask=document.createElement('canvas');emptyBaseMask.width=emptyBaseMask.height=TILE;
@@ -1647,41 +1647,56 @@ const emptyBaseMask=document.createElement('canvas');emptyBaseMask.width=emptyBa
 let rawMaskPixels=[];
 let tailPlate=null,tailSource=null,tailMask=null,tailBasePlate=null,tailOriginalTex=null,tailMaskTex=null;
 
-function tailCutoutZone(){
- return zones.find(z=>z.tailCutout&&!z.isBase)||null;
+// 2-D: '외곽까지 흔들기' 영역 최대 4개. 영역 모양은 한 텍스처의 R·G·B·A 채널에 하나씩, 빈자리 배경판은 합친 모양으로 한 장.
+const TAIL_MAX=4;let tailChannels=null,tailSources=new Map();
+function tailCutoutZones(){
+ return zones.filter(z=>z.tailCutout&&!z.isBase).slice(0,TAIL_MAX);
 }
+function tailCutoutZone(){return tailCutoutZones()[0]||null}
 
 function updateTailCutout(){
- tailPlate=tailSource=tailMask=tailBasePlate=null;
+ tailPlate=tailMask=tailBasePlate=tailChannels=null;tailSource=null;tailSources=new Map();
  baseForegroundSource=null;
- const index=zones.indexOf(tailCutoutZone());
- if(index<0)return;
- const mask=rawMasks[index];
- const plate=buildBackgroundPlate(mask);
+ const list=tailCutoutZones().map(z=>rawMasks[zones.indexOf(z)]).filter(Boolean);
+ if(!list.length)return;
+ const union=document.createElement('canvas');
+ union.width=union.height=TILE;
+ const u=union.getContext('2d',{willReadFrequently:true});
+ for(const m of list)u.drawImage(m,0,0);
+ const plate=buildBackgroundPlate(union);
  if(!plate)return;
  tailPlate=plate;
- tailMask=mask;
+ tailMask=union;
+ const packed=document.createElement('canvas');
+ packed.width=packed.height=TILE;
+ const pg=packed.getContext('2d'),img=pg.createImageData(TILE,TILE);
+ list.forEach((m,k)=>{const a=m.getContext('2d',{willReadFrequently:true}).getImageData(0,0,TILE,TILE).data;for(let i=0;i<TILE*TILE;i++)img.data[i*4+k]=a[i*4+3]});
+ pg.putImageData(img,0,0);
+ tailChannels=packed;
  const baseIndex=zones.findIndex(z=>z.isBase);
  if(backgroundPlate&&baseIndex>=0&&!baseClipEnabled){
-  const union=document.createElement('canvas');
-  union.width=union.height=TILE;
-  const g=union.getContext('2d');
+  const both=document.createElement('canvas');
+  both.width=both.height=TILE;
+  const g=both.getContext('2d');
   g.drawImage(rawMasks[baseIndex],0,0);
-  g.drawImage(mask,0,0);
-  tailBasePlate=buildBackgroundPlate(union);
+  g.drawImage(union,0,0);
+  tailBasePlate=buildBackgroundPlate(both);
  }
 }
 
-function getTailSource(image=bitmap){
- if(tailSource)return tailSource;
- tailSource=document.createElement('canvas');
- tailSource.width=renderWidth;
- tailSource.height=renderHeight;
- const g=tailSource.getContext('2d');
+// 영역 하나의 오려낸 그림(캔버스 대체 경로용)
+function getTailSource(image=bitmap,z=tailCutoutZone()){
+ const key=z?.id;
+ if(tailSources.has(key))return tailSources.get(key);
+ const mask=rawMasks[zones.indexOf(z)]||tailMask;
+ const c=document.createElement('canvas');
+ c.width=renderWidth;c.height=renderHeight;
+ const g=c.getContext('2d');
  g.drawImage(image,0,0);
  g.globalCompositeOperation='destination-in';
- g.drawImage(tailMask,0,0,renderWidth,renderHeight);
- return tailSource;
+ g.drawImage(mask,0,0,renderWidth,renderHeight);
+ tailSources.set(key,c);
+ return c;
 }
 const maskPreviews=new WeakMap();
 
@@ -1724,9 +1739,9 @@ function updateMasks(){
   return c.clipped;
  });
  // '외곽까지 흔들기' 배경은 그 영역·몸체의 원본 마스크나 그림이 바뀔 때만 다시 만든다.
- const tailIndex=zones.indexOf(tailCutoutZone());
- const tailKey=tailIndex<0?'none':JSON.stringify([zones[tailIndex].id,keys[tailIndex],entries[tailIndex].clipKey,baseIndex>=0?keys[baseIndex]:'',baseClipEnabled,!!backgroundPlate,renderWidth,renderHeight]);
- if(tailKey!==lastTailKey||lastTailBitmap!==bitmap||(tailIndex>=0&&tailMask!==rawMasks[tailIndex])){updateTailCutout();lastTailKey=tailKey;lastTailBitmap=bitmap}
+ const tailList=tailCutoutZones().map(z=>zones.indexOf(z));
+ const tailKey=!tailList.length?'none':JSON.stringify([tailList.map(i=>[zones[i].id,keys[i],entries[i].clipKey]),baseIndex>=0?keys[baseIndex]:'',baseClipEnabled,!!backgroundPlate,renderWidth,renderHeight]);
+ if(tailKey!==lastTailKey||lastTailBitmap!==bitmap){updateTailCutout();lastTailKey=tailKey;lastTailBitmap=bitmap}
  rawMaskPixels=entries.map(c=>c.pixels);
  masks=zones.map((z,i)=>{
   const c=entries[i];
@@ -1745,7 +1760,7 @@ function updateMasks(){
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
   gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,maskAtlas);
   // 그림·배경판·몸체·분리 레이어 텍스처는 내용이 바뀐 경우에만 다시 올린다.
-  const sync=[gl,baseMaskCanvas,tailBasePlate||backgroundPlate,tailPlate,bitmap,tailMask];
+  const sync=[gl,baseMaskCanvas,tailBasePlate||backgroundPlate,tailPlate,bitmap,tailChannels];
   if(sync.some((v,i)=>v!==lastGLSync[i])){
    syncBaseTexturesGL();lastGLSync=sync;
    if(blinkLastStep>0)blinkLastStep=-1;
@@ -1843,6 +1858,16 @@ varying vec2 v_uv;
 uniform float u_time;
 uniform vec4 u_ambient;
 uniform float u_baseExclude;
+vec4 tailLayer(vec4 color,vec2 source,int k,float light){
+ vec4 foreground=texture2D(u_tailOriginal,source);
+ vec4 m=texture2D(u_tailMask,source);
+ float ch=k==0?m.r:k==1?m.g:k==2?m.b:m.a;
+ float inside=step(0.0,source.x)*step(source.x,1.0)*step(0.0,source.y)*step(source.y,1.0);
+ float alpha=inside*ch*foreground.a;
+ float outAlpha=alpha+color.a*(1.0-alpha);
+ vec3 rgb=(foreground.rgb*light*alpha+color.rgb*color.a*(1.0-alpha))/max(outAlpha,.00001);
+ return vec4(rgb,outAlpha);
+}
 void main(){
   v_uv=a_uv;
   float topWeight=pow(clamp(1.0-a_uv.y,0.0,1.0),1.5);
@@ -1858,7 +1883,7 @@ uniform sampler2D u_tex;
 uniform sampler2D u_mask;
 uniform sampler2D u_baseMask;
 uniform sampler2D u_background;
-uniform float u_tailCutout;
+uniform vec4 u_tailCutout;
 uniform sampler2D u_tailOriginal,u_tailMask;
 uniform float u_baseExclude;
 uniform vec4 u_zone[12],u_motion[12],u_fx[12],u_tap[12],u_pivot[12],u_flow[12],u_spine[12],u_spinemotion[12];
@@ -1879,7 +1904,7 @@ float pointToSegment(vec2 uv,vec2 a,vec2 b,out float t){
 void main(){
  vec2 shift=vec2(0.0),flowVector=vec2(0.0);
  float flowWeight=0.0;
- vec2 cutoutShift=vec2(0.0);
+ vec2 cs0=vec2(0.0),cs1=vec2(0.0),cs2=vec2(0.0),cs3=vec2(0.0);
  for(int i=0;i<12;i++){
    if(i>=u_count)break;
    vec4 z=u_zone[i];
@@ -1887,7 +1912,8 @@ void main(){
    float fi=float(i);
    vec2 tile=vec2(mod(fi,4.0),floor(fi/4.0));
    float mask=texture2D(u_mask,(tile+v_uv)/vec2(4.0,3.0)).a;
-   bool cutout=abs(float(i)-u_tailCutout)<.5;
+   float fi2=float(i);
+   bool cutout=abs(fi2-u_tailCutout.x)<.5||abs(fi2-u_tailCutout.y)<.5||abs(fi2-u_tailCutout.z)<.5||abs(fi2-u_tailCutout.w)<.5;
    if(mask<.001&&!cutout)continue;
    vec4 mo=u_motion[i],fx=u_fx[i],tap=u_tap[i],piv=u_pivot[i],fl=u_flow[i],sp=u_spine[i],st=u_spinemotion[i],mid=u_chainMid[i];
    vec2 rel=v_uv-z.xy;
@@ -1934,7 +1960,8 @@ void main(){
    }
    // Effect safety: bounded distortion without changing the user's sliders.
    if(cutout){
-     cutoutShift=clamp(local,vec2(-.055),vec2(.055));
+     vec2 c=clamp(local,vec2(-.055),vec2(.055));
+     if(abs(fi2-u_tailCutout.x)<.5)cs0=c;else if(abs(fi2-u_tailCutout.y)<.5)cs1=c;else if(abs(fi2-u_tailCutout.z)<.5)cs2=c;else cs3=c;
      continue;
    }
    shift+=clamp(local,vec2(-.055),vec2(.055))*mask;
@@ -1948,7 +1975,7 @@ void main(){
    float drift=.80*sin(u_time*.98)+.20*sin(u_time*1.51+1.7);
    vec2 ambientShift=vec2(.013*u_ambient.z*drift,.018*u_ambient.y*inhale)*tw;
    shift+=ambientShift;
-   cutoutShift+=ambientShift;
+   cs0+=ambientShift;cs1+=ambientShift;cs2+=ambientShift;cs3+=ambientShift;
  }
  vec2 uv=clamp(v_uv-clamp(shift,vec2(-.08),vec2(.08)),vec2(.001),vec2(.999));
  vec4 color;
@@ -1966,15 +1993,11 @@ void main(){
    color.rgb*=light;
    color=mix(background,color,alpha);
  }else color.rgb*=light;
- if(u_tailCutout>=0.0){
-   vec2 source=v_uv-cutoutShift;
-   vec4 foreground=texture2D(u_tailOriginal,source);
-   float inside=step(0.0,source.x)*step(source.x,1.0)*step(0.0,source.y)*step(source.y,1.0);
-   float alpha=inside*texture2D(u_tailMask,source).a*foreground.a;
-   float outAlpha=alpha+color.a*(1.0-alpha);
-   vec3 rgb=(foreground.rgb*light*alpha+color.rgb*color.a*(1.0-alpha))/max(outAlpha,.00001);
-   color=vec4(rgb,outAlpha);
- }
+ // 2-D: 분리 영역을 목록 순서대로 위에 겹친다(뒤 영역이 위)
+ if(u_tailCutout.x>=0.0)color=tailLayer(color,v_uv-cs0,0,light);
+ if(u_tailCutout.y>=0.0)color=tailLayer(color,v_uv-cs1,1,light);
+ if(u_tailCutout.z>=0.0)color=tailLayer(color,v_uv-cs2,2,light);
+ if(u_tailCutout.w>=0.0)color=tailLayer(color,v_uv-cs3,3,light);
  gl_FragColor=color;
 }`;
 
@@ -2361,7 +2384,8 @@ function render(){
    gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,baseMaskTex);
    gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,backgroundTex);
    for(const [name,data] of [['zone',zp],['motion',mo],['fx',fx],['tap',tp],['pivot',pv],['flow',fl],['spine',sp],['spinemotion',sm],['chainMid',cm],['branchLine',bl],['branchMotion',bm],['pivotExtra',pe],['pull',pu]])if(uni[name])gl.uniform4fv(uni[name],data);
-   gl.uniform1f(uni.tailCutout,tailPlate?zones.indexOf(tailCutoutZone()):-1);
+   const tl=tailPlate?tailCutoutZones().map(z=>zones.indexOf(z)):[];
+   gl.uniform4f(uni.tailCutout,tl[0]??-1,tl[1]??-1,tl[2]??-1,tl[3]??-1);
    gl.uniform1f(uni.baseExclude,baseBackgroundExclude&&backgroundPlate?1:0);
    gl.uniform4f(uni.ambient,ambient.enabled?1:0,ambient.enabled?ambient.breath/100:0,ambient.enabled?ambient.sway/100:0,ambient.enabled?ambient.light/100:0);
    gl.uniform1f(uni.time,elapsed);gl.uniform1i(uni.count,zones.length);
@@ -2371,7 +2395,7 @@ function render(){
  if(!draw2d)return;
  const w=view.width,h=view.height;
  draw2d.clearRect(0,0,w,h);
- const cutout=tailPlate?tailCutoutZone():null;
+ const cutouts=tailPlate?tailCutoutZones():[];
  const scene=blinkScene||tailPlate||bitmap;
  const b=ambient.enabled?ambient.breath/100:0,s=ambient.enabled?ambient.sway/100:0;
  const scale=1+MotionPhysics.wave(elapsed*1.40,-.30)*b*.0073;
@@ -2407,7 +2431,7 @@ function render(){
 
  for(let i=0;i<zones.length;i++){
    const z=zones[i];
-   if(z===base||z===cutout||!hasLocalMotion(z))continue;
+   if(z===base||cutouts.includes(z)||!hasLocalMotion(z))continue;
    let f=fallbacks[i];if(!f||f.width!==w||f.height!==h){f=document.createElement('canvas');f.width=w;f.height=h;fallbacks[i]=f}
    const g=f.getContext('2d');g.clearRect(0,0,w,h);
    canvasWarpRegion(g,z,w,h,scene);
@@ -2415,12 +2439,12 @@ function render(){
    g.globalCompositeOperation='source-over';draw2d.drawImage(f,0,0);
  }
 
- if(cutout){
+ for(const cutout of cutouts){
    draw2d.save();
    draw2d.translate(w/2+MotionPhysics.wave(elapsed*.98)*s*w*.0036,h);
    draw2d.scale(scale,scale);
    draw2d.translate(-w/2,-h);
-   canvasWarpRegion(draw2d,cutout,w,h,getTailSource(blinkOriginal||bitmap));
+   canvasWarpRegion(draw2d,cutout,w,h,getTailSource(blinkOriginal||bitmap,cutout));
    draw2d.restore();
  }
  if(!base)applyCanvasLight(draw2d,w,h);
@@ -2643,7 +2667,7 @@ $('tailCutoutInput').onchange=e=>{
  const z=getSelected();
  if(!z||z.isBase)return;
  remember();
- if(e.target.checked)for(const other of zones)other.tailCutout=false;
+ if(e.target.checked&&tailCutoutZones().length>=TAIL_MAX){e.target.checked=false;setStatus(`외곽까지 흔들기는 영역 ${TAIL_MAX}개까지 켤 수 있습니다.`);return}
  z.tailCutout=e.target.checked;
  markMask();
  scheduleSave();
@@ -2931,7 +2955,7 @@ function updateBlinkScene(){
  blinkLastStep=step;blinkLastTail=tailPlate;
  blinkScene=blinkOriginal=null;
  if(!changed)return false;
- baseForegroundSource=null;tailSource=null;
+ baseForegroundSource=null;tailSource=null;tailSources=new Map();
  if(!step)return true;
  blinkOverlay??=blinkCanvas(renderWidth,renderHeight);
  const layer=blinkOverlay.getContext('2d');

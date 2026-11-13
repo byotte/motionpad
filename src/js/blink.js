@@ -54,7 +54,7 @@ function updateBlinkScene(){
  blinkLastStep=step;blinkLastTail=tailPlate;
  blinkScene=blinkOriginal=null;
  if(!changed)return false;
- baseForegroundSource=null;tailSource=null;
+ baseForegroundSource=null;tailSource=null;tailSources=new Map();
  if(!step)return true;
  blinkOverlay??=blinkCanvas(renderWidth,renderHeight);
  const layer=blinkOverlay.getContext('2d');
