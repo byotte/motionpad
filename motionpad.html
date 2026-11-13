@@ -122,7 +122,7 @@ input:is([type=checkbox],[type=radio]){accent-color:var(--accent)}
 .workspace{display:grid;grid-template-columns:minmax(0,1fr) var(--sideW);align-items:stretch;gap:0;min-width:0;height:calc(100dvh - 36px)}
 .workspace.placing{grid-template-columns:minmax(0,1fr)}
 .workspace.placing :is(.side,.stagebar){display:none}
-.stagebox{position:relative;z-index:5;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr) auto;min-width:0;overflow:hidden;background:var(--card);border:1px solid var(--line)}
+.stagebox{position:relative;z-index:5;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr) auto auto;min-width:0;overflow:hidden;background:var(--card);border:1px solid var(--line)}
 .stagebox>*{grid-column:1}
 
 /* 도구 줄 */
@@ -195,7 +195,7 @@ button[data-help]:hover::before{color:var(--ink)}
 .loupe{position:absolute;top:10px;right:12px;z-index:20;width:152px;height:152px;pointer-events:none;border:2px solid var(--accent);border-radius:12px;box-shadow:0 7px 26px #000a;background:var(--panel);image-rendering:pixelated}
 
 /* 캔버스 아래 줄 */
-.stagebottom{grid-row:4;align-self:start;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 8px;min-width:0;padding:3px 7px;background:var(--panel);border-top:1px solid var(--line)}
+.stagebottom{grid-row:5;align-self:start;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 8px;min-width:0;padding:3px 7px;background:var(--panel);border-top:1px solid var(--line)}
 :root[data-theme="light"] .stagebottom{background:var(--card)}
 .quick{display:flex;flex-wrap:wrap;gap:3px;min-width:0;max-width:100%}
 .quick>*{flex:none}
@@ -206,7 +206,10 @@ button[data-help]:hover::before{color:var(--ink)}
 #zoomResetBtn{min-width:43px;font-size:10px}
 .precisionSwitch{gap:2px;min-height:31px;padding:4px 6px;border:1px solid var(--line);border-radius:7px;background:var(--panel);font-size:11px;white-space:normal}
 .precisionSwitch input{flex:none}
-.status{display:block;flex:1 1 170px;min-width:0;overflow:hidden;font-size:11px;text-align:center;text-overflow:ellipsis;white-space:normal}
+/* 3-C 안내줄: 캔버스 바로 아래 전용 한 줄. 모든 안내 문구가 여기 뜬다. PC는 한 줄(넘치면 …, 마우스를 올리면 전체), 폰은 두 줄까지 */
+.guideLine{grid-row:4;display:flex;align-items:center;gap:6px;min-width:0;min-height:24px;padding:3px 10px;background:color-mix(in srgb,var(--accent) 7%,var(--panel));border-top:1px solid var(--line)}
+.guideLine .ic{width:14px;height:14px;color:var(--accent)}
+.status{display:block;flex:1 1 auto;min-width:0;overflow:hidden;font-size:12px;line-height:1.45;color:var(--ink);text-overflow:ellipsis;white-space:nowrap}
 
 /* ── 7. 옵션 패널 ───────────────────────────────────────── */
 .side{display:flex;flex-direction:column;min-width:0;padding:0;overflow:auto;background:var(--card);border:1px solid var(--line);scrollbar-color:var(--line) transparent}
@@ -373,10 +376,10 @@ button[data-help]:hover::before{color:var(--ink)}
   .stagebar .mode{min-height:40px;min-width:max-content;font-size:11px}
   .stage{height:43dvh;min-height:210px}
   .stagebottom{align-self:stretch}
-  .quick{width:100%}
+  .quick{width:auto}
   .quick .btn{font-size:10px}
   .toggle{font-size:11px}
-  .status{text-align:left}
+  .status{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
   .side{max-height:var(--panel-height,36dvh)}
   .side>.maskDisplay{display:none}
   /* 2-F 폰: 영역 목록은 가로 이름표(효과 이름표는 숨김, 몸체는 별표) */
@@ -403,10 +406,12 @@ button[data-help]:hover::before{color:var(--ink)}
   .zoneTools{gap:1px}
   .zoneTools .btn{padding-inline:5px}
   .stage{height:42dvh;min-height:195px}
-  .quick{flex:1 1 100%;gap:0 1px}
+  .quick{flex:0 1 auto;gap:0 1px}
   .quick .btn{min-width:22px}
+  .stagebottom{gap:2px 4px}
+  .quick .iconBtn{min-width:28px;padding-inline:3px}
   .quick .precisionSwitch{padding:0 2px;border:0;background:transparent;font-size:10px}
-  .status{flex:1 1 0;font-size:10px}
+  .guideLine{padding-inline:8px}
   .loupe{top:6px;right:6px;width:104px;height:104px}
   .engineBadge{padding:4px 5px;font-size:9px}
   .viewerAudio .btn{font-size:10px}
@@ -435,7 +440,7 @@ button[data-help]:hover::before{color:var(--ink)}
 </style>
 </head>
 <body>
-<svg class="iconSprite" aria-hidden="true"><defs><symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol><symbol id="i-brush" viewBox="0 0 24 24"><path d="M4 20c2.6 0 4.5-1.3 4.5-3.4a2.2 2.2 0 0 0-4.4 0c0 1.5-.4 2.6-.1 3.4z"/><path d="M8 15.4 18.6 4.8a1.7 1.7 0 0 1 2.4 2.4L10.4 17.8"/></symbol><symbol id="i-erase" viewBox="0 0 24 24"><path d="M9 20h11"/><path d="M5.2 15.3 13.6 6.9a2 2 0 0 1 2.8 0l2.4 2.4a2 2 0 0 1 0 2.8L11 20H8.2l-3-3a1.2 1.2 0 0 1 0-1.7z"/><path d="m9.5 11 5 5"/></symbol><symbol id="i-wand" viewBox="0 0 24 24"><path d="m4 20 11-11"/><path d="m13.5 7.5 3 3"/><path d="M18 3v4M16 5h4M20 11v2.5M18.8 12.2h2.5M10 3v2.5M8.8 4.2h2.5"/></symbol><symbol id="i-lasso" viewBox="0 0 24 24"><path d="M12 4c4.7 0 8 2.3 8 5.3s-3.3 5.2-8 5.2-8-2.3-8-5.2S7.3 4 12 4z" stroke-dasharray="2.6 2.4"/><path d="M8.5 14c-1.4 1.6-1 3.6.8 3.9 1.6.3 2 1.5 1 3.1"/></symbol><symbol id="i-ellipse" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8.5" ry="6.5" stroke-dasharray="2.6 2.4"/></symbol><symbol id="i-move" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/><path d="m9 6 3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></symbol><symbol id="i-pan" viewBox="0 0 24 24"><path d="M8 13V6a1.5 1.5 0 0 1 3 0v5.5M11 11V4.5a1.5 1.5 0 0 1 3 0v7M14 11.5V6a1.5 1.5 0 0 1 3 0v8.5c0 3.8-2.4 6.5-5.8 6.5-2.4 0-3.9-1.1-5.3-3.3L4.2 15.4a1.5 1.5 0 0 1 2.5-1.7L8 15.4"/></symbol><symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol><symbol id="i-redo" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></symbol><symbol id="i-minus" viewBox="0 0 24 24"><path d="M6 12h12"/></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></symbol><symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="1.5"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/></symbol><symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m11 18-6-6 6-6"/></symbol></defs></svg>
+<svg class="iconSprite" aria-hidden="true"><defs><symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.5v.01"/></symbol><symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol><symbol id="i-brush" viewBox="0 0 24 24"><path d="M4 20c2.6 0 4.5-1.3 4.5-3.4a2.2 2.2 0 0 0-4.4 0c0 1.5-.4 2.6-.1 3.4z"/><path d="M8 15.4 18.6 4.8a1.7 1.7 0 0 1 2.4 2.4L10.4 17.8"/></symbol><symbol id="i-erase" viewBox="0 0 24 24"><path d="M9 20h11"/><path d="M5.2 15.3 13.6 6.9a2 2 0 0 1 2.8 0l2.4 2.4a2 2 0 0 1 0 2.8L11 20H8.2l-3-3a1.2 1.2 0 0 1 0-1.7z"/><path d="m9.5 11 5 5"/></symbol><symbol id="i-wand" viewBox="0 0 24 24"><path d="m4 20 11-11"/><path d="m13.5 7.5 3 3"/><path d="M18 3v4M16 5h4M20 11v2.5M18.8 12.2h2.5M10 3v2.5M8.8 4.2h2.5"/></symbol><symbol id="i-lasso" viewBox="0 0 24 24"><path d="M12 4c4.7 0 8 2.3 8 5.3s-3.3 5.2-8 5.2-8-2.3-8-5.2S7.3 4 12 4z" stroke-dasharray="2.6 2.4"/><path d="M8.5 14c-1.4 1.6-1 3.6.8 3.9 1.6.3 2 1.5 1 3.1"/></symbol><symbol id="i-ellipse" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8.5" ry="6.5" stroke-dasharray="2.6 2.4"/></symbol><symbol id="i-move" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/><path d="m9 6 3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></symbol><symbol id="i-pan" viewBox="0 0 24 24"><path d="M8 13V6a1.5 1.5 0 0 1 3 0v5.5M11 11V4.5a1.5 1.5 0 0 1 3 0v7M14 11.5V6a1.5 1.5 0 0 1 3 0v8.5c0 3.8-2.4 6.5-5.8 6.5-2.4 0-3.9-1.1-5.3-3.3L4.2 15.4a1.5 1.5 0 0 1 2.5-1.7L8 15.4"/></symbol><symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol><symbol id="i-redo" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></symbol><symbol id="i-minus" viewBox="0 0 24 24"><path d="M6 12h12"/></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></symbol><symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="1.5"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/></symbol><symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m11 18-6-6 6-6"/></symbol></defs></svg>
 <div class="app">
 <header class="header starting"><div class="brand"><div class="logo" aria-hidden="true">∿</div><h1>MotionPad <span>0.5 RC 23</span></h1></div>
 <nav class="toolbar"><details class="topMenu"><summary>파일</summary><div class="topMenuItems"><button class="btn" id="menuNew">새 그림 열기…</button><button class="btn" id="menuOpen">프로젝트 열기…</button><hr class="menuSep"><button class="btn" id="backupBtn" type="button" title="다시 열어 편집할 프로젝트 저장">프로젝트 저장</button><button class="btn" id="saveAsBtn" type="button" aria-haspopup="dialog" >다른 이름으로 저장…</button><hr class="menuSep"><button class="btn" data-dialog="videoDialog">영상으로 내보내기…</button><button class="btn" id="legacyMenu" data-dialog="filesDialog" hidden>기기에 보관한 프로젝트…</button></div></details><details class="topMenu"><summary>소리</summary><div class="topMenuItems"><button class="btn" id="openMusic" data-dialog="soundDialog">배경음악…</button><button class="btn" id="openEffects" data-dialog="soundDialog">터치 효과음…</button></div></details><details class="topMenu"><summary>설정</summary><div class="topMenuItems"><button class="btn" data-dialog="layoutSettings">색상 테마 · 화면 표시 품질…</button><hr class="menuSep"><button class="btn" id="maskMenu">선택 영역 표시…</button></div></details><button class="btn primary" id="viewerBtn">플레이</button></nav></header>
@@ -451,7 +456,7 @@ button[data-help]:hover::before{color:var(--ink)}
 <button type="button" class="btn" id="outlineApply" disabled>적용</button><button type="button" class="btn" id="outlineCancel">취소</button>
 </div></div>
 <div class="stage" id="stage"><div class="surface" id="surface"><canvas id="view"></canvas><canvas id="overlay"></canvas></div><canvas id="loupe" class="loupe" width="160" height="160" hidden aria-label="확대 미리보기"></canvas></div>
-<div class="stagebottom"><div class="quick"><button class="btn iconBtn" id="undoBtn" title="실행 취소" aria-label="실행 취소" disabled><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button><button class="btn iconBtn" id="redoBtn" title="다시 실행" aria-label="다시 실행" disabled><svg class="ic" aria-hidden="true"><use href="#i-redo"/></svg></button><button class="btn iconBtn" id="zoomOutBtn" title="화면 축소" aria-label="화면 축소"><svg class="ic" aria-hidden="true"><use href="#i-minus"/></svg></button><button class="btn" id="zoomResetBtn" title="화면 원래 크기">100%</button><button class="btn iconBtn" id="zoomInBtn" title="화면 확대" aria-label="화면 확대"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></button><label class="toggle precisionSwitch"><input id="loupeInput" type="checkbox">돋보기</label><label class="toggle precisionSwitch"><input id="offsetInput" type="checkbox" aria-label="손가락 위에 그리기">손가락 보정</label></div><label class="toggle"><input type="checkbox" id="showZones" checked>영역선</label><span class="status" id="status" role="status">준비 중</span></div></section>
+<div class="guideLine"><svg class="ic" aria-hidden="true"><use href="#i-info"/></svg><span class="status" id="status" role="status">준비 중</span></div><div class="stagebottom"><div class="quick"><button class="btn iconBtn" id="undoBtn" title="실행 취소" aria-label="실행 취소" disabled><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button><button class="btn iconBtn" id="redoBtn" title="다시 실행" aria-label="다시 실행" disabled><svg class="ic" aria-hidden="true"><use href="#i-redo"/></svg></button><button class="btn iconBtn" id="zoomOutBtn" title="화면 축소" aria-label="화면 축소"><svg class="ic" aria-hidden="true"><use href="#i-minus"/></svg></button><button class="btn" id="zoomResetBtn" title="화면 원래 크기">100%</button><button class="btn iconBtn" id="zoomInBtn" title="화면 확대" aria-label="화면 확대"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></button><label class="toggle precisionSwitch"><input id="loupeInput" type="checkbox">돋보기</label><label class="toggle precisionSwitch"><input id="offsetInput" type="checkbox" aria-label="손가락 위에 그리기">손가락 보정</label></div><label class="toggle"><input type="checkbox" id="showZones" checked>영역선</label></div></section>
 <aside class="side">
 
 <details id="zonesPanel"><summary>1. 영역 <span class="count" id="zoneCount">0개</span></summary>
@@ -613,7 +618,7 @@ const MOTION_PRESETS=Object.freeze({
  wind:{strength:21,spring:10,damping:76,windStrength:52,windSpeed:1.3,windNoise:45,windDelay:75,pivotEnabled:true},
  scarf:{strength:25,spring:8,damping:80,windStrength:65,windAngle:-25,windSpeed:.9,windNoise:25,windDelay:84,pivotEnabled:true}
 });
-function setStatus(s){$('status').textContent=s}
+function setStatus(s){const e=$('status');e.textContent=s;e.title=s}
 // 작업이 날아갈 수 있는 동작 앞의 확인창. 문구는 부르는 곳에서 상황에 맞게 정한다.
 function askConfirm({title,message,ok='확인',cancel='취소'}){
  return new Promise(resolve=>{
@@ -3181,14 +3186,14 @@ function setMode(m){
   if(m==='extraPivot')setStatus('선택 영역 안에서 추가 축을 놓을 위치를 한 번 눌러 주세요.');
   if(m==='spine')setStatus('선택 영역 안에서 고정할 뿌리부터 흔들릴 끝까지 한 획을 그려 주세요.');
   if(m==='flowdir')setStatus('흐름 시작점에서 끝점으로 드래그하세요.');
-  if(m==='pan')setStatus('확대한 이미지를 손가락으로 이동할 수 있습니다.');
-  if(m==='wand')setStatus('그림을 먼저 눌러 선택한 뒤 범위를 조절하세요.');
-  if(m==='lasso')setStatus($('encloseInput').checked?'대상을 대략 둘러 그리면 외곽 미리보기가 나타납니다.':'그림에서 원하는 범위를 둘러 그리세요.');
+  if(m==='pan')setStatus('화면 이동을 선택했습니다. 끌어서 확대한 화면을 옮기세요.');
+  if(m==='wand')setStatus('마술봉을 선택했습니다. 선택할 부분을 누른 뒤 범위를 조절하세요.');
+  if(m==='lasso')setStatus($('encloseInput').checked?'올가미를 선택했습니다. 대상을 대략 둘러 그리면 윤곽에 맞춰 선택됩니다.':'올가미를 선택했습니다. 원하는 범위를 둘러 그려 주세요.');
  const toolHints={
-  brush:'붓 도구를 선택했습니다. 움직일 부분을 칠해 주세요.',
-  erase:'지우개 도구를 선택했습니다. 선택된 영역에서 빼고 싶은 곳을 지워 주세요.',
-  ellipse:'도형 도구를 선택했습니다. 그림을 끌어 타원이나 사각형을 그리세요. 선택한 도형은 손잡이나 두 손가락으로 크기·비율·기울기를 다듬을 수 있습니다.',
-  edit:'이동 도구를 선택했습니다. 영역을 끌어 위치를 옮기세요.',
+  brush:'붓을 선택했습니다. 움직일 부분을 칠해 주세요.',
+  erase:'지우개를 선택했습니다. 선택한 영역에서 뺄 곳을 지워 주세요.',
+  ellipse:'도형을 선택했습니다. 끌어서 그린 뒤 손잡이나 두 손가락으로 다듬으세요.',
+  edit:'이동을 선택했습니다. 영역을 끌어 위치를 옮기세요.',
   branch:'가지 선 도구를 선택했습니다. 기존 선에서 이어질 방향을 그려 주세요.'
  };
  if(toolHints[m])setStatus(toolHints[m]);

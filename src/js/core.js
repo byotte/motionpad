@@ -17,7 +17,7 @@ const MOTION_PRESETS=Object.freeze({
  wind:{strength:21,spring:10,damping:76,windStrength:52,windSpeed:1.3,windNoise:45,windDelay:75,pivotEnabled:true},
  scarf:{strength:25,spring:8,damping:80,windStrength:65,windAngle:-25,windSpeed:.9,windNoise:25,windDelay:84,pivotEnabled:true}
 });
-function setStatus(s){$('status').textContent=s}
+function setStatus(s){const e=$('status');e.textContent=s;e.title=s}
 // 작업이 날아갈 수 있는 동작 앞의 확인창. 문구는 부르는 곳에서 상황에 맞게 정한다.
 function askConfirm({title,message,ok='확인',cancel='취소'}){
  return new Promise(resolve=>{
