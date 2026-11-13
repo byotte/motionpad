@@ -2,6 +2,7 @@
 // Frames are captured after the normal animation update, without the editing overlay.
 let videoRecorder=null,videoCaptureTrack=null,videoAnimationFrame=0,videoCancelled=false,videoErrorMessage='';
 function interruptVideoRecording(reason){
+  if(exportPreparing){exportAbort=true;return}
   if(!videoRecorder||videoRecorder.state!=='recording')return;
   videoCancelled=true;videoErrorMessage=reason||'';
   cancelAnimationFrame(videoAnimationFrame);
@@ -77,31 +78,49 @@ for(const el of document.querySelectorAll('#videoDialog input,#videoDialog selec
 document.querySelector('[data-dialog="videoDialog"]')?.addEventListener('click',()=>setTimeout(refreshVideoPlan));
 // opts.live: 플레이 화면 녹화(● 버튼). 멈출 때까지(최대 60초) 녹화하고 끝 이어붙이기는 하지 않는다. opts.fx: 터치 이펙트 넣기.
 const LIVE_MAX=60;
+// 녹화 준비: 고른 크기로 그리게 바꾸고, 필요하면 원본 그림을 올린다(3-G). 원본 준비는 몇 초 걸릴 수 있어 먼저 안내를 띄우고 시작한다.
+// 준비하는 동안 멈춤(● 다시 누름·화면 전환)이 들어오면 되돌리고 false.
+let exportPreparing=false,exportAbort=false;
+function endExportRender(){exportRender=null;leaveHiRes();fit()}
+async function beginExport(plan,opts){
+ exportPreparing=true;exportAbort=false;$('exportVideoBtn').disabled=true;
+ try{
+  const need=Math.max(plan.vw,plan.vh);
+  if(hiResWant(need)){
+   const msg='원본 그림을 준비하고 있습니다. 잠시만 기다려 주세요.';$('videoProgress').textContent=msg;if(opts.live)showViewerToast(msg);
+   await waitFrames(2);// 안내가 화면에 그려진 뒤에 무거운 일을 시작한다
+  }
+  exportRender={w:plan.vw,h:plan.vh};fit();
+  await enterHiRes(need).catch(e=>console.warn('원본 올리기 실패, 편집 사본으로 녹화',e));
+  await waitFrames(3);// 크기를 바꾸면 그림이 지워진다. 다시 그려진 뒤부터 찍어야 첫 장(팔레트·끝 이어붙이기 기준)이 비지 않는다
+ }finally{exportPreparing=false}
+ if(exportAbort){endExportRender();$('exportVideoBtn').disabled=false;$('videoProgress').textContent='저장을 취소했습니다.';liveDone('');return false}
+ if(opts.live)showViewerToast(`녹화 중 · 다시 누르면 저장합니다(최대 ${LIVE_MAX}초)`);
+ return true;
+}
 async function recordVideo(opts={}){
  if(!ready){showNotice('영상 내보내기','먼저 그림을 열어 주세요.');return}
- if(videoRecorder&&videoRecorder.state!=='inactive')return;
+ if(exportPreparing||videoRecorder&&videoRecorder.state!=='inactive')return;
  const plan=videoPlan();if(opts.live)plan.duration=LIVE_MAX;if(plan.format==='gif')return recordGif(plan,opts);
  const mime=videoMimeType();if(!mime){showNotice('영상 내보내기','이 브라우저는 영상 녹화를 지원하지 않습니다. Chrome에서 다시 시도해 주세요.');return}
  const {duration,fps,OW:W,OH:H}=plan;
  const output=document.createElement('canvas');output.width=W;output.height=H;
  const g=output.getContext('2d',{alpha:false});
  const first=document.createElement('canvas');first.width=W;first.height=H;const firstG=first.getContext('2d');
- exportRender={w:plan.vw,h:plan.vh};fit();
- await enterHiRes(Math.max(plan.vw,plan.vh)).catch(e=>console.warn('원본 올리기 실패, 편집 사본으로 녹화',e));
- await waitFrames(3);// 크기를 바꾸면 그림이 지워진다. 다시 그려진 뒤부터 찍어야 첫 장(팔레트·끝 이어붙이기 기준)이 비지 않는다
+ if(!await beginExport(plan,opts))return;
  const stream=output.captureStream(fps),track=stream.getVideoTracks()[0];videoCaptureTrack=track;
  const chunks=[];let recorder;
  try{recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:plan.bitrate});}
- catch(e){track.stop();exportRender=null;leaveHiRes();fit();showNotice('영상 내보내기','영상 녹화를 시작하지 못했습니다.'+why(e));return}
+ catch(e){track.stop();endExportRender();$('exportVideoBtn').disabled=false;liveDone('');showNotice('영상 내보내기','영상 녹화를 시작하지 못했습니다.'+why(e));return}
  blinkEpoch=elapsed;
  videoRecorder=recorder;videoCancelled=false;videoErrorMessage='';
- $('exportVideoBtn').disabled=true;$('cancelVideoBtn').hidden=false;
+ $('cancelVideoBtn').hidden=false;
  $('videoProgress').textContent=`녹화 준비 중 · ${W}×${H} · ${duration}초 / ${fps} FPS`;
  const start=performance.now();let frameNo=0;const secs=()=>Math.max(1,Math.round((performance.now()-start)/1000));
  recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};
  recorder.onerror=e=>{console.error('MediaRecorder error',e);videoCancelled=true;videoErrorMessage='이 기기에서 이 크기로는 영상을 만들지 못했습니다. 세부 설정에서 크기를 1080으로 줄여 다시 시도해 주세요.'};
  recorder.onstop=()=>{
-  cancelAnimationFrame(videoAnimationFrame);videoAnimationFrame=0;track.stop();exportRender=null;leaveHiRes();fit();
+  cancelAnimationFrame(videoAnimationFrame);videoAnimationFrame=0;track.stop();endExportRender();
   $('exportVideoBtn').disabled=false;$('cancelVideoBtn').hidden=true;videoRecorder=null;
   if(videoCancelled){$('videoProgress').textContent=videoErrorMessage||'영상 저장을 취소했습니다.';liveDone('');return}
   const blob=new Blob(chunks,{type:mime.split(';')[0]});
@@ -136,13 +155,13 @@ async function recordGif(plan,opts={}){
  const first=document.createElement('canvas');first.width=W;first.height=H;const firstG=first.getContext('2d');
  const enc=createGifEncoder(W,H,{colors:plan.gifColors,extra:opts.fx?[[255,248,214],[255,255,255],[60,48,36]]:[]});
  const fake={state:'recording',stop(){this.state='inactive';finish()}};
+ if(!await beginExport(plan,opts))return;
  videoRecorder=fake;videoCancelled=false;videoErrorMessage='';
- exportRender={w:plan.vw,h:plan.vh};fit();await enterHiRes(Math.max(plan.vw,plan.vh)).catch(e=>console.warn('원본 올리기 실패, 편집 사본으로 녹화',e));await waitFrames(3);blinkEpoch=elapsed;
- $('exportVideoBtn').disabled=true;$('cancelVideoBtn').hidden=false;
+ blinkEpoch=elapsed;$('cancelVideoBtn').hidden=false;
  let start=0,frameNo=0,pending=null,pendingAt=0,carry=0;
  function push(now){if(!pending)return;const cs=(now-pendingAt)/10+carry,d=Math.max(2,Math.round(cs));carry=cs-d;enc.addFrame(pending,d)}
  function finish(){
-  cancelAnimationFrame(videoAnimationFrame);videoAnimationFrame=0;exportRender=null;leaveHiRes();fit();
+  cancelAnimationFrame(videoAnimationFrame);videoAnimationFrame=0;endExportRender();
   $('exportVideoBtn').disabled=false;$('cancelVideoBtn').hidden=true;videoRecorder=null;
   if(videoCancelled){$('videoProgress').textContent=videoErrorMessage||'움짤 저장을 취소했습니다.';liveDone('');return}
   const endAt=opts.live?performance.now():start+duration*1000,sec=Math.max(1,Math.round((endAt-start)/1000));push(endAt);
@@ -166,7 +185,7 @@ async function recordGif(plan,opts={}){
  }
  videoAnimationFrame=requestAnimationFrame(nextFrame);
 }
-$('exportVideoBtn').onclick=()=>recordVideo().catch(e=>{console.error(e);exportRender=null;leaveHiRes();fit();$('exportVideoBtn').disabled=false;$('cancelVideoBtn').hidden=true;showNotice('영상 내보내기','영상을 저장하다 문제가 생겼습니다.'+why(e))});
+$('exportVideoBtn').onclick=()=>recordVideo().catch(e=>{console.error(e);exportPreparing=false;endExportRender();$('exportVideoBtn').disabled=false;$('cancelVideoBtn').hidden=true;showNotice('영상 내보내기','영상을 저장하다 문제가 생겼습니다.'+why(e))});
 $('cancelVideoBtn').onclick=()=>interruptVideoRecording('사용자가 영상 저장을 취소했습니다.');
 
 // 3-F 플레이 화면 녹화(●). 크기·화질·형식은 '영상으로 내보내기' 창의 값을 쓴다. 버튼 자체는 영상에 찍히지 않는다(그림만 그린다).
@@ -174,12 +193,11 @@ let liveRecording=false;
 function liveTick(t){const s=Math.floor(t);$('recViewer').querySelector('span').textContent=`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`}
 function liveDone(msg){if(!liveRecording)return;liveRecording=false;const b=$('recViewer');b.classList.remove('recording');b.querySelector('span').textContent='';b.title=b.ariaLabel='녹화 시작';if(msg)showViewerToast(msg)}
 function showViewerToast(msg){const h=$('viewerHint');h.textContent=msg;h.classList.remove('dim');clearTimeout(showViewerToast.t);showViewerToast.t=setTimeout(()=>h.classList.add('dim'),3200)}
-function stopLiveRecording(){if(liveRecording&&videoRecorder&&videoRecorder.state==='recording')videoRecorder.stop()}
+function stopLiveRecording(){if(exportPreparing){exportAbort=true;return}if(liveRecording&&videoRecorder&&videoRecorder.state==='recording')videoRecorder.stop()}
 $('recViewer').onclick=()=>{
  if(liveRecording){stopLiveRecording();return}
  if(videoRecorder&&videoRecorder.state!=='inactive')return;
  if(radioValue('videoFormat')!=='gif'&&!videoMimeType()){showViewerToast('이 브라우저는 영상 녹화를 지원하지 않습니다.');return}
  liveRecording=true;const b=$('recViewer');b.classList.add('recording');b.title=b.ariaLabel='녹화 멈추고 저장';liveTick(0);
- showViewerToast(`녹화 중 · 다시 누르면 저장합니다(최대 ${LIVE_MAX}초)`);
- recordVideo({live:true,fx:$('videoFx').checked}).catch(e=>{console.error(e);exportRender=null;leaveHiRes();fit();liveDone('녹화하지 못했습니다.'+why(e))});
+ recordVideo({live:true,fx:$('videoFx').checked}).catch(e=>{console.error(e);exportPreparing=false;endExportRender();liveDone('녹화하지 못했습니다.'+why(e))});
 };

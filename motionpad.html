@@ -2531,7 +2531,9 @@ function glLimits(){
  return {tex:gl.getParameter(gl.MAX_TEXTURE_SIZE)||4096,view:Math.min(vp[0],vp[1],gl.getParameter(gl.MAX_RENDERBUFFER_SIZE)||4096)};
 }
 // 채움판과 사본이 다른 곳(=메운 자리)만 알파로 남긴 가림막. 2칸 넓히고 살짝 흐리게 해 이음매가 안 보이게 한다.
+const plateHoleCache=new WeakMap();// 채움판이 그대로면 가림막도 그대로라 한 번만 만든다(다시 저장할 때 바로 시작)
 function plateHoleMask(plate){
+ const hit=plateHoleCache.get(plate);if(hit&&hit.width===renderWidth&&hit.height===renderHeight)return hit;
  const W=renderWidth,H=renderHeight,a=document.createElement('canvas');a.width=W;a.height=H;
  const pg=document.createElement('canvas');pg.width=W;pg.height=H;const p=pg.getContext('2d',{willReadFrequently:true});p.drawImage(plate,0,0,W,H);
  const pd=p.getImageData(0,0,W,H).data;p.clearRect(0,0,W,H);p.drawImage(bitmap,0,0,W,H);const bd=p.getImageData(0,0,W,H).data;
@@ -2540,7 +2542,7 @@ function plateHoleMask(plate){
  const g=a.getContext('2d');g.putImageData(out,0,0);
  const b=document.createElement('canvas');b.width=W;b.height=H;const bg=b.getContext('2d');bg.filter='blur(1.5px)';
  for(const [dx,dy] of [[0,0],[-2,0],[2,0],[0,-2],[0,2]])bg.drawImage(a,dx,dy);
- return b;
+ plateHoleCache.set(plate,b);return b;
 }
 function hiPlate(plate,hi){
  const c=document.createElement('canvas');c.width=hi.width;c.height=hi.height;const g=c.getContext('2d');
@@ -2549,19 +2551,27 @@ function hiPlate(plate,hi){
  g.drawImage(hi,0,0);g.drawImage(m,0,0);return c;
 }
 // 필요한 긴 변(px)만큼 원본을 올린다. 사본으로 충분하거나 WebGL이 없으면 아무것도 하지 않는다.
-async function enterHiRes(needLong){
- if(!gl||!imgBlob||hiResActive)return null;
+// 원본을 올려야 하면 올릴 긴 변(px), 아니면 0.
+function hiResWant(needLong){
+ if(!gl||!imgBlob||hiResActive)return 0;
  const curLong=Math.max(renderWidth,renderHeight),srcLong=Math.max(sourceSize.w,sourceSize.h);
  const want=Math.min(srcLong,Math.ceil(needLong),glLimits().tex);
- if(want<=curLong*1.02)return null;
+ return want<=curLong*1.02?0:want;
+}
+async function enterHiRes(needLong){
+ const want=hiResWant(needLong);if(!want)return null;
  const src=await loadImage(imgBlob),s=want/Math.max(src.naturalWidth,src.naturalHeight);
  const hi=document.createElement('canvas');hi.width=Math.max(1,Math.round(src.naturalWidth*s));hi.height=Math.max(1,Math.round(src.naturalHeight*s));
  hi.getContext('2d').drawImage(src,0,0,hi.width,hi.height);
- const bgPlate=tailBasePlate||backgroundPlate,body=tailPlate?hiPlate(tailPlate,hi):hi,back=bgPlate?hiPlate(bgPlate,hi):hi;
+ // 무거운 합성 사이사이 한 프레임씩 쉬어 화면(준비 안내)이 굳지 않게 한다. 그래픽 카드에 올리는 것은 끝에 한꺼번에.
+ const tp=tailPlate,bgPlate=tailBasePlate||backgroundPlate;await waitFrames(1);
+ const body=tp?hiPlate(tp,hi):hi;if(tp&&bgPlate)await waitFrames(1);
+ const back=bgPlate?hiPlate(bgPlate,hi):hi;
+ if(hiResActive||tp!==tailPlate||bgPlate!==(tailBasePlate||backgroundPlate))return null;// 쉬는 사이 그림이 바뀌었으면 사본 그대로
  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,imageTex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,body);
  if(backgroundTex){gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,backgroundTex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,back)}
- if(tailPlate&&tailOriginalTex){gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D,tailOriginalTex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,hi)}
+ if(tp&&tailOriginalTex){gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D,tailOriginalTex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,hi)}
  gl.activeTexture(gl.TEXTURE0);
  hiResActive=true;return {w:hi.width,h:hi.height};
 }
@@ -2573,6 +2583,7 @@ function leaveHiRes(){
 // Frames are captured after the normal animation update, without the editing overlay.
 let videoRecorder=null,videoCaptureTrack=null,videoAnimationFrame=0,videoCancelled=false,videoErrorMessage='';
 function interruptVideoRecording(reason){
+  if(exportPreparing){exportAbort=true;return}
   if(!videoRecorder||videoRecorder.state!=='recording')return;
   videoCancelled=true;videoErrorMessage=reason||'';
   cancelAnimationFrame(videoAnimationFrame);
@@ -2648,31 +2659,49 @@ for(const el of document.querySelectorAll('#videoDialog input,#videoDialog selec
 document.querySelector('[data-dialog="videoDialog"]')?.addEventListener('click',()=>setTimeout(refreshVideoPlan));
 // opts.live: 플레이 화면 녹화(● 버튼). 멈출 때까지(최대 60초) 녹화하고 끝 이어붙이기는 하지 않는다. opts.fx: 터치 이펙트 넣기.
 const LIVE_MAX=60;
+// 녹화 준비: 고른 크기로 그리게 바꾸고, 필요하면 원본 그림을 올린다(3-G). 원본 준비는 몇 초 걸릴 수 있어 먼저 안내를 띄우고 시작한다.
+// 준비하는 동안 멈춤(● 다시 누름·화면 전환)이 들어오면 되돌리고 false.
+let exportPreparing=false,exportAbort=false;
+function endExportRender(){exportRender=null;leaveHiRes();fit()}
+async function beginExport(plan,opts){
+ exportPreparing=true;exportAbort=false;$('exportVideoBtn').disabled=true;
+ try{
+  const need=Math.max(plan.vw,plan.vh);
+  if(hiResWant(need)){
+   const msg='원본 그림을 준비하고 있습니다. 잠시만 기다려 주세요.';$('videoProgress').textContent=msg;if(opts.live)showViewerToast(msg);
+   await waitFrames(2);// 안내가 화면에 그려진 뒤에 무거운 일을 시작한다
+  }
+  exportRender={w:plan.vw,h:plan.vh};fit();
+  await enterHiRes(need).catch(e=>console.warn('원본 올리기 실패, 편집 사본으로 녹화',e));
+  await waitFrames(3);// 크기를 바꾸면 그림이 지워진다. 다시 그려진 뒤부터 찍어야 첫 장(팔레트·끝 이어붙이기 기준)이 비지 않는다
+ }finally{exportPreparing=false}
+ if(exportAbort){endExportRender();$('exportVideoBtn').disabled=false;$('videoProgress').textContent='저장을 취소했습니다.';liveDone('');return false}
+ if(opts.live)showViewerToast(`녹화 중 · 다시 누르면 저장합니다(최대 ${LIVE_MAX}초)`);
+ return true;
+}
 async function recordVideo(opts={}){
  if(!ready){showNotice('영상 내보내기','먼저 그림을 열어 주세요.');return}
- if(videoRecorder&&videoRecorder.state!=='inactive')return;
+ if(exportPreparing||videoRecorder&&videoRecorder.state!=='inactive')return;
  const plan=videoPlan();if(opts.live)plan.duration=LIVE_MAX;if(plan.format==='gif')return recordGif(plan,opts);
  const mime=videoMimeType();if(!mime){showNotice('영상 내보내기','이 브라우저는 영상 녹화를 지원하지 않습니다. Chrome에서 다시 시도해 주세요.');return}
  const {duration,fps,OW:W,OH:H}=plan;
  const output=document.createElement('canvas');output.width=W;output.height=H;
  const g=output.getContext('2d',{alpha:false});
  const first=document.createElement('canvas');first.width=W;first.height=H;const firstG=first.getContext('2d');
- exportRender={w:plan.vw,h:plan.vh};fit();
- await enterHiRes(Math.max(plan.vw,plan.vh)).catch(e=>console.warn('원본 올리기 실패, 편집 사본으로 녹화',e));
- await waitFrames(3);// 크기를 바꾸면 그림이 지워진다. 다시 그려진 뒤부터 찍어야 첫 장(팔레트·끝 이어붙이기 기준)이 비지 않는다
+ if(!await beginExport(plan,opts))return;
  const stream=output.captureStream(fps),track=stream.getVideoTracks()[0];videoCaptureTrack=track;
  const chunks=[];let recorder;
  try{recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:plan.bitrate});}
- catch(e){track.stop();exportRender=null;leaveHiRes();fit();showNotice('영상 내보내기','영상 녹화를 시작하지 못했습니다.'+why(e));return}
+ catch(e){track.stop();endExportRender();$('exportVideoBtn').disabled=false;liveDone('');showNotice('영상 내보내기','영상 녹화를 시작하지 못했습니다.'+why(e));return}
  blinkEpoch=elapsed;
  videoRecorder=recorder;videoCancelled=false;videoErrorMessage='';
- $('exportVideoBtn').disabled=true;$('cancelVideoBtn').hidden=false;
+ $('cancelVideoBtn').hidden=false;
  $('videoProgress').textContent=`녹화 준비 중 · ${W}×${H} · ${duration}초 / ${fps} FPS`;
  const start=performance.now();let frameNo=0;const secs=()=>Math.max(1,Math.round((performance.now()-start)/1000));
  recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};
  recorder.onerror=e=>{console.error('MediaRecorder error',e);videoCancelled=true;videoErrorMessage='이 기기에서 이 크기로는 영상을 만들지 못했습니다. 세부 설정에서 크기를 1080으로 줄여 다시 시도해 주세요.'};
  recorder.onstop=()=>{
-  cancelAnimationFrame(videoAnimationFrame);videoAnimationFrame=0;track.stop();exportRender=null;leaveHiRes();fit();
+  cancelAnimationFrame(videoAnimationFrame);videoAnimationFrame=0;track.stop();endExportRender();
   $('exportVideoBtn').disabled=false;$('cancelVideoBtn').hidden=true;videoRecorder=null;
   if(videoCancelled){$('videoProgress').textContent=videoErrorMessage||'영상 저장을 취소했습니다.';liveDone('');return}
   const blob=new Blob(chunks,{type:mime.split(';')[0]});
@@ -2707,13 +2736,13 @@ async function recordGif(plan,opts={}){
  const first=document.createElement('canvas');first.width=W;first.height=H;const firstG=first.getContext('2d');
  const enc=createGifEncoder(W,H,{colors:plan.gifColors,extra:opts.fx?[[255,248,214],[255,255,255],[60,48,36]]:[]});
  const fake={state:'recording',stop(){this.state='inactive';finish()}};
+ if(!await beginExport(plan,opts))return;
  videoRecorder=fake;videoCancelled=false;videoErrorMessage='';
- exportRender={w:plan.vw,h:plan.vh};fit();await enterHiRes(Math.max(plan.vw,plan.vh)).catch(e=>console.warn('원본 올리기 실패, 편집 사본으로 녹화',e));await waitFrames(3);blinkEpoch=elapsed;
- $('exportVideoBtn').disabled=true;$('cancelVideoBtn').hidden=false;
+ blinkEpoch=elapsed;$('cancelVideoBtn').hidden=false;
  let start=0,frameNo=0,pending=null,pendingAt=0,carry=0;
  function push(now){if(!pending)return;const cs=(now-pendingAt)/10+carry,d=Math.max(2,Math.round(cs));carry=cs-d;enc.addFrame(pending,d)}
  function finish(){
-  cancelAnimationFrame(videoAnimationFrame);videoAnimationFrame=0;exportRender=null;leaveHiRes();fit();
+  cancelAnimationFrame(videoAnimationFrame);videoAnimationFrame=0;endExportRender();
   $('exportVideoBtn').disabled=false;$('cancelVideoBtn').hidden=true;videoRecorder=null;
   if(videoCancelled){$('videoProgress').textContent=videoErrorMessage||'움짤 저장을 취소했습니다.';liveDone('');return}
   const endAt=opts.live?performance.now():start+duration*1000,sec=Math.max(1,Math.round((endAt-start)/1000));push(endAt);
@@ -2737,7 +2766,7 @@ async function recordGif(plan,opts={}){
  }
  videoAnimationFrame=requestAnimationFrame(nextFrame);
 }
-$('exportVideoBtn').onclick=()=>recordVideo().catch(e=>{console.error(e);exportRender=null;leaveHiRes();fit();$('exportVideoBtn').disabled=false;$('cancelVideoBtn').hidden=true;showNotice('영상 내보내기','영상을 저장하다 문제가 생겼습니다.'+why(e))});
+$('exportVideoBtn').onclick=()=>recordVideo().catch(e=>{console.error(e);exportPreparing=false;endExportRender();$('exportVideoBtn').disabled=false;$('cancelVideoBtn').hidden=true;showNotice('영상 내보내기','영상을 저장하다 문제가 생겼습니다.'+why(e))});
 $('cancelVideoBtn').onclick=()=>interruptVideoRecording('사용자가 영상 저장을 취소했습니다.');
 
 // 3-F 플레이 화면 녹화(●). 크기·화질·형식은 '영상으로 내보내기' 창의 값을 쓴다. 버튼 자체는 영상에 찍히지 않는다(그림만 그린다).
@@ -2745,14 +2774,13 @@ let liveRecording=false;
 function liveTick(t){const s=Math.floor(t);$('recViewer').querySelector('span').textContent=`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`}
 function liveDone(msg){if(!liveRecording)return;liveRecording=false;const b=$('recViewer');b.classList.remove('recording');b.querySelector('span').textContent='';b.title=b.ariaLabel='녹화 시작';if(msg)showViewerToast(msg)}
 function showViewerToast(msg){const h=$('viewerHint');h.textContent=msg;h.classList.remove('dim');clearTimeout(showViewerToast.t);showViewerToast.t=setTimeout(()=>h.classList.add('dim'),3200)}
-function stopLiveRecording(){if(liveRecording&&videoRecorder&&videoRecorder.state==='recording')videoRecorder.stop()}
+function stopLiveRecording(){if(exportPreparing){exportAbort=true;return}if(liveRecording&&videoRecorder&&videoRecorder.state==='recording')videoRecorder.stop()}
 $('recViewer').onclick=()=>{
  if(liveRecording){stopLiveRecording();return}
  if(videoRecorder&&videoRecorder.state!=='inactive')return;
  if(radioValue('videoFormat')!=='gif'&&!videoMimeType()){showViewerToast('이 브라우저는 영상 녹화를 지원하지 않습니다.');return}
  liveRecording=true;const b=$('recViewer');b.classList.add('recording');b.title=b.ariaLabel='녹화 멈추고 저장';liveTick(0);
- showViewerToast(`녹화 중 · 다시 누르면 저장합니다(최대 ${LIVE_MAX}초)`);
- recordVideo({live:true,fx:$('videoFx').checked}).catch(e=>{console.error(e);exportRender=null;leaveHiRes();fit();liveDone('녹화하지 못했습니다.'+why(e))});
+ recordVideo({live:true,fx:$('videoFx').checked}).catch(e=>{console.error(e);exportPreparing=false;endExportRender();liveDone('녹화하지 못했습니다.'+why(e))});
 };
 function safeProjectFilename(name){const base=String(name||'내 프로젝트').trim().replace(/[\\/:*?"<>|\x00-\x1F]/g,'_').replace(/\.+$/,'').slice(0,70)||'내 프로젝트';return base+'.motionpad.json'}
 function toDataURL(blob){return new Promise((ok,fail)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=()=>fail(r.error);r.readAsDataURL(blob)})}
