@@ -12,6 +12,8 @@
 | **2 움직임** | **진행 중**: 2-0 계측(실기기 60 FPS → 성능 개선은 대기), 2-A 깜빡임 간격 옵션·설정창 정렬, 2-B 잡아당기는 변형, 2-C 쉬는 간격·극단값 튐 원인 확인, 2-D 외곽 흔들기 4개까지. 다음 움직임 옵션 정리 | `2-0.md`, `2-A.md`, `2-B.md`, `2-C.md`, `2-D.md` |
 | (2-D 뒤) 이름 정리 | 완료: 선택 방식 '새로' → '교체'(그린 모양이 사라짐을 알리는 말, 사용자 제안), 확정 버튼 '선택 적용·선택 완료' → '적용' | 이 표 |
 | 2-E 도구줄 영역 관리·확인창 | 완료 | `2-E.md` |
+| 2-M 움직임 품질 측정(빈자리 메우기·극단값 튐) | 측정 완료, **사용자 결정 대기** → 결정 뒤 구현 | `2-M.md` |
+| 2-F 움직임 옵션 정리 + 영역 목록 | 구조 확정, 2-M 구현 뒤 | `2-F-plan.md` |
 | 3 완성도 | 대기 | `docs/REVIEW.md` 개발안 v2 |
 
 ## 개발 방법 (0-5부터)
@@ -29,6 +31,7 @@
 - 선택 엔진 정확도: `node tools/select/bench.js <이름> [--base 이전이름] [--images]` (테스트 세트·정답 마스크 자동 생성, 결과 `tools/select/out/`). 자세히는 `1-A.md`.
 - 마스크 격자 측정(1-B): `node tools/select/grid.js [--images]`(정확도), `python3 tools/select/grid_crops.py`(확대 그림), `node tools/select/grid_cost.js`(시간·크기).
 - 플레이 화면 프레임 계측(2-0): `node tools/motion/frame_cost.js [--blink]`.
+- 빈자리 메우기·접힘 측정(2-M): `tools/motion/fill/`(make_cases.py → run.js → moved.py), `tools/motion/fold/sim.py`. 자세히는 `2-M.md`.
 - 기준 html이 필요하면 `git show <커밋>:motionpad.html > 파일`로 꺼내 쓴다. 0-5 끝 시점 결과물은 0-4b 끝과 바이트까지 같다.
 
 ## 사용자 요청 대기 목록 (해당 단계에서 반영)
