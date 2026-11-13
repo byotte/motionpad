@@ -11,7 +11,32 @@ async function useBlob(blob,reset=true){const source=await loadImage(blob);sourc
 $('imageBtn').onclick=()=>$('imageFile').click();$('imageFile').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;try{if(!f.type.startsWith('image/'))throw Error('이미지 파일을 선택한다');await useBlob(f,true);undoStack=[];redoStack=[];refreshHistory();setMode('play');setStatus('그림을 불러왔습니다.')}catch(err){showNotice('그림 열기 실패','그림을 열지 못했습니다. 다른 그림 파일(png·jpg 등)로 다시 시도해 주세요.'+why(err))}e.target.value=''};
 async function sample(){const c=sampleCanvas(),blob=await canvasBlob(c);await useBlob(blob,true);zones=[sanitize({name:'로봇 몸체',x:.39,y:.60,rx:.20,ry:.24,kind:'ellipse',axis:'y',strength:22},0),sanitize({name:'생명체',kind:'brush',strokes:[{r:.15,points:[[.8,.62],[.8,.68],[.81,.72]]}],axis:'diag',strength:30,auto:true},1)];selected=zones[0].id;markMask();updateUI();scheduleSave();setStatus('샘플 · TOP과 BOTTOM 방향을 확인한다')}
 $('sampleBtn').onclick=async()=>{if(storedLayoutProject&&!await askConfirm({title:'샘플 그림으로 체험하기',message:'자동 저장된 이전 작업이 있습니다. 샘플을 열면 이전 작업은 이어할 수 없게 됩니다. 계속할까요?',ok:'샘플 열기'}))return;sample().then(()=>setMode('play'))};
-async function enterViewer(){if(!ready)return;viewerOpen=true;previousMode=mode;gesture=null;pointers.clear();$('viewer').hidden=false;applyPlayerVisibility();$('viewerStage').appendChild(surface);setMode('play');fit();$('viewerHint').classList.remove('dim');setTimeout(()=>$('viewerHint').classList.add('dim'),3000);stopMusic();if($('viewer').requestFullscreen)try{await $('viewer').requestFullscreen({navigationUI:'hide'})}catch(e){}fit()}
+// 플레이 화면 아이콘(돌아가기·녹화·접힌 음악 플레이어)의 색을 아이콘 뒤 그림 색에 맞춘다.
+// 바탕은 뒤 색에서 살짝만 어둡게/밝게(감상을 덜 가리게), 글자는 바탕과 반대 밝기(안 보이지 않게).
+const VIEWER_BACKDROP=[16,17,20];
+function tintViewerIcons(){
+ if(!viewerOpen||!bitmap)return;
+ const s=surface.getBoundingClientRect(),probe=document.createElement('canvas');probe.width=probe.height=1;
+ const g=probe.getContext('2d',{willReadFrequently:true});
+ for(const el of [$('exitViewer'),$('recViewer'),$('viewerAudio')]){
+  const r=el.getBoundingClientRect();if(!r.width||!s.width)continue;
+  // 아이콘과 그림이 겹치는 부분의 평균색. 겹치지 않으면 플레이 화면 바탕색.
+  const x0=Math.max(r.left,s.left),y0=Math.max(r.top,s.top),x1=Math.min(r.right,s.right),y1=Math.min(r.bottom,s.bottom);
+  let c=VIEWER_BACKDROP;
+  if(x1-x0>2&&y1-y0>2){
+   const kx=bitmap.width/s.width,ky=bitmap.height/s.height;
+   try{g.clearRect(0,0,1,1);g.drawImage(bitmap,(x0-s.left)*kx,(y0-s.top)*ky,Math.max(1,(x1-x0)*kx),Math.max(1,(y1-y0)*ky),0,0,1,1);const d=g.getImageData(0,0,1,1).data;
+    const cover=(x1-x0)*(y1-y0)/(r.width*r.height);c=[0,1,2].map(i=>d[i]*cover+VIEWER_BACKDROP[i]*(1-cover))}catch(_){}
+  }
+  const lum=(.2126*c[0]+.7152*c[1]+.0722*c[2])/255,light=lum>.55,to=light?0:255,mix=light?.22:.14;
+  const bg=c.map(v=>Math.round(v+(to-v)*mix));
+  el.style.setProperty('--vbg',`rgba(${bg.join(',')},.82)`);
+  el.style.setProperty('--vfg',light?'#17181d':'#ffffff');
+  el.style.setProperty('--vline',light?'rgba(0,0,0,.28)':'rgba(255,255,255,.3)');
+ }
+}
+window.addEventListener('resize',()=>{if(viewerOpen)setTimeout(tintViewerIcons,60)});
+async function enterViewer(){if(!ready)return;viewerOpen=true;previousMode=mode;gesture=null;pointers.clear();$('viewer').hidden=false;applyPlayerVisibility();$('viewerStage').appendChild(surface);setMode('play');fit();$('viewerHint').classList.remove('dim');setTimeout(()=>$('viewerHint').classList.add('dim'),3000);stopMusic();if($('viewer').requestFullscreen)try{await $('viewer').requestFullscreen({navigationUI:'hide'})}catch(e){}fit();tintViewerIcons();setTimeout(tintViewerIcons,300)}
 async function exitViewer(){if(!viewerOpen)return;if(liveRecording)stopLiveRecording();viewerOpen=false;if(document.fullscreenElement)try{await document.exitFullscreen()}catch(e){}stage.appendChild(surface);$('viewer').hidden=true;clearTouchFx();stopMusic();setMode(previousMode);gesture=null;pointers.clear();fit()}
 $('viewerBtn').onclick=enterViewer;$('exitViewer').onclick=exitViewer;document.addEventListener('keydown',e=>{if(e.key==='Escape'&&viewerOpen)exitViewer()});document.addEventListener('fullscreenchange',()=>{if(viewerOpen&&!document.fullscreenElement&&document.fullscreenEnabled)exitViewer()});
 
