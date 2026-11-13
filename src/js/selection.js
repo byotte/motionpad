@@ -98,7 +98,7 @@ $('toleranceInput').addEventListener('input',()=>{
 $('wandCancel').onclick=()=>{clearWandDraft();setStatus('마술봉 미리보기를 취소했습니다.');};
 $('wandApply').onclick=()=>{
  cancelAnimationFrame(wandFrame);updateWandDraft();
- if(wandDraft?.count&&appendRasterBits(wandDraft.bits,'마술봉 '+(zones.length+1))){
+ if(wandDraft?.count&&applySelectionBits(wandDraft.bits,'마술봉 '+(zones.length+1))){
   clearWandDraft();setStatus('마술봉 선택을 적용했습니다.');
  }
 };
@@ -171,7 +171,7 @@ $('outlineUndo').onclick=()=>{
 };
 $('outlineApply').onclick=()=>{
  const preview=outlineDraft?.preview;
- if(preview?.count&&appendRasterBits(preview.bits,'외곽 선택')){
+ if(preview?.count&&applySelectionBits(preview.bits,'외곽 선택')){
   clearOutlineDraft();setStatus('외곽 선택을 적용했습니다.');
  }
 };
@@ -268,5 +268,7 @@ function extendLasso(gesture,p,minDistance=Math.max(4,Math.min(renderWidth,rende
  gesture.points.push(...points.slice(0,2500-gesture.points.length));
  gesture.last=p;
 }
-function addPolygon(pts){if(pts.length<3)return;if($('appendInput').checked&&getSelected()&&!getSelected().locked){const temp=sanitize({kind:'polygon',polygon:pts},zones.length);const bits=rasterize(temp);return appendRasterBits(bits,'추가 영역')}if(zones.length>=LIMIT){setStatus('영역 개수 제한입니다.');return false}remember();const z=sanitize({id:newId(),name:`올가미 ${zones.length+1}`,kind:'polygon',polygon:pts},zones.length);zones.push(z);selected=z.id;$('appendInput').checked=true;markMask();updateUI();scheduleSave()}
+function addPolygon(pts){if(pts.length<3)return;
+ if(editableSelected()||selectOp()==='subtract'){const temp=sanitize({kind:'polygon',polygon:pts},zones.length);return applySelectionBits(rasterize(temp),'올가미 '+(zones.length+1))}
+ if(zones.length>=LIMIT){setStatus('영역 개수 제한입니다.');return false}remember();const z=sanitize({id:newId(),name:`올가미 ${zones.length+1}`,kind:'polygon',polygon:pts},zones.length);zones.push(z);selected=z.id;markMask();updateUI();scheduleSave()}
 

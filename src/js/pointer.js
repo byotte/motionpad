@@ -42,7 +42,51 @@ if(origin.spine?.length){z.spine=origin.spine.map(transformPin);z.chainNodes=nul
 if(origin.branch?.length){z.branch=origin.branch.map(transformPin);z.branchNodes=null}
 if(origin.extraPivots?.length)z.extraPivots=origin.extraPivots.map(transformPin)
 if(z.kind==='brush'){const co=Math.cos(angle||0),si=Math.sin(angle||0);z.strokes=origin.strokes.map(st=>({r:clamp(st.r*scale,.004,.5),points:st.points.map(([x,y])=>{const ax=(x-origin.x)*scale,ay=(y-origin.y)*scale;return [clamp(z.x+ax*co-ay*si,0,1),clamp(z.y+ax*si+ay*co,0,1)]})}));recalcBounds(z);z.rot=0;z.scale=1}
-if(z.kind==='polygon'){const co=Math.cos(angle||0),si=Math.sin(angle||0);z.polygon=origin.polygon.map(([x,y])=>{const ax=(x-origin.x)*scale,ay=(y-origin.y)*scale;return [clamp(z.x+ax*co-ay*si,0,1),clamp(z.y+ax*si+ay*co,0,1)]});recalcPolygon(z);z.rot=0;z.scale=1}markMask()}
+if(z.kind==='polygon'){const co=Math.cos(angle||0),si=Math.sin(angle||0);z.polygon=origin.polygon.map(([x,y])=>{const ax=(x-origin.x)*scale,ay=(y-origin.y)*scale;return [clamp(z.x+ax*co-ay*si,0,1),clamp(z.y+ax*si+ay*co,0,1)]});recalcPolygon(z);z.rot=r;z.scale=1}markMask()}
+// ── 도형 다듬기(1-A): 크기·비율·기울기.
+// 틀 = 중심(cx,cy), 반폭·반높이(rx,ry), 기울기(rot)를 '틀 공간'에서 잡는다. 틀 공간은 가로에 화면 비율(A)을 곱한 좌표다.
+//  - 사각형(꼭짓점 영역)·붓: A = 그림 가로/세로 → 실제 화면에서 돌리므로 직각이 유지된다. 기울기는 z.rot에 기억(그리기에는 안 쓰임).
+//  - 타원·픽셀 영역: A = 1 → 마스크를 그리는 정규 공간과 같다(기존 회전 방식).
+function frameAspect(z){return ['polygon','brush'].includes(z.kind)?renderWidth/Math.max(1,renderHeight):1}
+function shapeFrame(z){
+ const A=frameAspect(z),rot=z.kind==='brush'?0:(z.rot||0);
+ const pts=z.kind==='polygon'?z.polygon:z.kind==='brush'?z.strokes.flatMap(st=>st.points):null;
+ if(!pts?.length)return {cx:z.x*A,cy:z.y,rx:z.rx*A,ry:z.ry,rot,A};
+ const c=Math.cos(-rot),s=Math.sin(-rot);let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+ for(const [x,y] of pts){const X=x*A,lx=X*c-y*s,ly=X*s+y*c;x0=Math.min(x0,lx);x1=Math.max(x1,lx);y0=Math.min(y0,ly);y1=Math.max(y1,ly)}
+ const mx=(x0+x1)/2,my=(y0+y1)/2,c2=Math.cos(rot),s2=Math.sin(rot);
+ return {cx:mx*c2-my*s2,cy:mx*s2+my*c2,rx:Math.max(.005,(x1-x0)/2),ry:Math.max(.005,(y1-y0)/2),rot,A};
+}
+function shapeTransform(z,origin,sx,sy,angle,dx=0,dy=0){
+ if(z.kind==='raster'){applyTransform(z,origin,dx,dy,Math.sqrt(sx*sy),angle);return}
+ sx=clamp(sx,.1,10);sy=clamp(sy,.1,10);
+ const f=shapeFrame({...origin,kind:z.kind}),A=f.A,c0=Math.cos(-f.rot),s0=Math.sin(-f.rot),c1=Math.cos(f.rot+angle),s1=Math.sin(f.rot+angle);
+ const ncx=f.cx+dx*A,ncy=f.cy+dy;
+ const map=([x,y])=>{const X=x*A-f.cx,Y=y-f.cy,lx=(X*c0-Y*s0)*sx,ly=(X*s0+Y*c0)*sy;return [clamp((ncx+lx*c1-ly*s1)/A,0,1),clamp(ncy+lx*s1+ly*c1,0,1)]};
+ if(origin.pivotX!=null&&origin.pivotY!=null)[z.pivotX,z.pivotY]=map([origin.pivotX,origin.pivotY]);
+ if(origin.spine?.length){z.spine=origin.spine.map(map);z.chainNodes=null}
+ if(origin.branch?.length){z.branch=origin.branch.map(map);z.branchNodes=null}
+ if(origin.extraPivots?.length)z.extraPivots=origin.extraPivots.map(map);
+ if(z.kind==='ellipse'){z.x=clamp(ncx,.01,.99);z.y=clamp(ncy,.01,.99);z.rx=clamp(origin.rx*sx,.009,.5);z.ry=clamp(origin.ry*sy,.009,.5);z.rot=f.rot+angle}
+ else if(z.kind==='polygon'){z.polygon=origin.polygon.map(map);recalcPolygon(z);z.rot=f.rot+angle;z.scale=1}
+ else if(z.kind==='brush'){const k=Math.sqrt(sx*sy);z.strokes=origin.strokes.map(st=>({r:clamp(st.r*k,.004,.5),points:st.points.map(map)}));recalcBounds(z);z.rot=0;z.scale=1}
+ markMask();
+}
+// 선택한 도형의 손잡이 위치(0~1 좌표): 모서리 4개(크기·비율), 위쪽 회전 손잡이 1개
+function shapeHandles(z){
+ const f=shapeFrame(z),c=Math.cos(f.rot),s=Math.sin(f.rot),rect=overlay.getBoundingClientRect();
+ const at=(lx,ly)=>[(f.cx+lx*c-ly*s)/f.A,f.cy+lx*s+ly*c];
+ const out=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([a,b])=>({type:'corner',p:at(a*f.rx,b*f.ry)}));
+ const lift=28/Math.max(1,rect.height);// 위쪽으로 약 28px 띄운 회전 손잡이
+ out.push({type:'rotate',p:at(0,-f.ry-lift),base:at(0,-f.ry)});
+ return out;
+}
+function handleAt(z,p,touch){
+ const rect=overlay.getBoundingClientRect(),radius=touch?22:11;
+ let best=null,bestD=radius;
+ for(const h of shapeHandles(z)){const d=Math.hypot((h.p[0]-p.x)*rect.width,(h.p[1]-p.y)*rect.height);if(d<=bestD){bestD=d;best=h}}
+ return best;
+}
 function pointerCentroid(arr){return {x:(arr[0].x+arr[1].x)/2,y:(arr[0].y+arr[1].y)/2}}
 function pointerAngle(arr){return Math.atan2((arr[1].y-arr[0].y)*renderHeight,(arr[1].x-arr[0].x)*renderWidth)}
 function pinchBegin(){const arr=[...pointers.values()];if(arr.length<2||!selected)return;const z=getSelected();if(!z||z.locked)return;gesture={type:'pinch',id:z.id,origin:snap(z),dist:Math.max(5,pixelDistance(arr[0],arr[1])),angle:pointerAngle(arr),centroid:pointerCentroid(arr)};remember();setStatus('두 손가락으로 확대, 이동, 회전할 수 있습니다.')}
@@ -58,7 +102,11 @@ window.addEventListener('blur',()=>{spacePanHeld=false});
 function beginPinch(){
   const arr=[...pointers.values()],z=getSelected();if(arr.length<2)return;
   const d=Math.max(5,pixelDistance(arr[0],arr[1]));
-  if(mode==='edit'&&z&&!z.locked){gesture={type:'pinch',id:z.id,origin:snap(z),dist:d,angle:pointerAngle(arr),centroid:pointerCentroid(arr)};remember();return}
+  if(mode==='ellipse'&&z&&!z.locked){
+   // 손가락 방향이 도형의 가로축과 가까우면 가로만, 세로축과 가까우면 세로만, 대각선이면 같은 비율로
+   const a=pointerAngle(arr),rel=a-shapeFrame(z).rot,axis=Math.abs(Math.sin(rel))<.5?'x':Math.abs(Math.cos(rel))<.5?'y':'both';
+   gesture={type:'pinch',id:z.id,origin:snap(z),dist:d,angle:a,centroid:pointerCentroid(arr),axis};
+   setStatus(axis==='both'?'두 손가락으로 크기와 기울기를 바꿉니다.':`두 손가락으로 ${axis==='x'?'가로':'세로'} 길이와 기울기를 바꿉니다.`);return}
   gesture={type:'pinch-nav',dist:d,zoom:zoomLevel,centroid:pointerCentroid(arr),panX,panY};
   setStatus('두 손가락으로 캔버스를 확대하고 이동합니다. 선택 영역은 변경하지 않습니다.');
 }
@@ -78,13 +126,16 @@ overlay.addEventListener('pointerdown',e=>{
   if(mode==='wand'){magicSelect(p.x,p.y);return}
   if(mode==='pivot'||mode==='extraPivot'){placePivot(getSelected(),p,mode==='extraPivot');return}
   if(mode==='edit'){
-    const z=hit(p.x,p.y);if(z){selected=z.id;gesture=z.locked?null:{type:'move',id:z.id,start:p,origin:snap(z)};if(gesture)remember();updateUI()}
+    const z=hit(p.x,p.y);if(z){selected=z.id;gesture=z.locked?null:{type:'move',id:z.id,start:p,origin:snap(z)};updateUI()}// 되돌리기 기록은 실제로 움직일 때 남긴다
     else{selected=null;gesture=null;updateUI()}return;
   }
   if(mode==='brush'||mode==='erase'){
     gesture={type:mode,points:[[p.x,p.y]],r:brushSize/200,last:p};return;
   }
-  if(mode==='ellipse'){gesture={type:'ellipse',start:p,now:p};return}
+  if(mode==='ellipse'){
+   const z=editableSelected(),h=z&&handleAt(z,p,e.pointerType==='touch');
+   if(h){const f=shapeFrame(z);gesture={type:'handle',handle:h.type,id:z.id,origin:snap(z),frame:f,startAngle:Math.atan2(p.y-f.cy,p.x*f.A-f.cx)};return}
+   gesture={type:'ellipse',shape:document.querySelector('input[name="shapeKind"]:checked')?.value||'ellipse',start:p,now:p};return}
   if(mode==='lasso'){
    if(outlineDraft&&$('outlineAction').value!=='draw'){correctOutline(p.x,p.y);return;}
    if(outlineDraft)clearOutlineDraft();
@@ -110,17 +161,28 @@ overlay.addEventListener('pointermove',e=>{
   if(g.type==='pinch-nav'){if(pointers.size<2)return;const arr=[...pointers.values()],c=pointerCentroid(arr),next=clamp(g.zoom*pixelDistance(arr[0],arr[1])/g.dist,1,4);zoomLevel=next;panX=g.panX+(c.x-g.centroid.x)*stage.clientWidth;panY=g.panY+(c.y-g.centroid.y)*stage.clientHeight;applyZoom();return}
   if(g.type==='pinch'){
     if(pointers.size<2)return;const arr=[...pointers.values()],z=zones.find(v=>v.id===g.id);
-    if(z&&!z.locked){const c=pointerCentroid(arr),a=pointerAngle(arr);let da=a-g.angle;
+    if(z&&!z.locked){if(!g.remembered){remember();g.remembered=true}const c=pointerCentroid(arr),a=pointerAngle(arr);let da=a-g.angle;
       while(da>Math.PI)da-=Math.PI*2;while(da< -Math.PI)da+=Math.PI*2;
-      applyTransform(z,g.origin,c.x-g.centroid.x,c.y-g.centroid.y,pixelDistance(arr[0],arr[1])/g.dist,da);
+      const k=pixelDistance(arr[0],arr[1])/g.dist;
+      shapeTransform(z,g.origin,g.axis==='y'?1:k,g.axis==='x'?1:k,da,c.x-g.centroid.x,c.y-g.centroid.y);
     }return;
   }
   if(g.type==='pan'){panX=g.panX+e.clientX-g.clientX;panY=g.panY+e.clientY-g.clientY;applyZoom();return}
   if(g.type==='move'){
     if(pointers.size!==1)return;const z=zones.find(v=>v.id===g.id);
-    if(z&&!z.locked)applyTransform(z,g.origin,p.x-g.start.x,p.y-g.start.y,1,0);return;
+    if(z&&!z.locked){if(!g.remembered){remember();g.remembered=true}applyTransform(z,g.origin,p.x-g.start.x,p.y-g.start.y,1,0)}return;
   }
   if(g.type==='ellipse'){g.now=p;return}
+  if(g.type==='handle'){
+    const z=zones.find(v=>v.id===g.id);if(!z||z.locked)return;const f=g.frame;if(!g.remembered){remember();g.remembered=true}
+    const X=p.x*f.A-f.cx,Y=p.y-f.cy;
+    if(g.handle==='rotate'){shapeTransform(z,g.origin,1,1,Math.atan2(Y,X)-g.startAngle);return}
+    // 모서리: 중심 기준으로 포인터까지의 가로·세로 거리 → 비율. Shift를 누르면 같은 비율
+    const c=Math.cos(-f.rot),s=Math.sin(-f.rot),lx=X*c-Y*s,ly=X*s+Y*c;
+    let sx=Math.abs(lx)/Math.max(.002,f.rx),sy=Math.abs(ly)/Math.max(.002,f.ry);
+    if(e.shiftKey||z.kind==='raster'){const k=Math.max(sx,sy);sx=sy=k}
+    shapeTransform(z,g.origin,sx,sy,0);return;
+  }
   if(['brush','erase','lasso','spine','branch','flowdir'].includes(g.type)){
     const q=g.points[g.points.length-1],prev=g.type==='lasso'?g.last:{x:q[0],y:q[1]},d=pixelDistance(p,prev);
     if(!g.enclose&&d>Math.max(75,Math.min(renderWidth,renderHeight)*.18)){g.jumped=true;return}
@@ -150,6 +212,7 @@ function finishPointer(e,cancelled=false){
   if(g.type==='pinch-nav'){if(pointers.size<2){gesture=null;applyZoom()}return}
   if(g.type==='pinch'){if(pointers.size<2){gesture=null;updateUI();scheduleSave()}return}
   if(g.type==='move'){if(pointers.size===0){gesture=null;updateUI();scheduleSave()}return}
+  if(g.type==='handle'){if(pointers.size===0){gesture=null;updateUI();scheduleSave()}return}
   if(g.type==='pan'){if(!pointers.size)gesture=null;return}
   if(cancelled){if(g.type==='play')stopPlay(zones.find(v=>v.id===g.id));if(!pointers.size)gesture=null;setStatus('터치가 중단되어 그리기를 취소했습니다.');return}
   if(g.type==='play'){
@@ -173,8 +236,15 @@ function finishPointer(e,cancelled=false){
   if(pointers.size>0)return;
   if(g.type==='ellipse'){
     const a=g.start,b=p;let x=(a.x+b.x)/2,y=(a.y+b.y)/2,rx=Math.abs(a.x-b.x)/2,ry=Math.abs(a.y-b.y)/2;
-    if(rx<.013||ry<.013){x=a.x;y=a.y;rx=.11;ry=.11}
-    addEllipse(x,y,clamp(rx,.015,.48),clamp(ry,.015,.48));gesture=null;setMode('edit');return;
+    gesture=null;
+    if(rx<.013||ry<.013){
+     if(editableSelected()){setStatus('끌어서 도형을 그리세요. 선택한 도형은 손잡이나 두 손가락으로 다듬을 수 있습니다.');return}
+     x=a.x;y=a.y;rx=.11;ry=.11*renderWidth/Math.max(1,renderHeight);// 살짝 누르면 기본 크기(화면에서 정원)
+    }
+    rx=clamp(rx,.015,.48);ry=clamp(ry,.015,.48);
+    const done=g.shape==='rect'?addShape({kind:'polygon',polygon:[[x-rx,y-ry],[x+rx,y-ry],[x+rx,y+ry],[x-rx,y+ry]]}):addShape({kind:'ellipse',x,y,rx,ry});
+    if(done!==false)setStatus('도형을 적용했습니다. 손잡이나 두 손가락으로 크기·비율·기울기를 다듬을 수 있습니다.');
+    return;
   }
   if(g.type==='brush'||g.type==='erase'){
     const pts=g.points,q={x:pts[pts.length-1][0],y:pts[pts.length-1][1]};

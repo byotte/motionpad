@@ -7,7 +7,7 @@ function setZoom(next){zoomLevel=clamp(next,1,4);if(zoomLevel===1){panX=panY=0}a
 $('zoomInBtn').onclick=()=>setZoom(zoomLevel+.25);
 $('zoomOutBtn').onclick=()=>setZoom(zoomLevel-.25);
 $('zoomResetBtn').onclick=()=>setZoom(1);
-$('newRegionBtn').onclick=()=>{selected=null;$('appendInput').checked=false;updateUI();setMode('brush');setStatus('새 영역을 그려 주세요. 기존 영역에 더하려면 영역을 다시 선택하세요.')};
+$('newRegionBtn').onclick=()=>{selected=null;setSelectOp('new');updateUI();setMode('brush');setStatus('새 영역을 그려 주세요. 기존 영역에 더하려면 영역을 다시 선택하세요.')};
 function updateRendererBadge(){
   const badge=$('engineBadge');if(!badge)return;
   const renderer=gl?'WebGL':'Canvas';const quality=qualityMode==='auto'?'자동':qualityMode==='balanced'?'절전':'고화질';
@@ -212,7 +212,9 @@ function setMode(m){
   $('editInstruction').textContent=({pivot:'고정할 곳을 눌러 주세요.',extraPivot:'고정점을 더 놓을 곳을 눌러 주세요.',spine:'붙어 있는 곳에서 끝까지 그어 주세요.',flowdir:'흐를 방향으로 그어 주세요.'})[m]||'그림에서 부분을 선택하거나 다듬어 주세요.';
   if(ready&&!viewerOpen)requestAnimationFrame(fit);
   for(const b of document.querySelectorAll('.mode'))b.classList.toggle('active',b.dataset.mode===m);
-  $('brushbar').hidden=!['brush','erase','lasso','wand'].includes(m);
+  $('brushbar').hidden=!['brush','erase','lasso','wand','ellipse'].includes(m);
+  $('selOp').hidden=!['lasso','wand','ellipse'].includes(m);
+  $('shapeKind').hidden=m!=='ellipse';
   $('wandbar').hidden=m!=='wand';$('lassobar').hidden=m!=='lasso';
   $('brushLabel').textContent=m==='erase'?'지우개 굵기':'붓 굵기';
   $('brushLabel').hidden=$('brushInput').hidden=$('brushValue').hidden=!['brush','erase'].includes(m);
@@ -228,8 +230,8 @@ function setMode(m){
  const toolHints={
   brush:'붓 도구를 선택했습니다. 움직일 부분을 칠해 주세요.',
   erase:'지우개 도구를 선택했습니다. 선택된 영역에서 빼고 싶은 곳을 지워 주세요.',
-  ellipse:'타원 도구를 선택했습니다. 그림을 끌어 선택 범위를 만드세요.',
-  edit:'이동·변형 도구를 선택했습니다. 영역을 선택해 옮기거나 크기를 조절하세요.',
+  ellipse:'도형 도구를 선택했습니다. 그림을 끌어 타원이나 사각형을 그리세요. 선택한 도형은 손잡이나 두 손가락으로 크기·비율·기울기를 다듬을 수 있습니다.',
+  edit:'이동 도구를 선택했습니다. 영역을 끌어 위치를 옮기세요.',
   branch:'가지 선 도구를 선택했습니다. 기존 선에서 이어질 방향을 그려 주세요.'
  };
  if(toolHints[m])setStatus(toolHints[m]);

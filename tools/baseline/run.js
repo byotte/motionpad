@@ -124,9 +124,15 @@ async function drag(page, pts, steps = 6) {
 async function clickMode(page, id) {
   await page.locator('#' + id).click();
 }
-// '선택에 더하기'를 끄면 다음 선택이 새 영역이 된다
+// 다음 선택이 새 영역이 되게 한다. 1-A 이전: '선택에 더하기' 끄기. 이후: '새 영역' 버튼(도구가 붓으로 바뀌므로 원래 도구로 돌아온다)
 async function newZoneNext(page) {
-  await page.evaluate(() => { const e = document.getElementById('appendInput'); e.checked = false; e.dispatchEvent(new Event('change', { bubbles: true })); });
+  await page.evaluate(() => {
+    const e = document.getElementById('appendInput');
+    if (e) { e.checked = false; e.dispatchEvent(new Event('change', { bubbles: true })); return; }
+    const tool = document.querySelector('.mode.active');
+    document.getElementById('newRegionBtn').click();
+    tool?.click();
+  });
 }
 async function saveProject(page, file) {
   const [dl] = await Promise.all([page.waitForEvent('download'), page.evaluate(() => document.getElementById('backupBtn').click())]);
@@ -254,7 +260,8 @@ function zoneSummary(z) {
     const { context, page } = await newPage(browser, VIEWPORTS.pc, 'violet');
     await openImage(page);
     await clickMode(page, 'ellipseMode'); await drag(page, [[0.36, 0.25], [0.64, 0.52]]);
-    await clickMode(page, 'wandMode'); await newZoneNext(page);
+    // 1-A 이전 앱만 '더하기'를 끈다(영역 1 선택 유지). 이후 앱은 선택을 그대로 두면 '새로'가 영역 1의 모양을 바꾼다.
+    await clickMode(page, 'wandMode'); if (await page.locator('#appendInput').count()) await newZoneNext(page);
     const pw = await toScreen(page, 0.42, 0.75); await page.mouse.click(pw.x, pw.y);
     await page.waitForFunction(() => !document.getElementById('wandApply').disabled, null, { timeout: 30000 });
     const state = () => page.evaluate(() => ({
@@ -274,7 +281,7 @@ function zoneSummary(z) {
     await page.locator('#wandMode').click(); await rafs(page, 2);
     const afterTool = await state();
     let applied = false;
-    if (afterTool.wandDraftAlive) { await page.locator('#wandApply').click(); await rafs(page, 2); applied = (await page.locator('#zoneCount').textContent()).trim().startsWith('2'); }
+    if (afterTool.wandDraftAlive) { await page.locator('#wandApply').click(); await rafs(page, 2); applied = await page.evaluate(() => document.getElementById('wandApply').disabled && /적용/.test(document.getElementById('status').textContent)); }
     results.previewKeep = { before, after, afterTouch, afterTool, applied,
       kept: before.wandDraftAlive && after.wandDraftAlive && before.tool === after.tool && afterTouch.wandDraftAlive && afterTool.wandDraftAlive && applied };
     await context.close();
