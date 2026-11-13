@@ -138,6 +138,9 @@ input:is([type=checkbox],[type=radio]){accent-color:var(--accent)}
 .zoneTools{display:inline-flex;align-items:center;gap:3px;margin-left:auto}
 .zoneTools .zoneNew{display:inline-flex;align-items:center;gap:4px;font-weight:700;color:var(--accentInk)}
 .zoneTools .iconBtn{min-width:28px}
+/* 도구줄 칸이 좁으면(폰 가로 등) 도구는 아이콘만: 줄바꿈으로 캔버스가 줄지 않게 */
+.stagebox{container-type:inline-size}
+@container (max-width:700px){.stagebar .mode>span{display:none}.stagebar .mode{padding-inline:6px}.modegroup{flex-wrap:nowrap;align-items:center}}
 :root[data-theme="light"] .mode{color:var(--sub)}
 :root[data-theme="light"] .stagebar .mode.active{color:var(--accentInk)}
 .workspace.touchPreview .stagebar .mode.active{opacity:.5}
