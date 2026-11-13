@@ -27,16 +27,19 @@ function videoPlan(sizeOverride){
  const r=ratio==='image'?rw/rh:(([a,b])=>a/b)(ratio.split(':').map(Number));
  let OW=rw,OH=rh;
  if(ratio!=='image'){const tall=r<rw/rh;if(fitMode==='fill'){if(tall){OH=rh;OW=rh*r}else{OW=rw;OH=rw/r}}else{if(tall){OW=rw;OH=rw/r}else{OH=rh;OW=rh*r}}}
- const size=sizeOverride||radioValue('videoSize')||'orig';
- let s=size==='orig'?1:Number(size)/Math.min(OW,OH);
- s=Math.min(s,3840/Math.max(OW,OH));
+ const size=sizeOverride||radioValue('videoSize')||'orig',format=radioValue('videoFormat')||'video';
+ // 3-G: 원본 = 처음 연 그림의 크기(편집 사본 1900px가 아니라). 영상은 긴 변 3840(4K), 움짤은 2048까지.
+ const up=Math.max(1,Math.max(sourceSize.w,sourceSize.h)/Math.max(rw,rh)||1),maxLong=format==='gif'?2048:3840;
+ let s=size==='orig'?up:Number(size)/Math.min(OW,OH);
+ const capped=s>maxLong/Math.max(OW,OH);s=Math.min(s,maxLong/Math.max(OW,OH));
  OW=even(OW*s);OH=even(OH*s);
  const k=(ratio!=='image'&&fitMode==='fit')?Math.min(OW/rw,OH/rh):Math.max(OW/rw,OH/rh);
- const dw=rw*k,dh=rh*k,cap=Math.min(1,4096/Math.max(dw,dh));
+ const lim=glLimits(),devLong=Math.min(8192,lim.view||4096,lim.tex||4096),dw=rw*k,dh=rh*k,cap=Math.min(1,devLong/Math.max(dw,dh));
+ const srcLong=Math.max(sourceSize.w,sourceSize.h)||Math.max(rw,rh),drawLong=Math.max(dw,dh),deviceLimited=drawLong>devLong+1&&srcLong>devLong;
  const fps=Number($('videoFPS').value)||30,duration=Number($('videoDuration').value)||5,q=Number($('videoQuality').value);
  const bpp=.02*15**(q/100),bitrate=Math.round(clamp(bpp*OW*OH*fps,250_000,40_000_000));
- const format=radioValue('videoFormat')||'video',gifColors=Math.round(32+q/100*224);
- return {format,gifColors,OW,OH,dw,dh,dx:(OW-dw)/2,dy:(OH-dh)/2,vw:Math.max(1,Math.round(dw*cap)),vh:Math.max(1,Math.round(dh*cap)),fps,duration,bitrate,bytes:format==='gif'?gifEstimate(OW,OH,fps,duration,gifColors):bitrate*duration/8,ratio,fitMode};
+ const gifColors=Math.round(32+q/100*224);
+ return {format,gifColors,capped,maxLong,deviceLimited,devLong,drawLong,OW,OH,dw,dh,dx:(OW-dw)/2,dy:(OH-dh)/2,vw:Math.max(1,Math.round(dw*cap)),vh:Math.max(1,Math.round(dh*cap)),fps,duration,bitrate,bytes:format==='gif'?gifEstimate(OW,OH,fps,duration,gifColors):bitrate*duration/8,ratio,fitMode};
 }
 // 움짤 용량 추정: 첫 장(전체) + 이후 장(바뀐 부분). 샘플 그림으로 잰 값에 맞춘 대략치.
 function gifEstimate(W,H,fps,duration,colors){const px=W*H,c=.55+.45*colors/256;return px*.45*c+px*.07*c*fps*duration}
@@ -48,6 +51,14 @@ function drawExportFrame(g,plan,W,H,withFx){
 }
 const waitFrames=n=>new Promise(r=>{const step=()=>--n<=0?r():requestAnimationFrame(step);requestAnimationFrame(step)});
 function fmtBytes(b){return b>=1048576?`${(b/1048576).toFixed(b>=10485760?0:1)}MB`:`${Math.max(1,Math.round(b/1024))}KB`}
+// 3-G: 원본·큰 크기를 골랐을 때만 나오는 안내.
+function videoWarnings(p){
+ const w=[];
+ if(p.capped)w.push(p.format==='gif'?`움짤은 긴 변 ${p.maxLong}px까지 저장합니다(그보다 크면 만드는 중 멈추거나 열리지 않을 수 있어서).`:`원본이 커서 4K(긴 변 ${p.maxLong}px)로 줄여 저장합니다. 대부분의 기기·앱이 재생할 수 있는 최대 크기입니다.`);
+ if(p.deviceLimited)w.push(`이 기기는 그림을 최대 ${p.devLong}px까지만 그릴 수 있어, 그만큼 그린 뒤 늘려 저장합니다. 크게 확대하면 조금 덜 선명할 수 있습니다.`);
+ if(p.format==='gif'&&(Math.max(p.OW,p.OH)>1080||p.bytes>15*1048576))w.push('큰 움짤은 ① 메신저·SNS에 용량 제한으로 안 올라가거나 ② 사진첩·뷰어에서 늦게 열리고 재생이 끊기거나 ③ 만드는 동안 프레임이 빠져 뚝뚝 끊길 수 있습니다. 480~720을 권합니다.');
+ return w.length?`<span class="videoWarn">${w.join('<br>')}</span>`:'';
+}
 function refreshVideoPlan(){
  if(!ready)return;const p=videoPlan(),mime=videoMimeType(),ext=mime?.startsWith('video/mp4')?'MP4':mime?'WebM':'';
  const sizeOrig=document.querySelector('input[name="videoSize"][value="orig"]+span');
@@ -55,7 +66,7 @@ function refreshVideoPlan(){
  const fmt=document.querySelector('input[name="videoFormat"][value="video"]+span');if(fmt)fmt.textContent=ext?`영상 (${ext})`:'영상';
  $('videoQualityValue').textContent=$('videoQuality').value;$('exportVideoBtn').textContent=p.format==='gif'?'움짤 저장':'영상 저장';
  $('videoFitRow').hidden=p.ratio==='image';
- $('videoEstimate').innerHTML=`예상: <b>${p.OW}×${p.OH} · ${p.duration}초 · ${p.fps} FPS${p.format==='gif'?` · ${p.gifColors}색`:''} · 약 ${fmtBytes(p.bytes)}</b><br><span class="micro">${p.format==='gif'?'움짤은 영상보다 훨씬 큽니다. 크기 480·짧은 길이를 권합니다.':'실제 용량은 움직임이 적으면 더 작아질 수 있습니다.'}</span>`;
+ $('videoEstimate').innerHTML=`예상: <b>${p.OW}×${p.OH} · ${p.duration}초 · ${p.fps} FPS${p.format==='gif'?` · ${p.gifColors}색`:''} · 약 ${fmtBytes(p.bytes)}</b><br><span class="micro">${p.format==='gif'?'움짤은 영상보다 훨씬 큽니다. 크기 480·짧은 길이를 권합니다.':'실제 용량은 움직임이 적으면 더 작아질 수 있습니다.'}</span>`+videoWarnings(p);
 }
 // 형식을 바꾸면 그 형식에 맞는 크기·FPS로 바꿔 둔다(움짤 480·15 FPS, 영상 원본·30 FPS). 이후 사용자가 바꾼 값은 그대로.
 for(const r of document.querySelectorAll('input[name="videoFormat"]'))r.addEventListener('change',()=>{const gif=r.value==='gif'&&r.checked;
@@ -74,11 +85,12 @@ async function recordVideo(opts={}){
  const g=output.getContext('2d',{alpha:false});
  const first=document.createElement('canvas');first.width=W;first.height=H;const firstG=first.getContext('2d');
  exportRender={w:plan.vw,h:plan.vh};fit();
+ await enterHiRes(Math.max(plan.vw,plan.vh)).catch(e=>console.warn('원본 올리기 실패, 편집 사본으로 녹화',e));
  await waitFrames(3);// 크기를 바꾸면 그림이 지워진다. 다시 그려진 뒤부터 찍어야 첫 장(팔레트·끝 이어붙이기 기준)이 비지 않는다
  const stream=output.captureStream(fps),track=stream.getVideoTracks()[0];videoCaptureTrack=track;
  const chunks=[];let recorder;
  try{recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:plan.bitrate});}
- catch(e){track.stop();exportRender=null;fit();showNotice('영상 내보내기','영상 녹화를 시작하지 못했습니다.'+why(e));return}
+ catch(e){track.stop();exportRender=null;leaveHiRes();fit();showNotice('영상 내보내기','영상 녹화를 시작하지 못했습니다.'+why(e));return}
  blinkEpoch=elapsed;
  videoRecorder=recorder;videoCancelled=false;videoErrorMessage='';
  $('exportVideoBtn').disabled=true;$('cancelVideoBtn').hidden=false;
@@ -87,7 +99,7 @@ async function recordVideo(opts={}){
  recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};
  recorder.onerror=e=>{console.error('MediaRecorder error',e);videoCancelled=true;videoErrorMessage='인코더 오류로 영상 저장을 취소했습니다.'};
  recorder.onstop=()=>{
-  cancelAnimationFrame(videoAnimationFrame);videoAnimationFrame=0;track.stop();exportRender=null;fit();
+  cancelAnimationFrame(videoAnimationFrame);videoAnimationFrame=0;track.stop();exportRender=null;leaveHiRes();fit();
   $('exportVideoBtn').disabled=false;$('cancelVideoBtn').hidden=true;videoRecorder=null;
   if(videoCancelled){$('videoProgress').textContent=videoErrorMessage||'영상 저장을 취소했습니다.';liveDone('');return}
   const blob=new Blob(chunks,{type:mime.split(';')[0]});
@@ -123,12 +135,12 @@ async function recordGif(plan,opts={}){
  const enc=createGifEncoder(W,H,{colors:plan.gifColors,extra:opts.fx?[[255,248,214],[255,255,255],[60,48,36]]:[]});
  const fake={state:'recording',stop(){this.state='inactive';finish()}};
  videoRecorder=fake;videoCancelled=false;videoErrorMessage='';
- exportRender={w:plan.vw,h:plan.vh};fit();await waitFrames(3);blinkEpoch=elapsed;
+ exportRender={w:plan.vw,h:plan.vh};fit();await enterHiRes(Math.max(plan.vw,plan.vh)).catch(e=>console.warn('원본 올리기 실패, 편집 사본으로 녹화',e));await waitFrames(3);blinkEpoch=elapsed;
  $('exportVideoBtn').disabled=true;$('cancelVideoBtn').hidden=false;
  let start=0,frameNo=0,pending=null,pendingAt=0,carry=0;
  function push(now){if(!pending)return;const cs=(now-pendingAt)/10+carry,d=Math.max(2,Math.round(cs));carry=cs-d;enc.addFrame(pending,d)}
  function finish(){
-  cancelAnimationFrame(videoAnimationFrame);videoAnimationFrame=0;exportRender=null;fit();
+  cancelAnimationFrame(videoAnimationFrame);videoAnimationFrame=0;exportRender=null;leaveHiRes();fit();
   $('exportVideoBtn').disabled=false;$('cancelVideoBtn').hidden=true;videoRecorder=null;
   if(videoCancelled){$('videoProgress').textContent=videoErrorMessage||'움짤 저장을 취소했습니다.';liveDone('');return}
   const endAt=opts.live?performance.now():start+duration*1000,sec=Math.max(1,Math.round((endAt-start)/1000));push(endAt);
@@ -152,7 +164,7 @@ async function recordGif(plan,opts={}){
  }
  videoAnimationFrame=requestAnimationFrame(nextFrame);
 }
-$('exportVideoBtn').onclick=()=>recordVideo().catch(e=>{console.error(e);exportRender=null;fit();$('exportVideoBtn').disabled=false;$('cancelVideoBtn').hidden=true;showNotice('영상 내보내기','영상을 저장하다 문제가 생겼습니다.'+why(e))});
+$('exportVideoBtn').onclick=()=>recordVideo().catch(e=>{console.error(e);exportRender=null;leaveHiRes();fit();$('exportVideoBtn').disabled=false;$('cancelVideoBtn').hidden=true;showNotice('영상 내보내기','영상을 저장하다 문제가 생겼습니다.'+why(e))});
 $('cancelVideoBtn').onclick=()=>interruptVideoRecording('사용자가 영상 저장을 취소했습니다.');
 
 // 3-F 플레이 화면 녹화(●). 크기·화질·형식은 '영상으로 내보내기' 창의 값을 쓴다. 버튼 자체는 영상에 찍히지 않는다(그림만 그린다).
@@ -167,5 +179,5 @@ $('recViewer').onclick=()=>{
  if(radioValue('videoFormat')!=='gif'&&!videoMimeType()){showViewerToast('이 브라우저는 영상 녹화를 지원하지 않습니다.');return}
  liveRecording=true;const b=$('recViewer');b.classList.add('recording');b.title=b.ariaLabel='녹화 멈추고 저장';liveTick(0);
  showViewerToast(`녹화 중 · 다시 누르면 저장합니다(최대 ${LIVE_MAX}초)`);
- recordVideo({live:true,fx:$('videoFx').checked}).catch(e=>{console.error(e);exportRender=null;fit();liveDone('녹화하지 못했습니다.'+why(e))});
+ recordVideo({live:true,fx:$('videoFx').checked}).catch(e=>{console.error(e);exportRender=null;leaveHiRes();fit();liveDone('녹화하지 못했습니다.'+why(e))});
 };

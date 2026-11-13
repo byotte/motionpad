@@ -348,6 +348,7 @@ button[data-help]:hover::before{color:var(--ink)}
 .videoEstimate b{color:var(--accent);font-variant-numeric:tabular-nums}
 #videoDialog details{margin:6px 0;padding:0 9px 4px;border:1px solid var(--line);border-radius:4px}
 #videoDialog details>summary{padding:6px 0;font-size:12px;font-weight:700;cursor:pointer}
+.videoWarn{display:block;margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);color:var(--warning);font-size:11px;line-height:1.5}
 /* ── 9. 감상 화면 ───────────────────────────────────────── */
 .viewer{position:fixed;inset:0;z-index:50;display:flex;align-items:stretch;justify-content:center;background:#101114}
 .viewerStage{display:flex;align-items:center;justify-content:center;width:100%;height:100%;overflow:hidden}
@@ -2364,7 +2365,7 @@ g.fillStyle='#6ea9a4';g.beginPath();g.roundRect(92,320,475,565,105);g.fill();g.f
 const jiggle=g.createLinearGradient(560,540,840,750);jiggle.addColorStop(0,'#a4d8ff');jiggle.addColorStop(1,'#8e8edb');g.fillStyle=jiggle;g.beginPath();g.ellipse(686,674,146,156,0,0,Math.PI*2);g.fill();circle(648,640,14,'#273c6f');circle(741,640,14,'#273c6f');g.strokeStyle='#303e6b';g.lineWidth=11;g.beginPath();g.arc(693,687,40,.1,Math.PI-.1);g.stroke();for(let i=0;i<3;i++){g.strokeStyle='#a4baff';g.lineWidth=19;g.beginPath();g.moveTo(610+i*60,785);g.quadraticCurveTo(560+i*87,860,575+i*68,932);g.stroke()}g.textAlign='center';g.fillStyle='#d5ece7';g.font='25px system-ui';g.fillText('BOTTOM ↓',430,1008);return c}
 async function canvasBlob(c,type='image/webp',quality=.92){return new Promise(ok=>c.toBlob(ok,type,quality))}
 async function loadImage(blob){const url=URL.createObjectURL(blob);try{const im=new Image();await new Promise((ok,fail)=>{im.onload=ok;im.onerror=fail;im.src=url});if(!im.naturalWidth||!im.naturalHeight)throw Error('손상된 이미지');return im}finally{URL.revokeObjectURL(url)}}
-async function useBlob(blob,reset=true){const source=await loadImage(blob),factor=Math.min(1,1900/Math.max(source.naturalWidth,source.naturalHeight));const c=document.createElement('canvas');c.width=Math.max(1,Math.round(source.naturalWidth*factor));c.height=Math.max(1,Math.round(source.naturalHeight*factor));c.getContext('2d').drawImage(source,0,0,c.width,c.height);const compressed=await canvasBlob(c);imgBlob=blob.size<=20*1024*1024?blob:(compressed||blob);bitmap=c;renderWidth=c.width;renderHeight=c.height;clearSelectionDrafts();restoreBlink(null);lastBaseSignature='';baseMaskCanvas=null;backgroundPlate=null;computeEdge();if(reset){zones=[];selected=null}ready=true;$('welcome').hidden=true;document.querySelector('.workspace').hidden=false;document.querySelector('.header').classList.remove('starting');if(!gl&&!draw2d)setupGL();uploadImage();markMask();fit();updateUI();scheduleSave();markProjectSaved();setStatus(`${c.width}×${c.height} · ${gl?'WebGL':'Canvas'} 모드`)}
+async function useBlob(blob,reset=true){const source=await loadImage(blob);sourceSize={w:source.naturalWidth,h:source.naturalHeight};const factor=Math.min(1,1900/Math.max(source.naturalWidth,source.naturalHeight));const c=document.createElement('canvas');c.width=Math.max(1,Math.round(source.naturalWidth*factor));c.height=Math.max(1,Math.round(source.naturalHeight*factor));c.getContext('2d').drawImage(source,0,0,c.width,c.height);const compressed=await canvasBlob(c);imgBlob=blob.size<=20*1024*1024?blob:(compressed||blob);bitmap=c;renderWidth=c.width;renderHeight=c.height;clearSelectionDrafts();restoreBlink(null);lastBaseSignature='';baseMaskCanvas=null;backgroundPlate=null;computeEdge();if(reset){zones=[];selected=null}ready=true;$('welcome').hidden=true;document.querySelector('.workspace').hidden=false;document.querySelector('.header').classList.remove('starting');if(!gl&&!draw2d)setupGL();uploadImage();markMask();fit();updateUI();scheduleSave();markProjectSaved();setStatus(`${c.width}×${c.height} · ${gl?'WebGL':'Canvas'} 모드`)}
 $('imageBtn').onclick=()=>$('imageFile').click();$('imageFile').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;try{if(!f.type.startsWith('image/'))throw Error('이미지 파일을 선택한다');await useBlob(f,true);undoStack=[];redoStack=[];refreshHistory();setMode('play');setStatus('그림을 불러왔습니다.')}catch(err){showNotice('그림 열기 실패','그림을 열지 못했습니다. 다른 그림 파일(png·jpg 등)로 다시 시도해 주세요.'+why(err))}e.target.value=''};
 async function sample(){const c=sampleCanvas(),blob=await canvasBlob(c);await useBlob(blob,true);zones=[sanitize({name:'로봇 몸체',x:.39,y:.60,rx:.20,ry:.24,kind:'ellipse',axis:'y',strength:22},0),sanitize({name:'생명체',kind:'brush',strokes:[{r:.15,points:[[.8,.62],[.8,.68],[.81,.72]]}],axis:'diag',strength:30,auto:true},1)];selected=zones[0].id;markMask();updateUI();scheduleSave();setStatus('샘플 · TOP과 BOTTOM 방향을 확인한다')}
 $('sampleBtn').onclick=async()=>{if(storedLayoutProject&&!await askConfirm({title:'샘플 그림으로 체험하기',message:'자동 저장된 이전 작업이 있습니다. 샘플을 열면 이전 작업은 이어할 수 없게 됩니다. 계속할까요?',ok:'샘플 열기'}))return;sample().then(()=>setMode('play'))};
@@ -2520,6 +2521,54 @@ function createGifEncoder(W,H,{colors=256,dither=1,extra=[]}={}){
   finish(){byte(0x3B);return new Uint8Array(out)}
  };
 }
+// 3-G 원본 해상도로 녹화하기. 편집은 긴 변 1900px 사본으로 하고(가볍게), 녹화하는 동안만 원본 그림을 그래픽 카드에 올린다.
+// 채움판(외곽 흔들기·배경 제외용으로 구멍을 메운 그림)은 1900 사본에서 만든 것이라, 원본 위에 '메운 자리'만 덮어 쓴다.
+// 그래서 몸체·배경·흔들리는 부위 모두 원본 화질이고, 움직일 때 잠깐 드러나는 채움 자리만 1900 기준이다.
+let sourceSize={w:0,h:0},hiResActive=false;
+function glLimits(){
+ if(!gl)return {tex:0,view:0};
+ const vp=gl.getParameter(gl.MAX_VIEWPORT_DIMS)||[4096,4096];
+ return {tex:gl.getParameter(gl.MAX_TEXTURE_SIZE)||4096,view:Math.min(vp[0],vp[1],gl.getParameter(gl.MAX_RENDERBUFFER_SIZE)||4096)};
+}
+// 채움판과 사본이 다른 곳(=메운 자리)만 알파로 남긴 가림막. 2칸 넓히고 살짝 흐리게 해 이음매가 안 보이게 한다.
+function plateHoleMask(plate){
+ const W=renderWidth,H=renderHeight,a=document.createElement('canvas');a.width=W;a.height=H;
+ const pg=document.createElement('canvas');pg.width=W;pg.height=H;const p=pg.getContext('2d',{willReadFrequently:true});p.drawImage(plate,0,0,W,H);
+ const pd=p.getImageData(0,0,W,H).data;p.clearRect(0,0,W,H);p.drawImage(bitmap,0,0,W,H);const bd=p.getImageData(0,0,W,H).data;
+ const out=new ImageData(W,H);
+ for(let i=0;i<pd.length;i+=4){if(Math.abs(pd[i]-bd[i])+Math.abs(pd[i+1]-bd[i+1])+Math.abs(pd[i+2]-bd[i+2])>6)out.data[i+3]=255}
+ const g=a.getContext('2d');g.putImageData(out,0,0);
+ const b=document.createElement('canvas');b.width=W;b.height=H;const bg=b.getContext('2d');bg.filter='blur(1.5px)';
+ for(const [dx,dy] of [[0,0],[-2,0],[2,0],[0,-2],[0,2]])bg.drawImage(a,dx,dy);
+ return b;
+}
+function hiPlate(plate,hi){
+ const c=document.createElement('canvas');c.width=hi.width;c.height=hi.height;const g=c.getContext('2d');
+ const m=document.createElement('canvas');m.width=hi.width;m.height=hi.height;const mg=m.getContext('2d');
+ mg.drawImage(plateHoleMask(plate),0,0,hi.width,hi.height);mg.globalCompositeOperation='source-in';mg.drawImage(plate,0,0,hi.width,hi.height);
+ g.drawImage(hi,0,0);g.drawImage(m,0,0);return c;
+}
+// 필요한 긴 변(px)만큼 원본을 올린다. 사본으로 충분하거나 WebGL이 없으면 아무것도 하지 않는다.
+async function enterHiRes(needLong){
+ if(!gl||!imgBlob||hiResActive)return null;
+ const curLong=Math.max(renderWidth,renderHeight),srcLong=Math.max(sourceSize.w,sourceSize.h);
+ const want=Math.min(srcLong,Math.ceil(needLong),glLimits().tex);
+ if(want<=curLong*1.02)return null;
+ const src=await loadImage(imgBlob),s=want/Math.max(src.naturalWidth,src.naturalHeight);
+ const hi=document.createElement('canvas');hi.width=Math.max(1,Math.round(src.naturalWidth*s));hi.height=Math.max(1,Math.round(src.naturalHeight*s));
+ hi.getContext('2d').drawImage(src,0,0,hi.width,hi.height);
+ const bgPlate=tailBasePlate||backgroundPlate,body=tailPlate?hiPlate(tailPlate,hi):hi,back=bgPlate?hiPlate(bgPlate,hi):hi;
+ gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
+ gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,imageTex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,body);
+ if(backgroundTex){gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,backgroundTex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,back)}
+ if(tailPlate&&tailOriginalTex){gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D,tailOriginalTex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,hi)}
+ gl.activeTexture(gl.TEXTURE0);
+ hiResActive=true;return {w:hi.width,h:hi.height};
+}
+function leaveHiRes(){
+ if(!hiResActive)return;hiResActive=false;
+ if(gl){if(baseMaskTex&&backgroundTex)syncBaseTexturesGL();else uploadImage()}
+}
 // Client-only video recording. Standard MediaRecorder, with browser-dependent codec.
 // Frames are captured after the normal animation update, without the editing overlay.
 let videoRecorder=null,videoCaptureTrack=null,videoAnimationFrame=0,videoCancelled=false,videoErrorMessage='';
@@ -2549,16 +2598,19 @@ function videoPlan(sizeOverride){
  const r=ratio==='image'?rw/rh:(([a,b])=>a/b)(ratio.split(':').map(Number));
  let OW=rw,OH=rh;
  if(ratio!=='image'){const tall=r<rw/rh;if(fitMode==='fill'){if(tall){OH=rh;OW=rh*r}else{OW=rw;OH=rw/r}}else{if(tall){OW=rw;OH=rw/r}else{OH=rh;OW=rh*r}}}
- const size=sizeOverride||radioValue('videoSize')||'orig';
- let s=size==='orig'?1:Number(size)/Math.min(OW,OH);
- s=Math.min(s,3840/Math.max(OW,OH));
+ const size=sizeOverride||radioValue('videoSize')||'orig',format=radioValue('videoFormat')||'video';
+ // 3-G: 원본 = 처음 연 그림의 크기(편집 사본 1900px가 아니라). 영상은 긴 변 3840(4K), 움짤은 2048까지.
+ const up=Math.max(1,Math.max(sourceSize.w,sourceSize.h)/Math.max(rw,rh)||1),maxLong=format==='gif'?2048:3840;
+ let s=size==='orig'?up:Number(size)/Math.min(OW,OH);
+ const capped=s>maxLong/Math.max(OW,OH);s=Math.min(s,maxLong/Math.max(OW,OH));
  OW=even(OW*s);OH=even(OH*s);
  const k=(ratio!=='image'&&fitMode==='fit')?Math.min(OW/rw,OH/rh):Math.max(OW/rw,OH/rh);
- const dw=rw*k,dh=rh*k,cap=Math.min(1,4096/Math.max(dw,dh));
+ const lim=glLimits(),devLong=Math.min(8192,lim.view||4096,lim.tex||4096),dw=rw*k,dh=rh*k,cap=Math.min(1,devLong/Math.max(dw,dh));
+ const srcLong=Math.max(sourceSize.w,sourceSize.h)||Math.max(rw,rh),drawLong=Math.max(dw,dh),deviceLimited=drawLong>devLong+1&&srcLong>devLong;
  const fps=Number($('videoFPS').value)||30,duration=Number($('videoDuration').value)||5,q=Number($('videoQuality').value);
  const bpp=.02*15**(q/100),bitrate=Math.round(clamp(bpp*OW*OH*fps,250_000,40_000_000));
- const format=radioValue('videoFormat')||'video',gifColors=Math.round(32+q/100*224);
- return {format,gifColors,OW,OH,dw,dh,dx:(OW-dw)/2,dy:(OH-dh)/2,vw:Math.max(1,Math.round(dw*cap)),vh:Math.max(1,Math.round(dh*cap)),fps,duration,bitrate,bytes:format==='gif'?gifEstimate(OW,OH,fps,duration,gifColors):bitrate*duration/8,ratio,fitMode};
+ const gifColors=Math.round(32+q/100*224);
+ return {format,gifColors,capped,maxLong,deviceLimited,devLong,drawLong,OW,OH,dw,dh,dx:(OW-dw)/2,dy:(OH-dh)/2,vw:Math.max(1,Math.round(dw*cap)),vh:Math.max(1,Math.round(dh*cap)),fps,duration,bitrate,bytes:format==='gif'?gifEstimate(OW,OH,fps,duration,gifColors):bitrate*duration/8,ratio,fitMode};
 }
 // 움짤 용량 추정: 첫 장(전체) + 이후 장(바뀐 부분). 샘플 그림으로 잰 값에 맞춘 대략치.
 function gifEstimate(W,H,fps,duration,colors){const px=W*H,c=.55+.45*colors/256;return px*.45*c+px*.07*c*fps*duration}
@@ -2570,6 +2622,14 @@ function drawExportFrame(g,plan,W,H,withFx){
 }
 const waitFrames=n=>new Promise(r=>{const step=()=>--n<=0?r():requestAnimationFrame(step);requestAnimationFrame(step)});
 function fmtBytes(b){return b>=1048576?`${(b/1048576).toFixed(b>=10485760?0:1)}MB`:`${Math.max(1,Math.round(b/1024))}KB`}
+// 3-G: 원본·큰 크기를 골랐을 때만 나오는 안내.
+function videoWarnings(p){
+ const w=[];
+ if(p.capped)w.push(p.format==='gif'?`움짤은 긴 변 ${p.maxLong}px까지 저장합니다(그보다 크면 만드는 중 멈추거나 열리지 않을 수 있어서).`:`원본이 커서 4K(긴 변 ${p.maxLong}px)로 줄여 저장합니다. 대부분의 기기·앱이 재생할 수 있는 최대 크기입니다.`);
+ if(p.deviceLimited)w.push(`이 기기는 그림을 최대 ${p.devLong}px까지만 그릴 수 있어, 그만큼 그린 뒤 늘려 저장합니다. 크게 확대하면 조금 덜 선명할 수 있습니다.`);
+ if(p.format==='gif'&&(Math.max(p.OW,p.OH)>1080||p.bytes>15*1048576))w.push('큰 움짤은 ① 메신저·SNS에 용량 제한으로 안 올라가거나 ② 사진첩·뷰어에서 늦게 열리고 재생이 끊기거나 ③ 만드는 동안 프레임이 빠져 뚝뚝 끊길 수 있습니다. 480~720을 권합니다.');
+ return w.length?`<span class="videoWarn">${w.join('<br>')}</span>`:'';
+}
 function refreshVideoPlan(){
  if(!ready)return;const p=videoPlan(),mime=videoMimeType(),ext=mime?.startsWith('video/mp4')?'MP4':mime?'WebM':'';
  const sizeOrig=document.querySelector('input[name="videoSize"][value="orig"]+span');
@@ -2577,7 +2637,7 @@ function refreshVideoPlan(){
  const fmt=document.querySelector('input[name="videoFormat"][value="video"]+span');if(fmt)fmt.textContent=ext?`영상 (${ext})`:'영상';
  $('videoQualityValue').textContent=$('videoQuality').value;$('exportVideoBtn').textContent=p.format==='gif'?'움짤 저장':'영상 저장';
  $('videoFitRow').hidden=p.ratio==='image';
- $('videoEstimate').innerHTML=`예상: <b>${p.OW}×${p.OH} · ${p.duration}초 · ${p.fps} FPS${p.format==='gif'?` · ${p.gifColors}색`:''} · 약 ${fmtBytes(p.bytes)}</b><br><span class="micro">${p.format==='gif'?'움짤은 영상보다 훨씬 큽니다. 크기 480·짧은 길이를 권합니다.':'실제 용량은 움직임이 적으면 더 작아질 수 있습니다.'}</span>`;
+ $('videoEstimate').innerHTML=`예상: <b>${p.OW}×${p.OH} · ${p.duration}초 · ${p.fps} FPS${p.format==='gif'?` · ${p.gifColors}색`:''} · 약 ${fmtBytes(p.bytes)}</b><br><span class="micro">${p.format==='gif'?'움짤은 영상보다 훨씬 큽니다. 크기 480·짧은 길이를 권합니다.':'실제 용량은 움직임이 적으면 더 작아질 수 있습니다.'}</span>`+videoWarnings(p);
 }
 // 형식을 바꾸면 그 형식에 맞는 크기·FPS로 바꿔 둔다(움짤 480·15 FPS, 영상 원본·30 FPS). 이후 사용자가 바꾼 값은 그대로.
 for(const r of document.querySelectorAll('input[name="videoFormat"]'))r.addEventListener('change',()=>{const gif=r.value==='gif'&&r.checked;
@@ -2596,11 +2656,12 @@ async function recordVideo(opts={}){
  const g=output.getContext('2d',{alpha:false});
  const first=document.createElement('canvas');first.width=W;first.height=H;const firstG=first.getContext('2d');
  exportRender={w:plan.vw,h:plan.vh};fit();
+ await enterHiRes(Math.max(plan.vw,plan.vh)).catch(e=>console.warn('원본 올리기 실패, 편집 사본으로 녹화',e));
  await waitFrames(3);// 크기를 바꾸면 그림이 지워진다. 다시 그려진 뒤부터 찍어야 첫 장(팔레트·끝 이어붙이기 기준)이 비지 않는다
  const stream=output.captureStream(fps),track=stream.getVideoTracks()[0];videoCaptureTrack=track;
  const chunks=[];let recorder;
  try{recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:plan.bitrate});}
- catch(e){track.stop();exportRender=null;fit();showNotice('영상 내보내기','영상 녹화를 시작하지 못했습니다.'+why(e));return}
+ catch(e){track.stop();exportRender=null;leaveHiRes();fit();showNotice('영상 내보내기','영상 녹화를 시작하지 못했습니다.'+why(e));return}
  blinkEpoch=elapsed;
  videoRecorder=recorder;videoCancelled=false;videoErrorMessage='';
  $('exportVideoBtn').disabled=true;$('cancelVideoBtn').hidden=false;
@@ -2609,7 +2670,7 @@ async function recordVideo(opts={}){
  recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};
  recorder.onerror=e=>{console.error('MediaRecorder error',e);videoCancelled=true;videoErrorMessage='인코더 오류로 영상 저장을 취소했습니다.'};
  recorder.onstop=()=>{
-  cancelAnimationFrame(videoAnimationFrame);videoAnimationFrame=0;track.stop();exportRender=null;fit();
+  cancelAnimationFrame(videoAnimationFrame);videoAnimationFrame=0;track.stop();exportRender=null;leaveHiRes();fit();
   $('exportVideoBtn').disabled=false;$('cancelVideoBtn').hidden=true;videoRecorder=null;
   if(videoCancelled){$('videoProgress').textContent=videoErrorMessage||'영상 저장을 취소했습니다.';liveDone('');return}
   const blob=new Blob(chunks,{type:mime.split(';')[0]});
@@ -2645,12 +2706,12 @@ async function recordGif(plan,opts={}){
  const enc=createGifEncoder(W,H,{colors:plan.gifColors,extra:opts.fx?[[255,248,214],[255,255,255],[60,48,36]]:[]});
  const fake={state:'recording',stop(){this.state='inactive';finish()}};
  videoRecorder=fake;videoCancelled=false;videoErrorMessage='';
- exportRender={w:plan.vw,h:plan.vh};fit();await waitFrames(3);blinkEpoch=elapsed;
+ exportRender={w:plan.vw,h:plan.vh};fit();await enterHiRes(Math.max(plan.vw,plan.vh)).catch(e=>console.warn('원본 올리기 실패, 편집 사본으로 녹화',e));await waitFrames(3);blinkEpoch=elapsed;
  $('exportVideoBtn').disabled=true;$('cancelVideoBtn').hidden=false;
  let start=0,frameNo=0,pending=null,pendingAt=0,carry=0;
  function push(now){if(!pending)return;const cs=(now-pendingAt)/10+carry,d=Math.max(2,Math.round(cs));carry=cs-d;enc.addFrame(pending,d)}
  function finish(){
-  cancelAnimationFrame(videoAnimationFrame);videoAnimationFrame=0;exportRender=null;fit();
+  cancelAnimationFrame(videoAnimationFrame);videoAnimationFrame=0;exportRender=null;leaveHiRes();fit();
   $('exportVideoBtn').disabled=false;$('cancelVideoBtn').hidden=true;videoRecorder=null;
   if(videoCancelled){$('videoProgress').textContent=videoErrorMessage||'움짤 저장을 취소했습니다.';liveDone('');return}
   const endAt=opts.live?performance.now():start+duration*1000,sec=Math.max(1,Math.round((endAt-start)/1000));push(endAt);
@@ -2674,7 +2735,7 @@ async function recordGif(plan,opts={}){
  }
  videoAnimationFrame=requestAnimationFrame(nextFrame);
 }
-$('exportVideoBtn').onclick=()=>recordVideo().catch(e=>{console.error(e);exportRender=null;fit();$('exportVideoBtn').disabled=false;$('cancelVideoBtn').hidden=true;showNotice('영상 내보내기','영상을 저장하다 문제가 생겼습니다.'+why(e))});
+$('exportVideoBtn').onclick=()=>recordVideo().catch(e=>{console.error(e);exportRender=null;leaveHiRes();fit();$('exportVideoBtn').disabled=false;$('cancelVideoBtn').hidden=true;showNotice('영상 내보내기','영상을 저장하다 문제가 생겼습니다.'+why(e))});
 $('cancelVideoBtn').onclick=()=>interruptVideoRecording('사용자가 영상 저장을 취소했습니다.');
 
 // 3-F 플레이 화면 녹화(●). 크기·화질·형식은 '영상으로 내보내기' 창의 값을 쓴다. 버튼 자체는 영상에 찍히지 않는다(그림만 그린다).
@@ -2689,7 +2750,7 @@ $('recViewer').onclick=()=>{
  if(radioValue('videoFormat')!=='gif'&&!videoMimeType()){showViewerToast('이 브라우저는 영상 녹화를 지원하지 않습니다.');return}
  liveRecording=true;const b=$('recViewer');b.classList.add('recording');b.title=b.ariaLabel='녹화 멈추고 저장';liveTick(0);
  showViewerToast(`녹화 중 · 다시 누르면 저장합니다(최대 ${LIVE_MAX}초)`);
- recordVideo({live:true,fx:$('videoFx').checked}).catch(e=>{console.error(e);exportRender=null;fit();liveDone('녹화하지 못했습니다.'+why(e))});
+ recordVideo({live:true,fx:$('videoFx').checked}).catch(e=>{console.error(e);exportRender=null;leaveHiRes();fit();liveDone('녹화하지 못했습니다.'+why(e))});
 };
 function safeProjectFilename(name){const base=String(name||'내 프로젝트').trim().replace(/[\\/:*?"<>|\x00-\x1F]/g,'_').replace(/\.+$/,'').slice(0,70)||'내 프로젝트';return base+'.motionpad.json'}
 function toDataURL(blob){return new Promise((ok,fail)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=()=>fail(r.error);r.readAsDataURL(blob)})}
