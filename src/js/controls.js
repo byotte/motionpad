@@ -20,7 +20,7 @@ function readAmbient(){
  if(Object.keys(values).every(key=>ambient[key]===values[key]))return;
  Object.assign(ambient,values);scheduleSave();previewMotion();
 }
-for(const id of ['ambientOn','ambientBreath','ambientSway','ambientLight'])$(id).addEventListener('input',()=>{readAmbient();updateAmbientLabels()});
+for(const id of ['ambientOn','ambientBreath','ambientSway','ambientLight'])$(id).addEventListener('input',()=>{readAmbient();updateAmbientLabels();if(id==='ambientOn')refreshBaseUI()});
 function updateAmbientLabels(){for(const [k,id] of [['breath','ambientBreathVal'],['sway','ambientSwayVal'],['light','ambientLightVal']])$(id).textContent=ambient[k]+'%'}
 // 0-2: 옵션 조작 시 모드를 바꾸지 않는다. '터치 미리보기'만 켜서 선택 미리보기·복원 지점을 보존한다.
 function setTouchPreview(on){
@@ -172,7 +172,7 @@ function restoreExtra(d){
   sfxType=['soft','slap','jelly','water','wetClip','hardClip','softClip','mudClip','off'].includes(d?.sfxType)?d.sfxType:'soft';$('sfxTypeInput').value=sfxType;
   playerVisible=d?.playerVisible!==false;$('playerVisibleInput').checked=playerVisible;
   for(const k of ['enabled','breath','sway','light'])if(d?.ambient?.[k]!=null)ambient[k]=d.ambient[k];
-  $('ambientOn').checked=ambient.enabled;
+  $('ambientOn').checked=ambient.enabled;refreshBaseUI();
   for(const [k,id] of [['breath','ambientBreath'],['sway','ambientSway'],['light','ambientLight']])$(id).value=ambient[k];
   updateAmbientLabels();applyPlayerVisibility();setTrack(d?.track||'lounge');
   qualityMode=['auto','high','balanced'].includes(d?.qualityMode)?d.qualityMode:'auto';paintQuality();

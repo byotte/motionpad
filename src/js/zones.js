@@ -11,24 +11,29 @@ function getSelected(){return zones.find(z=>z.id===selected)||null}
 function radiusXY(r){const m=Math.min(renderWidth,renderHeight);return [r*m/renderWidth,r*m/renderHeight]}
 function recalcBounds(z){if(z.kind!=='brush'||!z.strokes.length)return;let x0=1,y0=1,x1=0,y1=0;for(const st of z.strokes){const [rx,ry]=radiusXY(st.r);for(const p of st.points){x0=Math.min(x0,p[0]-rx);y0=Math.min(y0,p[1]-ry);x1=Math.max(x1,p[0]+rx);y1=Math.max(y1,p[1]+ry)}}z.x=(x0+x1)/2;z.y=(y0+y1)/2;z.rx=Math.max(.009,(x1-x0)/2);z.ry=Math.max(.009,(y1-y0)/2)}
 function markMask(){maskDirty=true}
+// 3-I: 몸체 지정은 '완장'(1. 영역의 버튼), 움직일 대상(이미지 전체/몸체)은 2. 몸체 움직이기에서 고른다. 대상 = 기존 '배경 제외' 값.
 function refreshBaseUI(){
- const z=getBase(),sel=getSelected();$('baseHint').textContent=z?`몸체: ${z.name}`:'몸체 영역이 없습니다.';
- $('markBaseBtn').textContent=sel?.isBase?'몸체 지정 해제':'선택한 영역을 몸체로 지정';
- $('markBaseBtn').disabled=!sel;
- $('baseClipInput').checked=baseClipEnabled;$('baseExcludeInput').checked=baseBackgroundExclude;
+ const z=getBase(),sel=getSelected(),bodyOn=!!z&&baseBackgroundExclude,on=$('ambientOn').checked;
+ $('markBaseBtn').textContent=sel?.isBase?'몸체 지정 해제':'이 영역을 몸체로 지정';
+ $('baseHint').textContent=sel?.isBase?'':z?`지금 몸체: ${z.name}`:'몸체가 없습니다(그림 전체가 움직입니다).';
+ $('baseClipRow').hidden=!sel?.isBase;$('baseClipInput').checked=baseClipEnabled;
+ for(const r of document.querySelectorAll('input[name="bodyTarget"]')){r.checked=(r.value==='body')===bodyOn;if(r.value==='body'){r.disabled=!z;r.parentElement.classList.toggle('dimOff',!z)}}
+ $('bodyTargetHint').hidden=!!z;$('baseEdgeRow').hidden=!bodyOn;
+ for(const id of ['bodyTarget','baseEdgeRow','ambientFx'])$(id).classList.toggle('dimOff',!on);
  $('baseEdgeInput').value=baseEdge;$('baseEdgeVal').textContent=String(baseEdge);
+ $('bodyState').textContent=!on?'꺼짐':bodyOn?`몸체: ${z.name}`:'그림 전체';
 }
 $('markBaseBtn').onclick=()=>{
  const z=getSelected();if(!z)return;remember();
  if(z.isBase){z.isBase=false;baseClipEnabled=false;}else{
    for(const v of zones)v.isBase=false;
-   z.isBase=true;// 0-2: 경계 부드러움·바깥 확장 값을 덮어쓰지 않는다
+   z.isBase=true;baseBackgroundExclude=true;// 완장을 채우면 움직일 대상도 몸체로. 0-2: 경계 부드러움·바깥 확장 값을 덮어쓰지 않는다
  }
  normalizeBaseOrder();lastBaseSignature='';markMask();updateUI();scheduleSave();
- setStatus(z.isBase?'베이스 영역을 지정했습니다. 일반 영역은 베이스 위에 유지됩니다.':'베이스 영역을 해제했습니다.');
+ setStatus(z.isBase?'몸체로 지정했습니다. 이제 몸체만 움직이고 배경은 고정됩니다.':'몸체 지정을 해제했습니다.');
 };
 $('baseClipInput').onchange=e=>{remember();baseClipEnabled=e.target.checked;markMask();scheduleSave();setStatus(baseClipEnabled?'자동 크롭을 적용했습니다. 원본 마스크는 유지됩니다.':'자동 크롭을 해제해 원본 영역을 복원했습니다.')};
-$('baseExcludeInput').onchange=e=>{remember();baseBackgroundExclude=e.target.checked;markMask();scheduleSave();setStatus(baseBackgroundExclude?'베이스 외부 배경은 고정됩니다.':'이미지 전체 기본 움직임이 적용됩니다.')};
+for(const r of document.querySelectorAll('input[name="bodyTarget"]'))r.onchange=()=>{if(!r.checked)return;remember();baseBackgroundExclude=r.value==='body';markMask();scheduleSave();refreshBaseUI();setStatus(baseBackgroundExclude?'몸체만 움직이고 배경은 고정됩니다.':'배경까지 그림 전체가 움직입니다.')};
 $('baseEdgeInput').oninput=e=>{baseEdge=Number(e.target.value);$('baseEdgeVal').textContent=String(baseEdge);markMask();scheduleSave()};
 function updateValues(){const z=getSelected();if(!z)return;$('zoneList').replaceChildren(...zones.map(zoneItem));for(const {key,ui} of ZONE_UI)if(ui.output)$(ui.output).textContent=(ui.fmt||String)(z[key]);updateQuickMotion(z)}
 // 2-F: 영역 목록. PC는 세로 목록(이름 + 켜진 효과 이름표 + 잠금), 폰은 가로 이름표(CSS). 몸체는 늘 맨 앞.
@@ -51,7 +56,7 @@ function zoneItem(item){const b=document.createElement('button');b.type='button'
  b.append(name,tags);if(item.locked){const lock=document.createElementNS('http://www.w3.org/2000/svg','svg');lock.setAttribute('class','ic zoneLock');lock.setAttribute('aria-label','잠금');const u=document.createElementNS('http://www.w3.org/2000/svg','use');u.setAttribute('href','#i-lock');lock.append(u);b.append(lock)}
  b.onclick=()=>{selected=item.id;updateUI()};b.oncontextmenu=e=>{e.preventDefault();clearTimeout(pressTimer);selected=item.id;updateUI();showZoneMenu(item)};let pressTimer=null;b.addEventListener('pointerdown',()=>{clearTimeout(pressTimer);pressTimer=setTimeout(()=>{selected=item.id;updateUI();showZoneMenu(item)},620)});for(const ev of ['pointerup','pointercancel','pointerleave'])b.addEventListener(ev,()=>clearTimeout(pressTimer));return b}
 function updateUI(){const z=getSelected(),base=getBase();$('zoneCount').textContent=`${zones.length}개`;$('zoneList').replaceChildren(...zones.map(zoneItem));$('zoneList').hidden=!zones.length;
- $('bodyState').textContent=base?`몸체: ${base.name}`:'몸체 미지정 · 그림 전체';$('partsName').textContent=z?z.name:'';
+ refreshBaseUI();$('partsName').textContent=z?z.name:'';
  $('noZone').hidden=!!z;$('editFields').hidden=$('zoneDetail').hidden=$('motionFields').hidden=!z;$('noZoneMotion').hidden=!!z;refreshBaseUI();if(!z)return;for(const {key,ui} of ZONE_UI){const node=$(ui.input),val=ui.toInput?ui.toInput(z[key]):z[key];if(ui.check)node.checked=val;else node.value=val}updateValues()}
 // 0-2: prompt() 대신 앱 자체 메뉴
 let zoneMenuTarget=null;

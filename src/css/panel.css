@@ -71,4 +71,9 @@
 .maskDisplay input[type=color]{width:24px;height:18px;padding:0}
 .maskDisplay input[type=range]{width:70px;padding:0}
 #soundPanel{padding-bottom:9px}
-
+/* 3-I 한 카테고리 안에서 성격이 다른 묶음(대상 고르기 / 효과)을 나누는 상자. 선 모양은 디자인 규칙 단계에서 확정 */
+.optGroup{margin:8px 0;padding:8px 9px;border:1px solid var(--line);border-radius:4px}
+.optGroup .field:last-child{margin-bottom:0}
+.targetRow{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 8px}
+.targetRow .selOp{font-size:11px}
+.dimOff{opacity:.45}

@@ -28,7 +28,6 @@ $('resumeProject').onclick=async()=>{
 };
 for(const id of ['imageBtn','restoreBtn'])$(id).addEventListener('click',()=>$('filesDialog').close());
 
-$('refineRegion').onclick=()=>{setMode('brush');$('stage').scrollIntoView({block:'nearest'});};
 $('finishEdit').onclick=()=>{setMode('play');$('editFields').scrollIntoView({block:'nearest'});};
 $('leaveEdit').onclick=()=>{
  if(editCheckpoint){

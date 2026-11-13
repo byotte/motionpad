@@ -304,7 +304,7 @@ function zoneSummary(z) {
     const zonesAfterMenu = (await page.locator('#zoneCount').textContent()).trim();
     // 몸체 지정: 첫 영역 선택 → 경계값 확인 → 몸체 지정 → 저장 파일에서 값 확인
     await page.locator('#zoneList .chip').first().click();
-    await page.evaluate(() => { document.getElementById('ambientPanel').open = true; document.getElementById('zonesPanel') && (document.getElementById('zonesPanel').open = true); document.getElementById('basePanel').open = true; });
+    await page.evaluate(() => { document.getElementById('ambientPanel').open = true; document.getElementById('zonesPanel') && (document.getElementById('zonesPanel').open = true); (document.getElementById('basePanel') || {}).open = true; });
     const before = await page.evaluate(() => ({ feather: document.getElementById('featherInput').value, spread: document.getElementById('spreadInput').value }));
     await page.locator('#markBaseBtn').click(); await rafs(page, 2);
     const saved = await saveProject(page, path.join(OUT, 'base-check.motionpad.json'));
