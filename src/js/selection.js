@@ -60,6 +60,8 @@ function selectionPreview(map,test){
  g.putImageData(image,0,0);
  return {bits,canvas,count};
 }
+// 고르는 중인 범위(마술봉·간략 범위지정)의 테두리. 처음 그릴 때 한 번만 뽑는다.
+function draftContour(d){return d.contour||(d.contour=maskContour(i=>d.bits[i]?255:0))}
 function outlineMask(points){
  const {width,height}=selectionSource;
  const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;

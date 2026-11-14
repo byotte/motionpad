@@ -3,7 +3,7 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),newId=()=>Math.random().toString(
 const LIMIT=12,TILE=384,COLS=4,ROWS=3;let zones=[],selected=null,mode='brush',imgBlob=null,bitmap=null,renderWidth=900,renderHeight=1100,ready=false,db=null,saveTimer=null,saveError=false;
 let gl=null,program=null,imageTex=null,maskTex=null,baseMaskTex=null,backgroundTex=null,uni={},draw2d=null,maskAtlas=document.createElement('canvas'),maskReady=false,maskDirty=true;
 maskAtlas.width=TILE*COLS;maskAtlas.height=TILE*ROWS;let masks=[];
-let touchPreview=false;
+let touchPreview=false,exportRender=null;// exportRender: 영상 녹화 중 그릴 크기(3-D)
 let baseClipEnabled=false,baseBackgroundExclude=true,baseEdge=1,baseMaskCanvas=null,backgroundPlate=null,lastBaseSignature='',lastBaseEdge=-1,baseForegroundSource=null;
 let pointers=new Map(),gesture=null,brushSize=10,viewerOpen=false,previousMode='brush',last=performance.now(),elapsed=0;
 let undoStack=[],redoStack=[],lastHistoryJSON='',imagePixels=null,edgeScores=null,audioBlob=null,audioName='',audioURL=null,activeAudio=null,audioCtx=null,audioMaster=null,musicTimer=null,musicPlaying=false,musicTick=0,effectMuted=false;
@@ -17,17 +17,30 @@ const MOTION_PRESETS=Object.freeze({
  wind:{strength:21,spring:10,damping:76,windStrength:52,windSpeed:1.3,windNoise:45,windDelay:75,pivotEnabled:true},
  scarf:{strength:25,spring:8,damping:80,windStrength:65,windAngle:-25,windSpeed:.9,windNoise:25,windDelay:84,pivotEnabled:true}
 });
-function setStatus(s){$('status').textContent=s}
+function setStatus(s){const e=$('status');e.textContent=s;e.title=s}
 // 작업이 날아갈 수 있는 동작 앞의 확인창. 문구는 부르는 곳에서 상황에 맞게 정한다.
 function askConfirm({title,message,ok='확인',cancel='취소'}){
  return new Promise(resolve=>{
   const d=$('confirmDialog');if(!d||d.open){resolve(false);return}
   $('confirmTitle').textContent=title;$('confirmMessage').textContent=message;
-  $('confirmOk').textContent=ok;$('confirmCancel').textContent=cancel;
+  $('confirmOk').textContent=ok;$('confirmCancel').textContent=cancel;$('confirmCancel').hidden=false;$('confirmOk').classList.add('warn');
   const done=v=>{d.close();resolve(v)};
   $('confirmOk').onclick=()=>done(true);$('confirmCancel').onclick=()=>done(false);
   d.oncancel=e=>{e.preventDefault();done(false)};
   d.showModal();$('confirmCancel').focus();
+ });
+}
+// 3-A: 브라우저 기본 알림창(alert) 대신 앱 디자인 알림창. 버튼 하나, 닫으면 끝.
+const why=e=>e&&e.message?` (${e.message})`:'';// 알림창 끝에 붙이는 원인(있을 때만)
+function showNotice(title,message){
+ return new Promise(resolve=>{
+  const d=$('confirmDialog');if(!d){resolve();return}
+  if(d.open){setStatus(message);resolve();return}
+  $('confirmTitle').textContent=title;$('confirmMessage').textContent=message;
+  $('confirmOk').textContent='확인';$('confirmOk').classList.remove('warn');$('confirmCancel').hidden=true;
+  const done=()=>{d.close();resolve()};
+  $('confirmOk').onclick=done;d.oncancel=e=>{e.preventDefault();done()};
+  d.showModal();$('confirmOk').focus();
  });
 }
 // 마지막으로 파일 저장·열기 했을 때와 지금이 다른가(새 그림·프로젝트 열기 전 확인용)

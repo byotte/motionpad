@@ -6,28 +6,50 @@
      좁은 폰: 폭 520px 이하                  → 상단바·도구 줄을 촘촘하게
    그 사이 값(옵션 패널 폭, 도구 글자 크기)은 clamp()로 화면 폭에 맞춰 부드럽게 바뀐다. */
 
-/* ── 1. 색 토큰 ─────────────────────────────────────────── */
+/* ── 1. 이름표(토큰) ─────────────────────────────────────
+   규칙은 docs/DESIGN-RULES.md. 색·글자 크기·굵기·모서리 값은 이 파일에만 적는다.
+   다른 CSS는 이름표(var(--…))만 쓴다. 검사: node tools/design/token_check.js */
 :root{
   color-scheme:dark;
-  --bg:#17171b; --card:#222229; --panel:#222229; --button:#2d2c36;
-  --ink:#f1eff6; --sub:#aaa6b7; --line:#ffffff24;
+  /* 바탕 5종: 화면 · 패널 · 버튼 · 파인 칸 · 강조 */
+  --bg:#17171b; --card:#222229; --panel:#222229; --button:#2d2c36; --field:#1a1a1f;
   --accent:#bba7ff; --accentSoft:#393249; --accentInk:#dbceff; --onAccent:#211633;
-  --warning:#f2a2b9; --stageInk:#19191c; --glass:rgba(25,22,45,.95);
+  /* 글자 3단계: 큰 메뉴 · 항목 · 도움말 */
+  --ink:#f1eff6; --item:#d3cfde; --help:#6c6877;
+  /* 선 3종: 틀 선 · 묶음 선(나누기만 하는 선) · 선택 선은 강조색 2px */
+  --line:#ffffff24; --groupLine:rgba(0,0,0,.38);
+  --warning:#f2a2b9; --mark:#f0c060; --stageInk:#19191c; --glass:rgba(25,22,45,.95);
+  /* 바탕에서 파생: 제목줄 · 마우스 올림 · 안내 바탕 · 슬라이더 길 */
+  --head:color-mix(in srgb,var(--ink) 7%,var(--panel)); --hover:color-mix(in srgb,var(--ink) 13%,var(--panel));
+  --veil:color-mix(in srgb,var(--ink) 8%,transparent); --tint:color-mix(in srgb,var(--accent) 7%,var(--panel));
+  --track:color-mix(in srgb,var(--ink) 23%,var(--panel)); --checker:color-mix(in srgb,var(--accent) 4%,transparent);
+  --glow:color-mix(in srgb,var(--accent) 9%,transparent);
+  --fieldShadow:inset 0 1px 2px rgba(0,0,0,.25);
+  --shadow:0 10px 30px #0007; --shadowStage:0 2px 25px #0008; --backdrop:#0008;
+  /* 글자 크기·굵기 (폰형은 responsive.css에서 크기만 키운다) */
+  --fs-title:13px; --fs-item:12px; --fs-help:11px; --fs-glyph:18px;
+  --fw-title:700; --fw-item:500; --fw-help:400;
+  /* 모서리 2종(+원형), 높이, 간격 3종 */
+  --r-ctl:2px; --r-box:3px; --r-round:999px;
+  --ctl-h:26px; --head-h:30px; --tool-h:26px;
+  --sp1:4px; --sp2:8px; --sp3:12px;
+  /* 플레이 화면 */
+  --viewerBg:#101114; --viewerBtn:#24242a; --viewerInk:#fff; --viewerHint:#fff8; --viewerHintShadow:0 1px 4px #0008;
+  --rec:#e8505b; --recRing:#fff3; --recOn:#5a1f26;
   --sideW:clamp(250px,calc(15.625vw + 90px),315px);
-  --toolFont:clamp(10px,calc(.625vw + 3px),12px);
 }
 :root[data-theme="light"],.themeSample[data-theme="light"]{
-  --bg:#e9eaee; --card:#f7f7f9; --panel:#f7f7f9; --button:#e4e5ea;
-  --ink:#1d2129; --sub:#5e6470; --line:#0000001f;
+  --bg:#e9eaee; --card:#f7f7f9; --panel:#f7f7f9; --button:#e4e5ea; --field:#e9eaef;
+  --ink:#1d2129; --item:#3b414c; --help:#7a808c; --line:#0000001f; --groupLine:rgba(0,0,0,.07);
   --accent:#2f6fdb; --accentSoft:#dce7fb; --accentInk:#1d4fa8; --onAccent:#fff;
-  --warning:#c23a3a; --stageInk:#dcdee4; --glass:rgba(247,247,249,.95);
+  --warning:#c23a3a; --mark:#b07a10; --stageInk:#dcdee4; --glass:rgba(247,247,249,.95);
+  --fieldShadow:inset 0 1px 2px rgba(0,0,0,.12); --shadow:0 10px 30px #0003; --shadowStage:0 2px 18px #0004; --backdrop:#0006;
 }
 :root[data-theme="light"]{color-scheme:light}
 :root[data-theme="mono"],.themeSample[data-theme="mono"]{
-  --bg:#3a3a3a; --card:#454545; --panel:#424242; --button:#555;
-  --ink:#eee; --sub:#bdbdbd; --line:#ffffff22;
+  --bg:#3a3a3a; --card:#454545; --panel:#424242; --button:#555; --field:#353535;
+  --ink:#eee; --item:#d4d4d4; --help:#858585; --line:#ffffff22; --groupLine:rgba(0,0,0,.3);
   --accent:#e8e8e8; --accentSoft:#5e5e5e; --accentInk:#fff; --onAccent:#222;
   --warning:#ffb0b0; --stageInk:#303030; --glass:rgba(66,66,66,.95);
 }
 .themeSample[data-theme="violet"]{--bg:#17171b;--panel:#222229;--accent:#bba7ff;--line:#ffffff24}
-

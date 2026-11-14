@@ -64,6 +64,8 @@ async function measure(page, during, windowMs = 5000) {
   const base = path.join(OUT, 'base.motionpad.json');
   {
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true }), page = await ctx.newPage();
+    // 시험은 내려받기 경로로 저장한다(저장 위치 고르기 창은 자동 조작으로 다룰 수 없다)
+    await ctx.addInitScript(() => { try { Object.defineProperty(window, 'showSaveFilePicker', { value: undefined }); } catch (_) {} });
     await page.goto('file://' + TARGET);
     await page.setInputFiles('#imageFile', FIX); await page.waitForSelector('.workspace:not([hidden])'); await rafs(page, 3);
     const box = await page.locator('#view').boundingBox(), P = (x, y) => [box.x + box.width * x, box.y + box.height * y];
@@ -116,6 +118,7 @@ async function measure(page, during, windowMs = 5000) {
     // 영역 없이 깜빡임만 / 영역4+깜빡임. 창은 FPS에 맞춰 깜빡임 2번 이상(앱 시간 9초 이상)
     for (const image of ['800', 'big']) for (const throttle of [1, 4]) for (const level of [-3, 3]) {
       const ctx = await browser.newContext({ ...VPS.phone, acceptDownloads: true }), page = await ctx.newPage(), errs = [];
+      await ctx.addInitScript(() => { try { Object.defineProperty(window, 'showSaveFilePicker', { value: undefined }); } catch (_) {} });
       page.on('pageerror', e => errs.push(String(e)));
       await page.goto('file://' + TARGET);
       await page.setInputFiles('#backupFile', variant(level, image)); await page.waitForSelector('.workspace:not([hidden])'); await rafs(page, 5);
@@ -137,6 +140,7 @@ async function measure(page, during, windowMs = 5000) {
     if (vp === 'pc' && throttle === 4) continue;          // PC는 1배, 폰은 1배·4배
     for (let level = 0; level < LEVELS.length; level++) {
       const ctx = await browser.newContext({ ...VPS[vp], acceptDownloads: true }), page = await ctx.newPage(), errs = [];
+      await ctx.addInitScript(() => { try { Object.defineProperty(window, 'showSaveFilePicker', { value: undefined }); } catch (_) {} });
       page.on('pageerror', e => errs.push(String(e)));
       await page.goto('file://' + TARGET);
       await page.setInputFiles('#backupFile', variant(level, image)); await page.waitForSelector('.workspace:not([hidden])'); await rafs(page, 5);

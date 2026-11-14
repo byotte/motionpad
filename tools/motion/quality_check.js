@@ -14,6 +14,7 @@ const rafs = (p, n) => p.evaluate(n => new Promise(r => { let k = 0; const f = (
 (async () => {
   const browser = await chromium.launch(), errors = [];
   const open = async () => { const ctx = await browser.newContext({ viewport: { width: 1200, height: 900 }, acceptDownloads: true }), page = await ctx.newPage();
+    await ctx.addInitScript(() => { try { Object.defineProperty(window, 'showSaveFilePicker', { value: undefined }); } catch (_) {} });
     page.on('pageerror', e => errors.push(String(e))); page.on('console', m => { if (m.type() === 'error' || /WebGL 실행 실패/.test(m.text())) errors.push(m.text().slice(0, 200)); });
     await page.goto('file://' + TARGET); return { ctx, page }; };
   // 그림을 열고 타원 영역 하나를 그린 프로젝트 파일을 만든다

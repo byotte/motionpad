@@ -8,7 +8,6 @@ function hit(x,y){
  return null;
 }
 
-$('testBtn').onclick=()=>impulse(getSelected());
 function placePivot(z,p,additional){
  if(!z){setStatus('먼저 영역을 선택해 주세요.');return false}
  if(z.locked){setStatus('잠긴 영역은 수정할 수 없습니다.');return false}
@@ -90,9 +89,12 @@ function handleAt(z,p,touch){
 function pointerCentroid(arr){return {x:(arr[0].x+arr[1].x)/2,y:(arr[0].y+arr[1].y)/2}}
 function pointerAngle(arr){return Math.atan2((arr[1].y-arr[0].y)*renderHeight,(arr[1].x-arr[0].x)*renderWidth)}
 function pinchBegin(){const arr=[...pointers.values()];if(arr.length<2||!selected)return;const z=getSelected();if(!z||z.locked)return;gesture={type:'pinch',id:z.id,origin:snap(z),dist:Math.max(5,pixelDistance(arr[0],arr[1])),angle:pointerAngle(arr),centroid:pointerCentroid(arr)};remember();setStatus('두 손가락으로 확대, 이동, 회전할 수 있습니다.')}
-let spacePanHeld=false;
+let spacePanHeld=false,pointerOverStage=false;
+stage.addEventListener('pointerenter',()=>{pointerOverStage=true});stage.addEventListener('pointerleave',()=>{pointerOverStage=false});
 document.addEventListener('keydown',e=>{
- if(e.code==='Space'&&!e.target.closest?.('input,textarea,select,button,[contenteditable="true"]')&&!blinkDialog.open){
+ // 마우스가 그림 위에 있으면 초점이 도구 버튼에 남아 있어도 화면 이동으로 본다(도구를 누른 직후에도 되게).
+ const typing=e.target.closest?.('input:not([type=range]):not([type=checkbox]):not([type=radio]),textarea,select,[contenteditable="true"]');
+ if(e.code==='Space'&&!typing&&!document.querySelector('dialog[open]')&&(pointerOverStage||!e.target.closest?.('input,button,summary,a'))){
   spacePanHeld=true;e.preventDefault();
  }
 });
@@ -285,7 +287,7 @@ function finishPointer(e,cancelled=false){
     const z=getSelected();if(z&&!z.locked&&g.points.length>=2){remember();const pts=g.points,n=6;
       z.spine=Array.from({length:n},(_,i)=>{const q=spinePoint(pts,i/(n-1));return q});
       z.pivotEnabled=true;z.pivotX=z.spine[0][0];z.pivotY=z.spine[0][1];z.chainNodes=null;
-      updateUI();scheduleSave();setStatus('스프링 선을 지정했습니다. 시작점은 고정되고 끝부분이 늦게 반응합니다.');
+      updateUI();scheduleSave();gesture=null;setMode('edit');setStatus('움직임 가이드 선을 지정했습니다. 시작점은 고정되고 끝부분이 늦게 반응합니다.');return;
     }gesture=null;setMode('edit');return;
   }
   if(g.type==='branch'){

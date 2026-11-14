@@ -1,5 +1,6 @@
 const localHelp=$('localHelp');
 function showLocalHelp(button){
+ (button.closest('dialog')||document.body).append(localHelp);// 대화창 안에서는 창 위에 떠야 보인다
  localHelp.textContent=button.dataset.help;
  localHelp.hidden=false;
  const rect=button.getBoundingClientRect();
@@ -9,7 +10,7 @@ function showLocalHelp(button){
 document.querySelectorAll('[data-help]').forEach(button=>{
  button.addEventListener('mouseenter',()=>{if(matchMedia('(hover:hover)').matches)showLocalHelp(button);});
  button.addEventListener('mouseleave',()=>{localHelp.hidden=true;});
- button.onclick=()=>localHelp.hidden?showLocalHelp(button):localHelp.hidden=true;
+ button.onclick=e=>{e.preventDefault();e.stopPropagation();if(localHelp.hidden||localHelp.dataset.owner!==button.dataset.help)showLocalHelp(button);else localHelp.hidden=true;localHelp.dataset.owner=button.dataset.help};
 });
 document.addEventListener('pointerdown',event=>{if(!event.target.closest('[data-help]'))localHelp.hidden=true;});
 window.addEventListener('scroll',()=>{localHelp.hidden=true;},true);
@@ -24,11 +25,10 @@ $('startProject').onclick=async()=>{if(await keepPrevious('프로젝트 열기')
 $('resumeProject').onclick=async()=>{
  if(!storedLayoutProject)return;
  try{await restoreProjectObject(storedLayoutProject);setMode('play');}
- catch(err){alert('이전 작업을 열지 못했습니다: '+err.message);}
+ catch(err){showNotice('이어하기 실패','이전 작업을 열지 못했습니다.'+why(err));}
 };
 for(const id of ['imageBtn','restoreBtn'])$(id).addEventListener('click',()=>$('filesDialog').close());
 
-$('refineRegion').onclick=()=>{setMode('brush');$('stage').scrollIntoView({block:'nearest'});};
 $('finishEdit').onclick=()=>{setMode('play');$('editFields').scrollIntoView({block:'nearest'});};
 $('leaveEdit').onclick=()=>{
  if(editCheckpoint){

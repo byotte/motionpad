@@ -25,9 +25,9 @@ async function prep(page, state) {
       await page.locator('#ellipseMode').click();
       const [x0, y0] = await view(box[0], box[1]), [x1, y1] = await view(box[2], box[3]);
       await page.mouse.move(x0, y0); await page.mouse.down(); await page.mouse.move(x1, y1, { steps: 4 }); await page.mouse.up();
-      if (box[0] === .25) { await page.evaluate(() => { document.getElementById('ambientPanel').open = true; document.getElementById('basePanel').open = true; }); await page.locator('#markBaseBtn').click(); }
+      if (box[0] === .25) { await page.evaluate(() => { document.getElementById('ambientPanel').open = true; document.getElementById('zonesPanel') && (document.getElementById('zonesPanel').open = true); (document.getElementById('basePanel') || {}).open = true; }); await page.locator('#markBaseBtn').click(); }
     }
-    await page.evaluate(() => { for (const id of ['partsPanel', 'basePanel', 'advanced', 'effects', 'windPanel', 'anchorPanel']) { const d = document.getElementById(id); if (d) d.open = true; } });
+    await page.evaluate(() => { for (const id of ['partsPanel', 'basePanel', 'advanced', 'effects', 'windPanel', 'anchorPanel', 'zonesPanel', 'edgePanel', 'presetPanel', 'autoPanel', 'gainPanel']) { const d = document.getElementById(id); if (d) d.open = true; } });
   }
   if (state === 'outline') {
     await page.locator('#lassoMode').click();

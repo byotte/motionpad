@@ -2,6 +2,7 @@ function drawOverlay(){
  if(!ready)return;
  const w=overlay.width,h=overlay.height;
  ctx.clearRect(0,0,w,h);
+ const px=w/Math.max(1,overlay.getBoundingClientRect().width);// 화면 1픽셀 = 캔버스 몇 픽셀
  if(viewerOpen||(!$('showZones').checked&&mode==='play'))return;
  if($('showZones').checked){
   ctx.font=`${Math.max(12,w*.018)}px system-ui,sans-serif`;
@@ -10,6 +11,7 @@ function drawOverlay(){
    const z=zones[i],preview=maskPreview(i,z,z.id===selected);
    if(preview)ctx.drawImage(preview,0,0,w,h);
   }
+  const si=zones.findIndex(z=>z.id===selected);if(si>=0)strokeContour(ctx,zoneContour(si),w,h,px);
   for(const z of zones){
    const below=mode==='ellipse'&&z.id===selected&&!z.locked;// 도형 도구: 위쪽 회전 손잡이를 가리지 않게 이름표를 아래로
    const tx=clamp(z.x*w,50,w-50),ty=clamp(below?z.y*h+z.ry*h+19:z.y*h-z.ry*h-19,14,h-14),tw=ctx.measureText(z.name).width;
@@ -21,8 +23,8 @@ const active=getSelected();if(active&&active.pivotEnabled&&$('showZones').checke
 if(active?.extraPivots?.length&&$('showZones').checked){ctx.save();ctx.fillStyle='#f7ab52';for(const [px,py] of active.extraPivots){ctx.beginPath();ctx.arc(px*w,py*h,Math.max(5,w*.008),0,Math.PI*2);ctx.fill()}ctx.restore()}
 if(active?.branch?.length&&$('showZones').checked){ctx.save();ctx.strokeStyle='#e3a3ff';ctx.lineWidth=3;ctx.setLineDash([4,7]);ctx.beginPath();active.branch.forEach(([x,y],i)=>i?ctx.lineTo(x*w,y*h):ctx.moveTo(x*w,y*h));ctx.stroke();ctx.restore()}
 if(active&&active.spine?.length&&$('showZones').checked){ctx.save();ctx.strokeStyle='#ffcf70';ctx.lineWidth=3;ctx.setLineDash([5,5]);ctx.beginPath();active.spine.forEach(([x,y],i)=>i?ctx.lineTo(x*w,y*h):ctx.moveTo(x*w,y*h));ctx.stroke();ctx.restore()}
-if(mode==='wand'&&wandDraft)ctx.drawImage(wandDraft.canvas,0,0,w,h);
-if(mode==='lasso'&&outlineDraft?.preview)ctx.drawImage(outlineDraft.preview.canvas,0,0,w,h);
+if(mode==='wand'&&wandDraft){ctx.drawImage(wandDraft.canvas,0,0,w,h);strokeContour(ctx,draftContour(wandDraft),w,h,px)}
+if(mode==='lasso'&&outlineDraft?.preview){ctx.drawImage(outlineDraft.preview.canvas,0,0,w,h);strokeContour(ctx,draftContour(outlineDraft.preview),w,h,px)}
 if(mode==='lasso'&&lassoSegments.length){
  const points=lassoSegments.flat(),end=points.at(-1);
  ctx.save();ctx.strokeStyle='#83ffd3';ctx.fillStyle='#83ffd3';ctx.lineWidth=2;

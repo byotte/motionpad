@@ -18,9 +18,11 @@ $('fpsToggle').onclick=()=>{const b=$('fpsToggle');b.dataset.enabled=b.dataset.e
 function readAmbient(){
  const values={enabled:$('ambientOn').checked,breath:Number($('ambientBreath').value),sway:Number($('ambientSway').value),light:Number($('ambientLight').value)};
  if(Object.keys(values).every(key=>ambient[key]===values[key]))return;
+ if(values.enabled!==ambient.enabled)remember();// 켜기·끄기는 여기서, 슬라이더는 잡는 순간(아래) 되돌리기 지점을 만든다
  Object.assign(ambient,values);scheduleSave();previewMotion();
 }
-for(const id of ['ambientOn','ambientBreath','ambientSway','ambientLight'])$(id).addEventListener('input',()=>{readAmbient();updateAmbientLabels()});
+for(const id of ['ambientOn','ambientBreath','ambientSway','ambientLight'])$(id).addEventListener('input',()=>{readAmbient();updateAmbientLabels();if(id==='ambientOn')refreshBaseUI()});
+for(const id of ['ambientBreath','ambientSway','ambientLight','baseEdgeInput','maskColorInput','maskOpacityInput']){$(id).addEventListener('pointerdown',()=>remember(),{passive:true});$(id).addEventListener('focus',()=>remember())}
 function updateAmbientLabels(){for(const [k,id] of [['breath','ambientBreathVal'],['sway','ambientSwayVal'],['light','ambientLightVal']])$(id).textContent=ambient[k]+'%'}
 // 0-2: 옵션 조작 시 모드를 바꾸지 않는다. '터치 미리보기'만 켜서 선택 미리보기·복원 지점을 보존한다.
 function setTouchPreview(on){
@@ -36,17 +38,18 @@ function previewMotion(){
 function motionControls(z){
  if(['tail','wind','scarf'].includes(z.preset))return {
   angle:'windAngleInput',strength:'windStrengthInput',speed:'windSpeedInput',
-  hint:'흔들리는 쪽으로 방향을 맞추고, 고정점이 필요하면 아래에서 축을 지정해 주세요.'
+  hint:'바람에 흔들리는 움직임입니다. 흔들리는 쪽으로 방향을 맞추고, 고정점이 필요하면 ‘1. 영역 → 고정점과 가이드’에서 축을 지정해 주세요.'
  };
  if(z.preset==='breathing')return {
   strength:'breathInput',speed:'breathSpeed',
-  hint:'숨 쉬는 움직임은 손을 떼어도 계속됩니다.'
+  hint:'숨 쉬듯 부풀었다 줄어드는 움직임입니다.'
  };
  if(z.preset==='flow')return {
   angle:'flowAngleInput',strength:'flowInput',
-  hint:'텍스처가 흐를 방향을 각도로 조절해 주세요.'
+  hint:'무늬가 흐르는 움직임입니다. 흐를 방향을 각도로 정해 주세요.'
  };
- return {axis:true,strength:'strengthInput',speed:'springInput',hint:'그림을 누르거나 끌어 반응을 확인해 주세요.'};
+ // 2-F: 3-1의 세기·속도는 자동 움직임의 것. 이 종류의 자동 움직임은 터치 반응을 스스로 되풀이하므로 세기는 3-2 '반응 세기'와 같은 값이다.
+ return {axis:true,strength:'strengthInput',speed:'autoSpeedInput',hint:'‘자동으로 움직이기’를 켜면 이 세기·속도로 계속 흔들립니다. 세기는 터치 움직임의 ‘반응 세기’와 같은 값입니다.'};
 }
 $('tailCutoutInput').onchange=e=>{
  const z=getSelected();
@@ -82,10 +85,11 @@ function updateQuickMotion(z){
    const advanced=$(name);
    input.min=advanced.min;input.max=advanced.max;input.step=advanced.step;input.value=advanced.value;
   }
-  const unit=name==='windStrengthInput'?'%':['windSpeedInput','breathSpeed'].includes(name)?'×':'';
-  $(id+'Value').textContent=input.value+unit;
+  const unit=name==='windStrengthInput'?'%':['windSpeedInput','breathSpeed','autoSpeedInput'].includes(name)?'×':'';
+  $(id+'Value').textContent=(name==='autoSpeedInput'?Number(input.value).toFixed(1):input.value)+unit;
  }
  $('quickSpeedRow').hidden=!controls.speed;
+ $('autoSpeedRow').hidden=controls.speed==='autoSpeedInput';
  $('quickMotionHint').textContent=controls.hint;
 }
 for(const [id,key] of [['quickDirection','axis'],['quickAngle','angle'],['quickStrength','strength'],['quickSpeed','speed']]){
@@ -153,7 +157,7 @@ function playSfx(power=1){
     n.connect(filter);filter.connect(gain);gain.connect(audioMaster);n.start(t);n.stop(t+length+.005);
   }catch(e){console.warn('효과음 오류',e)}
 }
-function extraState(){return {blink:{eyes:blinkEyes,speed:blinkSpeed,interval:blinkInterval},base:{clip:baseClipEnabled,exclude:baseBackgroundExclude,edge:baseEdge},projectName:projectName||'내 프로젝트',maskColor:$('maskColorInput').value,maskOpacity:Number($('maskOpacityInput').value),track:$('trackSelect').value,musicVolume:Number($('musicVolume').value),sfxVolume:Number($('sfxVolume').value),sfxType,playerVisible,ambient:{...ambient},qualityMode}}
+function extraState(){return {blink:{eyes:blinkEyesForSave(),speed:blinkSpeed,interval:blinkInterval},base:{clip:baseClipEnabled,exclude:baseBackgroundExclude,edge:baseEdge},projectName:projectName||'내 프로젝트',maskColor:$('maskColorInput').value,maskOpacity:Number($('maskOpacityInput').value),track:$('trackSelect').value,musicVolume:Number($('musicVolume').value),sfxVolume:Number($('sfxVolume').value),sfxType,playerVisible,ambient:{...ambient},qualityMode}}
 function restoreExtra(d){
  restoreBlink(d?.blink);
  baseClipEnabled=!!d?.base?.clip;baseBackgroundExclude=d?.base?.exclude!==false;baseEdge=clamp(Number(d?.base?.edge??1),0,8);lastBaseSignature='';markMask();refreshBaseUI();
@@ -170,7 +174,7 @@ function restoreExtra(d){
   sfxType=['soft','slap','jelly','water','wetClip','hardClip','softClip','mudClip','off'].includes(d?.sfxType)?d.sfxType:'soft';$('sfxTypeInput').value=sfxType;
   playerVisible=d?.playerVisible!==false;$('playerVisibleInput').checked=playerVisible;
   for(const k of ['enabled','breath','sway','light'])if(d?.ambient?.[k]!=null)ambient[k]=d.ambient[k];
-  $('ambientOn').checked=ambient.enabled;
+  $('ambientOn').checked=ambient.enabled;refreshBaseUI();
   for(const [k,id] of [['breath','ambientBreath'],['sway','ambientSway'],['light','ambientLight']])$(id).value=ambient[k];
   updateAmbientLabels();applyPlayerVisibility();setTrack(d?.track||'lounge');
   qualityMode=['auto','high','balanced'].includes(d?.qualityMode)?d.qualityMode:'auto';paintQuality();
@@ -224,17 +228,19 @@ function setMode(m){
   if(m==='extraPivot')setStatus('선택 영역 안에서 추가 축을 놓을 위치를 한 번 눌러 주세요.');
   if(m==='spine')setStatus('선택 영역 안에서 고정할 뿌리부터 흔들릴 끝까지 한 획을 그려 주세요.');
   if(m==='flowdir')setStatus('흐름 시작점에서 끝점으로 드래그하세요.');
-  if(m==='pan')setStatus('확대한 이미지를 손가락으로 이동할 수 있습니다.');
-  if(m==='wand')setStatus('그림을 먼저 눌러 선택한 뒤 범위를 조절하세요.');
-  if(m==='lasso')setStatus($('encloseInput').checked?'대상을 대략 둘러 그리면 외곽 미리보기가 나타납니다.':'그림에서 원하는 범위를 둘러 그리세요.');
+  if(m==='pan')setStatus('화면 이동을 선택했습니다. 끌어서 확대한 화면을 옮기세요.');
+  if(m==='wand')setStatus('마술봉을 선택했습니다. 선택할 부분을 누른 뒤 범위를 조절하세요.');
+  if(m==='lasso')setStatus($('encloseInput').checked?'올가미를 선택했습니다. 대상을 대략 둘러 그리면 윤곽에 맞춰 선택됩니다.':'올가미를 선택했습니다. 원하는 범위를 둘러 그려 주세요.');
  const toolHints={
-  brush:'붓 도구를 선택했습니다. 움직일 부분을 칠해 주세요.',
-  erase:'지우개 도구를 선택했습니다. 선택된 영역에서 빼고 싶은 곳을 지워 주세요.',
-  ellipse:'도형 도구를 선택했습니다. 그림을 끌어 타원이나 사각형을 그리세요. 선택한 도형은 손잡이나 두 손가락으로 크기·비율·기울기를 다듬을 수 있습니다.',
-  edit:'이동 도구를 선택했습니다. 영역을 끌어 위치를 옮기세요.',
+  brush:'붓을 선택했습니다. 움직일 부분을 칠해 주세요.',
+  erase:'지우개를 선택했습니다. 선택한 영역에서 뺄 곳을 지워 주세요.',
+  ellipse:'도형을 선택했습니다. 끌어서 그린 뒤 손잡이나 두 손가락으로 다듬으세요.',
+  edit:'이동을 선택했습니다. 영역을 끌어 위치를 옮기세요.',
   branch:'가지 선 도구를 선택했습니다. 기존 선에서 이어질 방향을 그려 주세요.'
  };
  if(toolHints[m])setStatus(toolHints[m]);
+ // 폰형 화면은 안내줄이 좁다: '○○을 선택했습니다.'를 빼고 할 일만 남긴다
+ if(matchMedia('(orientation:portrait),(max-width:779px)').matches){const e=$('status'),t=e.textContent.replace(/^[^.]*선택했습니다\.\s*/,'');if(t&&t!==e.textContent)setStatus(t)}
 }
 function fit(){
   if(!ready)return;
@@ -243,7 +249,8 @@ function fit(){
   const w=Math.max(1,Math.floor(Math.min(maxW,maxH*r))),h=Math.max(1,Math.floor(w/r));
   surface.style.width=w+'px';surface.style.height=h+'px';
   const dpr=Math.min(window.devicePixelRatio||1,2)*qualityScale;
-  const f=Math.min(1,1700/Math.max(w*dpr,h*dpr)),W=Math.max(1,Math.floor(w*dpr*f)),H=Math.max(1,Math.floor(h*dpr*f));
+  const f=Math.min(1,1700/Math.max(w*dpr,h*dpr));let W=Math.max(1,Math.floor(w*dpr*f)),H=Math.max(1,Math.floor(h*dpr*f));
+  if(exportRender){W=exportRender.w;H=exportRender.h}// 3-D: 영상 녹화 중에는 화면 크기와 상관없이 고른 크기로 그린다
   if(view.width!==W||view.height!==H){for(const c of [view,overlay]){c.width=W;c.height=H}}
   if(gl)gl.viewport(0,0,W,H);
   applyZoom();markMask();updateRendererBadge();
@@ -260,7 +267,7 @@ function tick(now){
       z.dragging=true;z.desiredX=0;z.desiredY=0;z.desiredScale=-max*.65*(z.holdGain??60)/100;
     }
   }
-  try{updateMasks();render();drawOverlay()}catch(e){console.error('모션 렌더 오류',e)}
+  try{updateMasks();render();drawOverlay();drawTouchFx()}catch(e){console.error('모션 렌더 오류',e)}
   frames++;if(now-fpsLast>=1000){fps=frames*1000/(now-fpsLast);frames=0;fpsLast=now;
     const b=$('fpsToggle');if(b.dataset.enabled==='true')b.textContent=Math.round(fps)+' FPS';
     updateRendererBadge();

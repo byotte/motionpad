@@ -36,6 +36,8 @@ fs.writeFileSync(path.join(OUT, 'input.motionpad.json'), JSON.stringify(project)
 
 async function run(browser, file) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true });
+  // 시험은 내려받기 경로로 저장한다(저장 위치 고르기 창은 자동 조작으로 다룰 수 없다)
+  await context.addInitScript(() => { try { Object.defineProperty(window, 'showSaveFilePicker', { value: undefined }); } catch (_) {} });
   // 빈 아이디 영역의 새 아이디를 같게 하려고 난수를 고정
   await context.addInitScript(() => { let a = 7; Math.random = () => { a = (a * 16807) % 2147483647; return a / 2147483647; }; });
   const page = await context.newPage();
@@ -45,7 +47,7 @@ async function run(browser, file) {
   await page.goto('file://' + file);
   await page.setInputFiles('#backupFile', path.join(OUT, 'input.motionpad.json'));
   await page.waitForSelector('.workspace:not([hidden])');
-  await page.evaluate(() => { for (const id of ['partsPanel', 'advanced', 'effects', 'windPanel', 'anchorPanel']) { const d = document.getElementById(id); if (d) d.open = true; } });
+  await page.evaluate(() => { for (const id of ['partsPanel', 'advanced', 'effects', 'windPanel', 'anchorPanel', 'zonesPanel', 'edgePanel', 'presetPanel', 'autoPanel', 'gainPanel']) { const d = document.getElementById(id); if (d) d.open = true; } });
   const save = async () => {
     const [dl] = await Promise.all([page.waitForEvent('download'), page.evaluate(() => document.getElementById('backupBtn').click())]);
     const f = path.join(OUT, 'tmp.json'); await dl.saveAs(f);
@@ -59,9 +61,9 @@ async function run(browser, file) {
   for (let i = 0; i < n; i++) {
     await page.locator('#zoneList .chip').nth(i).click();
     result.ui.push(await page.evaluate(([ins, outs]) => ({
-      inputs: ins.map(id => { const e = document.getElementById(id); return e.type === 'checkbox' ? e.checked : e.value; }),
-      outputs: outs.map(id => document.getElementById(id).textContent),
-      rows: ['widthRow', 'heightRow', 'rotationRow'].map(id => document.getElementById(id).hidden),
+      inputs: ins.map(id => { const e = document.getElementById(id); if (!e) return null; return e.type === 'checkbox' ? e.checked : e.value; }),
+      outputs: outs.map(id => document.getElementById(id)?.textContent ?? null),
+      rows: ['widthRow', 'heightRow', 'rotationRow'].map(id => document.getElementById(id)?.hidden ?? null),
     }), [INPUTS, OUTPUTS]));
   }
   // 조작: 두 번째 영역(범위 밖 값)과 첫 영역에서 모든 입력을 한 번씩 바꾼다
@@ -70,6 +72,7 @@ async function run(browser, file) {
     await page.evaluate(ins => {
       for (const id of ins) {
         const e = document.getElementById(id);
+        if (!e) continue;
         if (id === 'lockedInput') continue; // 잠그면 이후 조작이 막히므로 마지막에
         if (e.type === 'checkbox') { e.checked = !e.checked; e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); continue; }
         if (e.tagName === 'SELECT') { e.selectedIndex = (e.selectedIndex + 1) % e.options.length; }

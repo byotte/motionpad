@@ -35,7 +35,7 @@ const UI_SCENES = [
   ['dlg-mask', () => document.getElementById('maskMenu').click()],
   ['dlg-saveas', () => document.getElementById('saveAsBtn').click()],
   ['dlg-blink', () => document.getElementById('eyeEntry').click()],
-  ['panel-parts', () => { const z = document.getElementById('ellipseMode'); for (const id of ['partsPanel', 'basePanel', 'advanced', 'effects', 'anchorPanel']) { const d = document.getElementById(id); if (d) d.open = true; } }],
+  ['panel-parts', () => { const z = document.getElementById('ellipseMode'); for (const id of ['partsPanel', 'basePanel', 'advanced', 'effects', 'anchorPanel', 'zonesPanel', 'edgePanel', 'presetPanel', 'autoPanel', 'gainPanel']) { const d = document.getElementById(id); if (d) d.open = true; } }],
 ];
 // 레이아웃 치수 기록 대상 [x, y, 너비, 높이]
 const LAYOUT_PARTS = ['.header', '.stagebar', '.stageOptions', '.stage', '#view', '.stagebottom', '.side', '.maskDisplay'];
@@ -82,6 +82,8 @@ const round = v => Math.round(v * 100) / 100;
 async function newPage(browser, vp, theme, frozen = false) {
   const { width, height, ...rest } = vp;
   const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1, acceptDownloads: true, ...rest });
+  // 시험은 내려받기 경로로 저장한다(저장 위치 고르기 창은 자동 조작으로 다룰 수 없다)
+  await context.addInitScript(() => { try { Object.defineProperty(window, 'showSaveFilePicker', { value: undefined }); } catch (_) {} });
   if (frozen) {
     // install만 하면 시간이 실제처럼 흘러 위상이 흔들린다 → pauseAt으로 완전히 멈추고 settle()로만 진행
     await context.clock.install({ time: new Date('2026-01-01T00:00:00Z') });
@@ -270,7 +272,7 @@ function zoneSummary(z) {
     }));
     const before = await state();
     // 영역 1(타원)의 움직임 세기 슬라이더를 조작 — 사용자는 옵션 패널을 연 상태
-    await page.evaluate(() => { for (const id of ['partsPanel', 'advanced']) { const d = document.getElementById(id); if (d) d.open = true; }
+    await page.evaluate(() => { for (const id of ['partsPanel', 'advanced', 'zonesPanel', 'edgePanel', 'presetPanel', 'autoPanel', 'gainPanel']) { const d = document.getElementById(id); if (d) d.open = true; }
       const e = document.getElementById('strengthInput'); e.value = String(Number(e.value) + 5); e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); });
     await rafs(page, 5);
     const after = await state();
@@ -295,7 +297,7 @@ function zoneSummary(z) {
     page.on('dialog', d => nativeDialogs.push(d.type()));
     await openImage(page);
     await clickMode(page, 'ellipseMode'); await drag(page, [[0.36, 0.25], [0.64, 0.52]]);
-    await page.evaluate(() => { document.getElementById('partsPanel').open = true; });
+    await page.evaluate(() => { document.getElementById('partsPanel').open = true; const zp = document.getElementById('zonesPanel'); if (zp) zp.open = true; });
     // 메뉴: 영역 칩 우클릭 → 앱 메뉴가 있으면 '복제'
     await page.locator('#zoneList .chip').first().click({ button: 'right' });
     await rafs(page, 2);
@@ -304,7 +306,7 @@ function zoneSummary(z) {
     const zonesAfterMenu = (await page.locator('#zoneCount').textContent()).trim();
     // 몸체 지정: 첫 영역 선택 → 경계값 확인 → 몸체 지정 → 저장 파일에서 값 확인
     await page.locator('#zoneList .chip').first().click();
-    await page.evaluate(() => { document.getElementById('ambientPanel').open = true; document.getElementById('basePanel').open = true; });
+    await page.evaluate(() => { document.getElementById('ambientPanel').open = true; document.getElementById('zonesPanel') && (document.getElementById('zonesPanel').open = true); (document.getElementById('basePanel') || {}).open = true; });
     const before = await page.evaluate(() => ({ feather: document.getElementById('featherInput').value, spread: document.getElementById('spreadInput').value }));
     await page.locator('#markBaseBtn').click(); await rafs(page, 2);
     const saved = await saveProject(page, path.join(OUT, 'base-check.motionpad.json'));
@@ -346,7 +348,7 @@ function zoneSummary(z) {
       requestAnimationFrame(step);
     }), [id, lo, hi]);
     // 마술봉 영역(마지막)이 선택된 상태 — 세부 패널을 열어 입력을 가능하게 함
-    await page.evaluate(() => { for (const id of ['partsPanel', 'effects']) { const d = document.getElementById(id); if (d) d.open = true; } });
+    await page.evaluate(() => { for (const id of ['partsPanel', 'effects', 'zonesPanel', 'edgePanel', 'presetPanel', 'autoPanel', 'gainPanel']) { const d = document.getElementById(id); if (d) d.open = true; } });
 
     // (가) 일반 영역: 경계 부드러움·바깥 확장 드래그
     const drag1 = await profileDuring(page, async () => [await sliderDrag('featherInput', 0, 45), await sliderDrag('spreadInput', 0, 26)]);

@@ -16,6 +16,8 @@ const TILE = 384;
   fs.mkdirSync(TMP, { recursive: true });
   const browser = await chromium.launch();
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1, acceptDownloads: true });
+  // 시험은 내려받기 경로로 저장한다(저장 위치 고르기 창은 자동 조작으로 다룰 수 없다)
+  await context.addInitScript(() => { try { Object.defineProperty(window, 'showSaveFilePicker', { value: undefined }); } catch (_) {} });
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
@@ -59,7 +61,7 @@ const TILE = 384;
   await tool('ellipseMode'); await box(0.36, 0.25, 0.64, 0.52);
   let z1 = await check('1 타원으로 새 영역', (z) => z.length === 1 && z[0].kind === 'ellipse');
   // 움직임 세기를 바꿔 둔다(모양을 바꿔도 남아야 함)
-  await page.evaluate(() => { for (const id of ['partsPanel', 'advanced']) { const d = document.getElementById(id); if (d) d.open = true; }
+  await page.evaluate(() => { for (const id of ['partsPanel', 'advanced', 'zonesPanel', 'edgePanel', 'presetPanel', 'autoPanel', 'gainPanel']) { const d = document.getElementById(id); if (d) d.open = true; }
     const e = document.getElementById('strengthInput'); e.value = '61'; e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); });
   // 2 더하기: 겹치는 타원
   await tool('ellipseMode'); await op('add'); await box(0.5, 0.45, 0.75, 0.62);

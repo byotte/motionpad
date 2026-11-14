@@ -1,18 +1,18 @@
 /* ── 2. 기본 ────────────────────────────────────────────── */
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 system-ui,-apple-system,"Noto Sans KR",sans-serif}
-body{min-height:100dvh;background-image:radial-gradient(ellipse at 92% -10%,color-mix(in srgb,var(--accent) 9%,transparent),transparent 46%)}
+html,body{margin:0;background:var(--bg);color:var(--item);font:var(--fs-item)/1.4 system-ui,-apple-system,"Noto Sans KR",sans-serif}
+body{min-height:100dvh;background-image:radial-gradient(ellipse at 92% -10%,var(--glow),transparent 46%)}
 :root:is([data-theme="light"],[data-theme="mono"]) body{background-image:none}
 button,input,select{font:inherit}
 button{cursor:pointer}
-button:disabled{opacity:.5}
+button:disabled{opacity:.45}
 :is(button,summary,input):focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 select:focus-visible{outline:1px solid var(--accent);outline-offset:0}
-:is(button,summary):not(:disabled,.btn,.chip,.playerHandle,.exitViewer):hover{box-shadow:inset 0 0 0 100px color-mix(in srgb,var(--ink) 8%,transparent)}
+:is(button,summary):not(:disabled,.btn,.chip,.playerHandle,.exitViewer):hover{box-shadow:inset 0 0 0 100px var(--veil)}
 .iconSprite{position:absolute;width:0;height:0;overflow:hidden}
 .ic{flex:none;width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
-.iconBtn{display:inline-grid;place-items:center}
+.iconBtn{display:inline-grid;place-items:center;min-width:var(--ctl-h);padding-inline:0}
 .iconBtn .ic{width:16px;height:16px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
 

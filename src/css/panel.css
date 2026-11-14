@@ -3,62 +3,73 @@
 .side>*{flex-shrink:0}
 .side details{margin:0;padding:0 10px 8px;border:0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
 .side details[open]{scroll-margin:10px}
-.side summary{display:flex;align-items:center;gap:7px;list-style:none;font-size:12px;font-weight:700;line-height:1.45;color:var(--ink);cursor:pointer}
+.side summary{display:flex;align-items:center;gap:7px;list-style:none;min-height:var(--head-h);font-size:var(--fs-title);font-weight:var(--fw-title);line-height:1.45;color:var(--ink);cursor:pointer}
 .side summary::-webkit-details-marker{display:none}
 /* 접힘 표시: 작은 꺾쇠(▸ 닫힘, ▾ 열림) */
 .side summary::before{content:"";flex:none;width:5px;height:5px;margin:0 2px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:rotate(-45deg);opacity:.7;transition:transform .12s}
 .side details[open]>summary::before{transform:rotate(45deg)}
 /* 패널 머리줄 */
-.side>details>summary{margin:0 -10px;padding:6px 10px;background:color-mix(in srgb,var(--ink) 7%,var(--panel));border-bottom:1px solid transparent}
-.side>details[open]>summary{margin-bottom:6px;border-bottom-color:var(--line)}
-#ambientPanel{background:var(--panel)}
-#ambientPanel>summary{background:color-mix(in srgb,var(--accent) 15%,var(--panel))}
-#ambientPanel>summary:hover{background:color-mix(in srgb,var(--accent) 23%,var(--panel))}
+.side>details>summary{margin:0 -10px;padding:0 10px;background:var(--head);border-bottom:1px solid transparent}
+.side>details[open]>summary{margin-bottom:var(--sp2);border-bottom-color:var(--line)}
+/* 2-F: 머리줄 오른쪽 작은 정보(영역 수·몸체 이름·선택 영역 이름) */
+.side summary>.count{margin-left:auto;min-width:0;overflow:hidden;font-size:var(--fs-help);font-weight:var(--fw-help);color:var(--help);text-overflow:ellipsis;white-space:nowrap}
 /* 패널 안쪽 묶음: 테두리 상자 + 작은 제목 */
-.side details details{margin:10px 0 4px;padding:0 9px 6px;border:1px solid var(--line);border-radius:4px}
-.side details details>summary{margin:0 -9px;padding:5px 9px;font-size:11px;color:var(--sub)}
-.side details details[open]>summary{margin-bottom:4px;border-bottom:1px solid var(--line);color:var(--ink)}
-.side :is(summary,button):not(:disabled):is(:hover,:focus-visible){background:color-mix(in srgb,var(--ink) 13%,var(--panel))}
-.side>.eyeEntry{display:block;align-self:stretch;width:100%;margin:0;border:0 none transparent;border-bottom:1px solid transparent;background:color-mix(in srgb,var(--ink) 6%,var(--panel));text-align:left}
+.side details details{margin:var(--sp2) 0 var(--sp1);padding:0 var(--sp2) var(--sp1);border:1px solid var(--groupLine);border-radius:var(--r-box)}
+.side details details>summary{min-height:var(--ctl-h);margin:0 calc(-1*var(--sp2));padding:0 var(--sp2);font-size:var(--fs-item);font-weight:var(--fw-item);color:var(--item)}
+.side details details[open]>summary{margin-bottom:var(--sp1);border-bottom:1px solid var(--groupLine);color:var(--ink)}
+.side :is(summary,button):not(:disabled):is(:hover,:focus-visible){background:var(--hover)}
+.side>.eyeEntry{display:flex;align-items:center;gap:7px;align-self:stretch;width:100%;min-height:var(--head-h);margin:0;padding:0 10px;border:0;border-bottom:1px solid var(--line);border-radius:0;background:var(--head);color:var(--ink);font:inherit;font-size:var(--fs-title);font-weight:var(--fw-title);line-height:1.45;text-align:left;cursor:pointer}
+/* 눈 깜빡임은 창으로 열린다: 꺾쇠를 오른쪽 방향으로 고정 */
+.side>.eyeEntry::before{content:"";flex:none;width:5px;height:5px;margin:0 2px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:rotate(-45deg);opacity:.7}
+.side .lead{margin:6px 0 2px}
+.side .groupLabel{margin:var(--sp3) 0 var(--sp1);padding-top:var(--sp2);border-top:1px solid var(--groupLine);font-size:var(--fs-help);font-weight:var(--fw-help);color:var(--help)}
+.side details>.toggle{margin:var(--sp2) 0}
 .side .mini{overflow-wrap:anywhere}
 .side select{min-width:0}
 .side .toggle{align-items:flex-start;white-space:normal;overflow-wrap:anywhere}
 .side .toggle input{flex:0 0 auto;margin-top:3px}
-#ambientPanel .toggle{margin:8px 0}
 /* 옵션 패널 안의 '그림에서 지정' 버튼들 */
-.side .mode{font-size:11px;font-weight:600;color:var(--sub);text-align:left;white-space:normal}
-.side .mode.active{background:var(--accentSoft);color:var(--ink);box-shadow:inset 2px 0 var(--accent)}
+.side .mode{font-size:var(--fs-item);font-weight:var(--fw-item);color:var(--item);text-align:left;white-space:normal}
+.side .mode.active{border-color:var(--accent);color:var(--ink);box-shadow:inset 0 0 0 1px var(--accent)}
 
-.field{margin:10px 0;min-width:0;overflow-wrap:anywhere}
-#ambientPanel .field{margin:8px 0}
-.fieldhead{display:flex;align-items:center;justify-content:space-between;min-width:0;margin:0 0 5px}
+.field{margin:var(--sp2) 0;min-width:0;overflow-wrap:anywhere}
+.fieldhead{display:flex;align-items:center;justify-content:space-between;min-width:0;margin:0 0 var(--sp1)}
 .fieldhead label{min-width:0;padding-right:5px;overflow-wrap:anywhere}
-.field label{font-size:11px;color:var(--sub)}
-.field .toggle{color:var(--ink)}
-:root[data-theme="light"] .field label{color:var(--ink)}
-.field output{font-size:11px;font-weight:750;color:var(--accent);font-variant-numeric:tabular-nums}
+.field label{font-size:var(--fs-item);color:var(--item)}
+.field output{font-size:var(--fs-item);font-weight:var(--fw-item);color:var(--accent);font-variant-numeric:tabular-nums}
 .field input[type=range]{width:100%}
 .field select{width:100%}
-.field input[type=text]{width:100%;min-height:25px;padding:3px 6px;border:1px solid var(--line);border-radius:2px;background:var(--panel);color:var(--ink)}
-:root[data-theme="light"] .field input[type=text]{color:#151929}
-.empty{padding:5px 0;font-size:12px;color:var(--sub)}
-#zoneList{display:flex;flex-wrap:wrap;gap:4px;margin:0;padding:6px 0}
-.chip{background:var(--button);color:var(--ink);font-size:11px;border-color:var(--line);border-radius:3px}
-.chip.active{background:var(--accentSoft);border-color:var(--accent);font-weight:750}
-.chip.baseChip{border-style:dashed}
-.chip.baseChip{order:-1000}
-.regionActionRow{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:3px 0}
-.settingActions{display:flex;gap:6px;margin-top:12px}
-.settingActions .btn{flex:1;font-size:12px}
+.field input[type=text]{width:100%}
+.nameRow{display:flex;gap:var(--sp1)}
+.nameRow input{flex:1;min-width:0}
+.empty{padding:var(--sp1) 0;font-size:var(--fs-help);color:var(--help)}
+/* 2-F 영역 목록. PC: 세로 목록(이름 · 켜진 효과 이름표 · 잠금). 이름표가 넘치면 뒤쪽(덜 중요한 것)부터 다음 줄로 밀려 숨는다 */
+.zoneList{display:flex;flex-direction:column;gap:2px;margin:0 -4px;padding:4px 0 6px}
+.chip{background:var(--button);color:var(--item);font-size:var(--fs-item);border-color:var(--line);border-radius:var(--r-ctl)}
+.chip.active{background:var(--accentSoft);border-color:var(--accent);color:var(--ink)}
+.zoneItem{display:flex;align-items:center;gap:6px;width:100%;min-height:var(--ctl-h);padding:2px 7px;border-color:transparent;background:transparent;text-align:left;font-weight:var(--fw-item)}
+.zoneItem.active{box-shadow:inset 3px 0 var(--accent)}
+.zoneName{flex:1 1 auto;min-width:3em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.baseMark{color:var(--mark)}
+.zoneTags{display:flex;flex-wrap:wrap;justify-content:flex-end;flex:0 1 auto;gap:3px;max-width:62%;height:18px;overflow:hidden}
+.zoneTag{padding:0 5px;border-radius:var(--r-ctl);background:var(--hover);color:var(--help);font-size:var(--fs-help);font-weight:var(--fw-item);line-height:18px;white-space:nowrap}
+.zoneItem.active .zoneTag{background:var(--hover);color:var(--ink)}
+.zoneLock{width:13px;height:13px;color:var(--help)}
+.settingActions{display:flex;gap:var(--sp1);margin-top:var(--sp3)}
+.settingActions .btn{flex:1}
 .side .settingActions{flex-wrap:wrap}
 .side .settingActions .btn{flex:1 1 auto;max-width:100%;white-space:normal;overflow-wrap:anywhere}
-.baseButtons{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:8px 0;padding:5px 0}
-.baseButtons .btn,.baseButtons .micro{font-size:11px}
-.baseButtons .btn:disabled{opacity:.55}
+.baseButtons{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp1);margin:var(--sp2) 0}
+.baseButtons .micro{font-size:var(--fs-help)}
 .maskDisplay{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:auto!important;padding:6px 8px}
 .side>.maskDisplay{border-top:1px solid var(--line)}
 .maskDisplay label{display:inline-flex;align-items:center;gap:4px;margin:0}
 .maskDisplay input[type=color]{width:24px;height:18px;padding:0}
 .maskDisplay input[type=range]{width:70px;padding:0}
 #soundPanel{padding-bottom:9px}
-
+/* 3-I 한 카테고리 안에서 성격이 다른 묶음(대상 고르기 / 효과)을 나누는 상자. 선 모양은 디자인 규칙 단계에서 확정 */
+.optGroup{margin:var(--sp2) 0;padding:var(--sp2);border:1px solid var(--groupLine);border-radius:var(--r-box)}
+.optGroup .field:first-child{margin-top:0}
+.optGroup .field:last-child{margin-bottom:0}
+.targetRow{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 8px}
+.dimOff{opacity:.45}

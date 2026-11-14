@@ -25,6 +25,8 @@ const stat = a => { const s = a.slice().sort((x, y) => x - y); return { avg: +(a
   const out = {};
   for (const throttle of [1, 4]) for (const n of [384, 768, 1024]) {
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true });
+    // 시험은 내려받기 경로로 저장한다(저장 위치 고르기 창은 자동 조작으로 다룰 수 없다)
+    await ctx.addInitScript(() => { try { Object.defineProperty(window, 'showSaveFilePicker', { value: undefined }); } catch (_) {} });
     const page = await ctx.newPage(); const errs = [];
     page.on('pageerror', e => errs.push(String(e)));
     await page.goto('file://' + SP + '/mp-' + n + '.html');
