@@ -2,7 +2,7 @@
 /* 폰형: 세로 화면이거나 폭 779px 이하 → 캔버스 위·옵션 아래, 옵션 패널만 스크롤 */
 @media (orientation:portrait),(max-width:779px){
   /* 폰형 글자 크기 */
-  :root{--fs-title:15px;--fs-item:14px;--fs-help:12px}
+  :root{--fs-title:14px;--fs-item:14px;--fs-help:12px}/* 폰형은 큰 메뉴와 항목의 크기를 같게 두고 굵기·바탕으로만 나눈다 */
   .header{gap:5px}
   .logo{width:23px;height:23px}
   .brand h1 span{display:none}
