@@ -376,25 +376,35 @@ button[data-help]:hover::before{color:var(--ink)}
 .qualityOptions p{flex-basis:100%;margin:2px 0;color:var(--help)}
 .saveDialog .maskDisplay label{display:inline-flex;margin:0}
 
-#blinkDialog{width:min(96vw,860px);max-height:94dvh;padding:0;overflow:auto;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:var(--r-ctl)}
+#blinkDialog{width:min(96vw,980px);max-height:94dvh;padding:0;overflow:auto;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:var(--r-box)}
 #blinkDialog::backdrop{background:var(--backdrop)}
 #blinkDialog h2{margin:0}
 #blinkDialog .settingActions{display:flex;gap:4px;width:auto;margin:0}
-.blinkToolbar,.blinkFooter,.blinkSettings{display:flex;flex-wrap:wrap;align-items:center;gap:5px 9px;padding:7px 10px}
 .blinkHead{flex-wrap:wrap;padding-block:2px}
-.blinkToolbar,.blinkSettings{background:var(--panel);border-bottom:1px solid var(--line)}
+/* 윗줄: 편집할 눈·제거 | 앞머리 보호 붓 | 되돌리기·다시 실행 | (붓을 켰을 때) 붓 굵기·피부색 참고 */
+.blinkToolbar{display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px;min-height:calc(var(--ctl-h) + 14px);padding:7px 10px;background:var(--panel);border-bottom:1px solid var(--line);font-size:var(--fs-item);color:var(--item)}
 .blinkToolbar label{display:inline-flex;align-items:center;gap:5px}
-.blinkControl{display:grid;grid-template-columns:7.2em minmax(60px,1fr) 3.2em;align-items:center;gap:var(--sp2);margin-top:var(--sp2);color:var(--item);white-space:nowrap}
-.blinkControl input{width:100%;margin:0}
-.blinkControl output{min-width:3.2em;font-size:var(--fs-item);color:var(--accent);text-align:right}
-.blinkSettings{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
-.blinkSettings .blinkControl{margin:0}
-.blinkSettings>.btn{justify-self:start}
+.blinkToolbar .barSep{height:18px;align-self:center;margin:0 2px}
+.blinkBrush{display:inline-flex;flex-wrap:wrap;align-items:center;gap:5px 8px}
+.blinkBrush input[type=range]{width:110px}
+/* 고르는 버튼 규칙: 바탕을 채우지 않고, 켜지면 강조색 굵은 테두리 */
+#blinkProtect{background:transparent}
+#blinkProtect[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);color:var(--ink)}
+#blinkUndo,#blinkRedo{border-color:transparent;background:transparent}
+#blinkUndo:not(:disabled):hover,#blinkRedo:not(:disabled):hover{background:var(--button)}
+#blinkUndo .ic,#blinkRedo .ic{width:18px;height:18px}
+/* 왼쪽 그림 · 오른쪽 옵션 */
+.blinkMain{display:grid;grid-template-columns:minmax(0,1fr) 240px;min-height:0}
 .blinkStage{display:grid;place-items:center;min-height:100px;overflow:hidden;background:repeating-conic-gradient(var(--panel) 0 25%,var(--stageInk) 0 50%) 0/16px 16px}
-#blinkPreview{display:block;width:auto;height:auto;max-width:100%;max-height:54dvh;margin:auto;cursor:crosshair}
-.blinkFooter{position:sticky;bottom:0;justify-content:space-between;background:var(--panel);border-top:1px solid var(--line)}
-#blinkHint{flex:1 1 210px;margin:0;font-size:var(--fs-item);color:var(--item)}
-#blinkApply{flex:none;min-width:110px}
+#blinkPreview{display:block;width:auto;height:auto;max-width:100%;max-height:calc(94dvh - 150px);margin:auto;cursor:crosshair}
+.blinkSettings{display:flex;flex-direction:column;gap:var(--sp1);min-width:0;padding:10px;background:var(--panel);border-left:1px solid var(--line)}
+.blinkSettings .field{margin:var(--sp1) 0}
+.blinkSettings .toggle{margin:var(--sp1) 0 var(--sp2)}
+/* 가장 중요한 버튼: '플레이'와 같은 강조 */
+#blinkApply{margin-top:auto;min-height:var(--head-h);background:var(--accent);border-color:var(--accent);color:var(--onAccent);font-weight:var(--fw-title)}
+#blinkApply:not(:disabled):hover{filter:brightness(.92)}
+.blinkFooter{position:sticky;bottom:0;padding:7px 10px;background:var(--panel);border-top:1px solid var(--line)}
+#blinkHint{margin:0;font-size:var(--fs-item);color:var(--item)}
 
 /* 3-D 영상 내보내기 창 */
 #videoDialog .videoRow{display:grid;grid-template-columns:86px minmax(0,1fr);align-items:center;gap:8px;margin:10px 0}
@@ -415,11 +425,19 @@ button[data-help]:hover::before{color:var(--ink)}
 .aboutList{margin:var(--sp3) 0 0;padding-top:var(--sp2);border-top:1px solid var(--groupLine)}
 .aboutList dt{margin-top:var(--sp2);font-size:var(--fs-help);color:var(--help)}
 .aboutList dd{margin:2px 0 0}
+/* 내보내기 두 가지 방법: 자동 저장 / 직접 터치하며 녹화 */
+.exportWays{display:grid;gap:var(--sp2);margin-top:var(--sp2)}
+.exportWay{padding:var(--sp2);border:1px solid var(--groupLine);border-radius:var(--r-box)}
+.exportWay b{font-size:var(--fs-item);font-weight:var(--fw-title);color:var(--ink)}
+.exportWay .mini{margin-top:2px}
+.fxRow{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp2);margin-top:var(--sp2)}
 /* ── 9. 감상 화면 ───────────────────────────────────────── */
 .viewer{position:fixed;inset:0;z-index:50;display:flex;align-items:stretch;justify-content:center;background:var(--viewerBg)}
 .viewerStage{display:flex;align-items:center;justify-content:center;width:100%;height:100%;overflow:hidden}
 .viewer .surface{box-shadow:none}
-.exitViewer{display:grid;place-items:center;min-height:32px;position:absolute;top:calc(9px + env(safe-area-inset-top));right:calc(9px + env(safe-area-inset-right));z-index:2;min-width:40px;background:var(--vbg,var(--viewerBtn));color:var(--vfg,var(--viewerInk));border-color:var(--vline,var(--line));font-size:var(--fs-item);font-weight:var(--fw-item);backdrop-filter:blur(5px)}
+/* 3-M: 플레이 화면 아이콘(녹화·돌아가기·음악)은 상자 없이 굵은 선으로. 색은 뒤 그림에 맞춰 자동(--vfg), 뒤가 얼룩덜룩해도 보이게 바탕색 그림자 */
+.exitViewer{display:grid;place-items:center;position:absolute;top:calc(7px + env(safe-area-inset-top));right:calc(7px + env(safe-area-inset-right));z-index:2;width:40px;height:40px;min-width:0;padding:0;border:0;background:transparent;color:var(--vfg,var(--viewerInk));font-size:var(--fs-item);font-weight:var(--fw-title);filter:drop-shadow(0 0 2px var(--vbg,var(--viewerBtn))) drop-shadow(0 0 1px var(--vbg,var(--viewerBtn)))}
+.exitViewer .ic{width:24px;height:24px;stroke-width:2.6}
 .viewerHint{position:absolute;left:0;right:0;bottom:72px;text-align:center;font-size:var(--fs-item);color:var(--viewerHint);text-shadow:var(--viewerHintShadow);pointer-events:none;transition:opacity .4s}
 .viewerHint.dim{opacity:0}
 .viewerAudio{position:absolute;right:calc(12px + env(safe-area-inset-right));bottom:calc(12px + env(safe-area-inset-bottom));z-index:4;display:flex;flex-direction:column;align-items:stretch;gap:6px;width:min(326px,calc(100vw - 18px));max-width:96vw;padding:6px 8px;
@@ -427,24 +445,25 @@ button[data-help]:hover::before{color:var(--ink)}
 .playerHeader{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:var(--fs-help);font-weight:var(--fw-help);color:var(--help)}
 .playerHandle{width:var(--ctl-h);height:var(--ctl-h);min-width:var(--ctl-h);padding:0;background:var(--button);color:var(--accent);font-size:var(--fs-glyph)}
 .playerControls{display:grid;flex-wrap:wrap;align-items:center;justify-content:center;gap:5px}
-.playerRow{display:grid;grid-template-columns:61px minmax(0,1fr) minmax(48px,72px);align-items:center;gap:5px}
+.playerRow{display:grid;grid-template-columns:76px minmax(0,1fr) minmax(48px,72px);align-items:center;gap:5px}
+.playerRow>.btn{padding-inline:4px}
 .playerRow>*{min-width:0}
 #musicBtn{background:var(--accentSoft);border-color:var(--accent)}
 .playerRow select{flex:1;justify-self:start;width:100%}
 .playerRow label{display:flex;flex:1;align-items:center;justify-content:flex-end;gap:3px;font-size:var(--fs-item);white-space:nowrap;color:var(--item)}
 .playerRow input{flex:1 1 0;width:100%;min-width:0;max-width:100px}
 .playerSfx input{max-width:80px}
-.viewerAudio.compact{width:42px;height:42px;padding:5px;justify-content:center;align-items:center;background:var(--vbg,var(--panel));border-color:var(--vline,var(--line));box-shadow:none}
+.viewerAudio.compact{width:42px;height:42px;padding:5px;justify-content:center;align-items:center;background:transparent;border-color:transparent;box-shadow:none;backdrop-filter:none;filter:drop-shadow(0 0 2px var(--vbg,var(--viewerBtn))) drop-shadow(0 0 1px var(--vbg,var(--viewerBtn)))}
 .viewerAudio.compact :is(.playerTitle,.playerControls){display:none}
 .viewerAudio.compact .playerHeader{justify-content:center;width:100%;height:100%}
-.viewerAudio.compact .playerHandle{width:34px;height:34px;border:0 none transparent;background:transparent;color:var(--vfg,var(--accent));font-size:var(--fs-glyph)}
+.viewerAudio.compact .playerHandle{width:34px;height:34px;border:0 none transparent;background:transparent;color:var(--vfg,var(--accent));font-size:var(--fs-glyph);font-weight:var(--fw-title);transform:scale(1.35)}
+.playerHandle{font-weight:var(--fw-title);line-height:1}
 
 /* 3-F 플레이 화면 녹화 버튼: 돌아가기 아이콘 왼쪽 */
-.recViewer{right:calc(55px + env(safe-area-inset-right));display:flex;align-items:center;gap:5px;padding:0 10px}
-.recViewer i{width:11px;height:11px;border-radius:50%;background:var(--rec);box-shadow:0 0 0 2px var(--recRing)}
+.recViewer{right:calc(51px + env(safe-area-inset-right));display:flex;align-items:center;justify-content:center;gap:5px;width:auto;min-width:40px;padding:0 4px}
+.recViewer i{flex:none;width:16px;height:16px;border-radius:50%;background:var(--rec);box-shadow:0 0 0 2.5px var(--vfg,var(--viewerInk))}
 .recViewer span:empty{display:none}
 .recViewer span{font-variant-numeric:tabular-nums}
-.recViewer.recording{background:var(--recOn)}
 .recViewer.recording i{border-radius:var(--r-ctl);animation:recBlink 1s steps(2) infinite}
 @keyframes recBlink{50%{opacity:.35}}
 /* ── 10. 화면 크기별 ────────────────────────────────────── */
@@ -467,6 +486,9 @@ button[data-help]:hover::before{color:var(--ink)}
   .status{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
   .side{max-height:var(--panel-height,36dvh)}
   .side>.maskDisplay{display:none}
+  .blinkMain{grid-template-columns:minmax(0,1fr)}
+  .blinkSettings{border-left:0;border-top:1px solid var(--line)}
+  #blinkPreview{max-height:41dvh}
   /* 2-F 폰: 영역 목록은 가로 이름표(효과 이름표는 숨김, 몸체는 별표) */
   .zoneList{flex-direction:row;flex-wrap:wrap;gap:4px;margin:0}
   .zoneItem{width:auto;max-width:100%;padding:2px 10px;border-color:var(--line);background:var(--button)}
@@ -501,10 +523,6 @@ button[data-help]:hover::before{color:var(--ink)}
   .loupe{top:6px;right:6px;width:104px;height:104px}
   #lassobar{gap:4px;padding-inline:4px}
   .fileBtn span{display:none}
-  #blinkPreview{max-height:41dvh}
-  .blinkSettings{grid-template-columns:1fr}
-  .blinkFooter{flex-wrap:nowrap}
-  #blinkHint,#blinkApply{min-width:0}
 }
 
 /* ── 11. 터치 기기·좁은 화면: 손가락으로 누르기 쉬운 높이 ── */
@@ -635,10 +653,9 @@ button[data-help]:hover::before{color:var(--ink)}
 <button type="button" class="eyeEntry" id="eyeEntry">4. 눈 깜빡임<span id="eyeEntryState" class="eyeEntryState"></span></button><div class="maskDisplay"><label>선택 영역 색상 <input id="maskColorInput" type="color" value="#45d8a9"></label><label>투명도 <input id="maskOpacityInput" type="range" min="0" max="85" value="32"><output id="maskOpacityValue">32%</output></label></div></aside></main>
 
 </div>
-<dialog id="filesDialog" class="saveDialog layoutDialog"><header class="dlgHead"><h2>브라우저에 임시 보관된 프로젝트</h2><button type="button" class="dlgX" aria-label="닫기">×</button></header><div class="dlgBody" tabindex="-1" autofocus><div class="field"><label for="projectSelect">보관된 프로젝트</label><select id="projectSelect"><option value="">저장된 프로젝트 없음</option></select></div><div class="settingActions"><button id="loadNamedBtn" class="btn">선택한 프로젝트 열기</button><button id="deleteNamedBtn" class="btn warn">삭제</button></div><button id="saveNamedBtn" class="btn" hidden>이전 방식으로 기기에 저장</button><p class="mini">예전 버전에서 ‘기기에 저장’으로 이 브라우저 안에 넣어 둔 프로젝트입니다. 브라우저 기록을 지우면 함께 사라지는 임시 보관이므로, 연 뒤에는 ‘파일 ▸ 프로젝트 저장’으로 파일로 남겨 주세요.</p></div></dialog><dialog id="videoDialog" class="saveDialog layoutDialog"><header class="dlgHead"><h2>영상으로 내보내기</h2><button type="button" class="dlgX" aria-label="닫기">×</button></header><div class="dlgBody" tabindex="-1" autofocus><div class="field videoRow"><span class="videoLabel">형식</span><div class="selOp" role="radiogroup" aria-label="형식"><label><input type="radio" name="videoFormat" value="video" checked><span>영상</span></label><label><input type="radio" name="videoFormat" value="gif"><span>움짤 (GIF)</span></label></div></div><div class="field videoRow"><span class="videoLabel">비율</span><div class="selOp" role="radiogroup" aria-label="비율"><label><input type="radio" name="videoRatio" value="image" checked><span>원본 비율</span></label><label><input type="radio" name="videoRatio" value="9:16"><span>9:16</span></label><label><input type="radio" name="videoRatio" value="3:4"><span>3:4</span></label><label><input type="radio" name="videoRatio" value="1:1"><span>1:1</span></label></div></div><div class="field"><div class="fieldhead"><label for="videoQuality">화질</label><output id="videoQualityValue">70</output></div><input id="videoQuality" type="range" min="0" max="100" step="5" value="70"><div class="qualityScale" aria-hidden="true"><span>낮음</span><span>보통</span><span>높음</span><span>최고</span></div></div><p class="videoEstimate" id="videoEstimate"></p><details id="videoMore"><summary>세부 설정 · 크기 · 길이 · FPS</summary><div class="field videoRow"><span class="videoLabel">크기<button type="button" class="helpDot" data-help="크기의 숫자는 짧은 변의 픽셀 수입니다(1080 = 1080p). 원본은 처음 연 그림의 크기 그대로입니다." aria-label="도움말"></button></span><div class="selOp" role="radiogroup" aria-label="크기"><label><input type="radio" name="videoSize" value="orig" checked><span>원본</span></label><label><input type="radio" name="videoSize" value="1080"><span>1080</span></label><label><input type="radio" name="videoSize" value="720"><span>720</span></label><label><input type="radio" name="videoSize" value="480"><span>480</span></label><label><input type="radio" name="videoSize" value="custom"><span>직접 입력</span></label></div></div><div class="field videoRow" id="videoCustomRow" hidden><span class="videoLabel">가로 × 세로</span><div class="videoCustom"><input id="videoW" type="number" inputmode="numeric" min="16" max="3840" step="2" aria-label="가로 픽셀"><span aria-hidden="true">×</span><input id="videoH" type="number" inputmode="numeric" min="16" max="3840" step="2" aria-label="세로 픽셀"><span class="micro">px</span><label class="toggle"><input id="videoKeepRatio" type="checkbox" checked>비율 유지</label></div></div><div class="field videoRow" id="videoFitRow"><span class="videoLabel">비율이 다를 때</span><div class="selOp" role="radiogroup" aria-label="비율이 다를 때"><label><input type="radio" name="videoFit" value="fill" checked><span>꽉 채우기(잘림)</span></label><label><input type="radio" name="videoFit" value="fit"><span>여백 넣기</span></label></div></div><div class="field videoRow"><label class="videoLabel" for="videoDuration">길이</label><select id="videoDuration"><option value="3">3초</option><option value="5" selected>5초</option><option value="8">8초</option><option value="10">10초</option><option value="15">15초</option></select></div><div class="field videoRow"><label class="videoLabel" for="videoFPS">부드러움</label><select id="videoFPS"><option value="15">15 FPS</option><option value="24">24 FPS</option><option value="30" selected>30 FPS</option><option value="60">60 FPS</option></select></div></details><label class="toggle"><input type="checkbox" id="videoFx" checked>플레이 화면 녹화(●)에 터치 이펙트 넣기</label>
-<p id="videoProgress" class="mini">소리 없이 움직임만 저장합니다. 끝과 처음이 자연스럽게 이어지는 반복 영상입니다.</p></div><footer class="dlgFoot"><button class="btn" id="cancelVideoBtn" hidden>녹화 취소</button><button class="btn primary" id="exportVideoBtn">영상 저장</button></footer></dialog><dialog id="soundDialog" class="saveDialog layoutDialog"><header class="dlgHead"><h2>소리</h2><button type="button" class="dlgX" aria-label="닫기">×</button></header><div class="dlgBody" tabindex="-1" autofocus><div id="soundPanel"><div class="field"><label for="trackSelect">배경음악</label><div class="pickRow"><select id="trackSelect"><option value="lounge">느린 라운지 (합성)</option><option value="dream">몽환적인 앰비언트 (합성)</option><option value="mystery">밤의 신시사이저 (합성)</option><option value="file">불러온 음악</option></select><button class="btn fileBtn" id="musicFileBtn" type="button" title="음악 파일 불러오기" aria-label="음악 파일 불러오기"><svg class="ic" aria-hidden="true"><use href="#i-folder"/></svg><span>파일 불러오기</span></button></div></div><div class="field"><div class="fieldhead"><label for="musicVolume">음악 볼륨</label><output id="musicVolumeValue">40%</output></div><input id="musicVolume" type="range" min="0" max="100" value="40"></div><div class="helpRow"><label class="toggle"><input id="playerVisibleInput" type="checkbox" checked>감상 화면에 음악 플레이어 표시</label><button type="button" class="helpDot" data-help="표시해도 감상 중 한 번 터치하여 아이콘으로 최소화할 수 있습니다." aria-label="도움말"></button></div>
+<dialog id="filesDialog" class="saveDialog layoutDialog"><header class="dlgHead"><h2>브라우저에 임시 보관된 프로젝트</h2><button type="button" class="dlgX" aria-label="닫기">×</button></header><div class="dlgBody" tabindex="-1" autofocus><div class="field"><label for="projectSelect">보관된 프로젝트</label><select id="projectSelect"><option value="">저장된 프로젝트 없음</option></select></div><div class="settingActions"><button id="loadNamedBtn" class="btn">선택한 프로젝트 열기</button><button id="deleteNamedBtn" class="btn warn">삭제</button></div><button id="saveNamedBtn" class="btn" hidden>이전 방식으로 기기에 저장</button><p class="mini">예전 버전에서 ‘기기에 저장’으로 이 브라우저 안에 넣어 둔 프로젝트입니다. 브라우저 기록을 지우면 함께 사라지는 임시 보관이므로, 연 뒤에는 ‘파일 ▸ 프로젝트 저장’으로 파일로 남겨 주세요.</p></div></dialog><dialog id="videoDialog" class="saveDialog layoutDialog"><header class="dlgHead"><h2>영상으로 내보내기</h2><button type="button" class="dlgX" aria-label="닫기">×</button></header><div class="dlgBody" tabindex="-1" autofocus><div class="field videoRow"><span class="videoLabel">형식</span><div class="selOp" role="radiogroup" aria-label="형식"><label><input type="radio" name="videoFormat" value="video" checked><span>영상</span></label><label><input type="radio" name="videoFormat" value="gif"><span>움짤 (GIF)</span></label></div></div><div class="field videoRow"><span class="videoLabel">비율</span><div class="selOp" role="radiogroup" aria-label="비율"><label><input type="radio" name="videoRatio" value="image" checked><span>원본 비율</span></label><label><input type="radio" name="videoRatio" value="9:16"><span>9:16</span></label><label><input type="radio" name="videoRatio" value="3:4"><span>3:4</span></label><label><input type="radio" name="videoRatio" value="1:1"><span>1:1</span></label></div></div><div class="field"><div class="fieldhead"><label for="videoQuality">화질</label><output id="videoQualityValue">70</output></div><input id="videoQuality" type="range" min="0" max="100" step="5" value="70"><div class="qualityScale" aria-hidden="true"><span>낮음</span><span>보통</span><span>높음</span><span>최고</span></div></div><p class="videoEstimate" id="videoEstimate"></p><details id="videoMore"><summary>세부 설정 · 크기 · 길이 · FPS</summary><div class="field videoRow"><span class="videoLabel">크기<button type="button" class="helpDot" data-help="크기의 숫자는 짧은 변의 픽셀 수입니다(1080 = 1080p). 원본은 처음 연 그림의 크기 그대로입니다." aria-label="도움말"></button></span><div class="selOp" role="radiogroup" aria-label="크기"><label><input type="radio" name="videoSize" value="orig" checked><span>원본</span></label><label><input type="radio" name="videoSize" value="1080"><span>1080</span></label><label><input type="radio" name="videoSize" value="720"><span>720</span></label><label><input type="radio" name="videoSize" value="480"><span>480</span></label><label><input type="radio" name="videoSize" value="custom"><span>직접 입력</span></label></div></div><div class="field videoRow" id="videoCustomRow" hidden><span class="videoLabel">가로 × 세로</span><div class="videoCustom"><input id="videoW" type="number" inputmode="numeric" min="16" max="3840" step="2" aria-label="가로 픽셀"><span aria-hidden="true">×</span><input id="videoH" type="number" inputmode="numeric" min="16" max="3840" step="2" aria-label="세로 픽셀"><span class="micro">px</span><label class="toggle"><input id="videoKeepRatio" type="checkbox" checked>비율 유지</label></div></div><div class="field videoRow" id="videoFitRow"><span class="videoLabel">비율이 다를 때</span><div class="selOp" role="radiogroup" aria-label="비율이 다를 때"><label><input type="radio" name="videoFit" value="fill" checked><span>꽉 채우기(잘림)</span></label><label><input type="radio" name="videoFit" value="fit"><span>여백 넣기</span></label></div></div><div class="field videoRow"><label class="videoLabel" for="videoDuration">길이</label><select id="videoDuration"><option value="3">3초</option><option value="5" selected>5초</option><option value="8">8초</option><option value="10">10초</option><option value="15">15초</option></select></div><div class="field videoRow"><label class="videoLabel" for="videoFPS">부드러움</label><select id="videoFPS"><option value="15">15 FPS</option><option value="24">24 FPS</option><option value="30" selected>30 FPS</option><option value="60">60 FPS</option></select></div></details><div class="exportWays"><div class="exportWay"><b>자동으로 저장</b><p id="videoProgress" class="mini">소리 없이 ‘연속 움직임’만 담습니다. 끝과 처음이 자연스럽게 이어지는 반복 영상입니다.</p></div><div class="exportWay"><b>직접 터치하며 녹화</b><p class="mini">플레이 화면에서 그림을 누르고 끄는 반응까지 담습니다. 플레이 화면의 ● 버튼으로도 시작할 수 있습니다.</p><div class="fxRow"><label class="toggle"><input type="checkbox" id="videoFx" checked>터치한 자리 표시</label><select id="videoFxKind" aria-label="터치 표시 모양"><option value="ring" selected>물결 고리</option><option value="dot">작은 점</option><option value="sparkle">반짝임</option></select></div></div></div></div><footer class="dlgFoot"><button class="btn" id="cancelVideoBtn" hidden>녹화 취소</button><button class="btn" id="liveRecBtn" type="button">플레이 화면에서 녹화</button><button class="btn primary" id="exportVideoBtn">영상 저장</button></footer></dialog><dialog id="soundDialog" class="saveDialog layoutDialog"><header class="dlgHead"><h2>소리</h2><button type="button" class="dlgX" aria-label="닫기">×</button></header><div class="dlgBody" tabindex="-1" autofocus><div id="soundPanel"><div class="field"><label for="trackSelect">배경음악</label><div class="pickRow"><select id="trackSelect"><option value="lounge">느린 라운지 (합성)</option><option value="dream">몽환적인 앰비언트 (합성)</option><option value="mystery">밤의 신시사이저 (합성)</option><option value="file">불러온 음악</option></select><button class="btn fileBtn" id="musicFileBtn" type="button" title="음악 파일 불러오기" aria-label="음악 파일 불러오기"><svg class="ic" aria-hidden="true"><use href="#i-folder"/></svg><span>파일 불러오기</span></button></div></div><div class="field"><div class="fieldhead"><label for="musicVolume">음악 볼륨</label><output id="musicVolumeValue">40%</output></div><input id="musicVolume" type="range" min="0" max="100" value="40"></div><div class="helpRow"><label class="toggle"><input id="playerVisibleInput" type="checkbox" checked>감상 화면에 음악 플레이어 표시</label><button type="button" class="helpDot" data-help="표시해도 감상 중 한 번 터치하여 아이콘으로 최소화할 수 있습니다." aria-label="도움말"></button></div>
 <div class="field"><label for="sfxTypeInput">터치 효과음</label><div class="pickRow"><select id="sfxTypeInput"><option value="off">끄기</option><option value="soft" selected>부드러운 터치</option><option value="slap">경쾌한 타격</option><option value="jelly">젤리·탄성</option><option value="water">물결·액체</option><option value="wetClip">물기 있는 짧은 터치 · 녹음</option><option value="hardClip">타격음 · 녹음</option><option value="softClip">부드러운 찰싹 · 녹음</option><option value="mudClip">질척한 터치 · 녹음</option><option value="file">불러온 효과음</option></select><button class="btn fileBtn" id="sfxFileBtn" type="button" title="효과음 파일 불러오기" aria-label="효과음 파일 불러오기"><svg class="ic" aria-hidden="true"><use href="#i-folder"/></svg><span>파일 불러오기</span></button></div></div>
-<div class="field"><div class="fieldhead"><label for="sfxVolume">터치 효과음 볼륨</label><output id="sfxVolumeValue">25%</output></div><input id="sfxVolume" type="range" min="0" max="100" value="25"></div></div></div></dialog><dialog id="layoutSettings" class="saveDialog layoutDialog"><header class="dlgHead"><h2>설정</h2><button type="button" class="dlgX" aria-label="닫기">×</button></header><div class="dlgBody" tabindex="-1" autofocus><fieldset class="themeOptions"><legend>색상 테마</legend><label>다크<span class="themeSample" data-theme="violet"><i></i></span><input type="radio" name="appTheme" value="violet"></label><label>라이트<span class="themeSample" data-theme="light"><i></i></span><input type="radio" name="appTheme" value="light"></label><label>모노<span class="themeSample" data-theme="mono"><i></i></span><input type="radio" name="appTheme" value="mono"></label></fieldset><fieldset class="qualityOptions"><legend>화면 표시 품질</legend><label><input type="radio" name="displayQuality" value="auto">자동</label><label><input type="radio" name="displayQuality" value="high">선명하게</label><label><input type="radio" name="displayQuality" value="balanced">가볍게</label><p>편집과 플레이 중 화면의 선명도와 기기 부담을 조절합니다.</p></fieldset><button class="btn" id="fpsToggle" title="성능 측정">FPS</button><span class="engineBadge" id="engineBadge" aria-label="렌더러와 프레임레이트" title="그래픽 렌더러 · 최근 FPS · 그래픽 품질">렌더러 확인 중</span></div></dialog><div class="viewer" id="viewer" hidden><div class="viewerStage" id="viewerStage"></div><button class="exitViewer recViewer" id="recViewer" aria-label="녹화 시작" title="녹화 시작"><i aria-hidden="true"></i><span></span></button><button class="exitViewer" id="exitViewer" aria-label="편집으로 돌아가기"><svg class="ic" aria-hidden="true"><use href="#i-back"/></svg></button><div class="viewerAudio compact" id="viewerAudio"><div class="playerHeader"><span class="playerTitle">♪ 음악 플레이어</span><button class="playerHandle" id="playerCollapse" aria-label="음악 플레이어 접기" title="음악 플레이어 접기">⌄</button></div><div class="playerControls"><div class="playerRow"><button id="musicBtn" class="btn" title="음악 재생·정지">▶ 음악</button><select id="viewerTrack" title="음악 선택"><option value="lounge">느린 라운지</option><option value="dream">몽환</option><option value="mystery">밤의 신스</option><option value="file">내 음악</option></select><label title="음악 볼륨">♫ <input id="viewerMusicVolume" type="range" min="0" max="100" value="40"></label></div><div class="playerRow"><button id="muteViewer" class="btn" title="효과음 켜기·끄기" aria-pressed="true">효과음 켜짐</button><select id="viewerEffects" class="viewerEffects" aria-label="터치 효과음 종류"><option value="off">끄기</option><option value="soft" selected>부드러운 터치</option><option value="slap">경쾌한 타격</option><option value="jelly">젤리·탄성</option><option value="water">물결·액체</option><option value="wetClip">물기 있는 짧은 터치 · 녹음</option><option value="hardClip">타격음 · 녹음</option><option value="softClip">부드러운 찰싹 · 녹음</option><option value="mudClip">질척한 터치 · 녹음</option><option value="file">불러온 효과음</option></select><label title="효과음 볼륨" class="playerSfx">효과 <input id="viewerSfxVolume" type="range" min="0" max="100" value="25"></label></div></div></div><div class="viewerHint" id="viewerHint">그림을 터치하면 반응합니다.</div></div>
+<div class="field"><div class="fieldhead"><label for="sfxVolume">터치 효과음 볼륨</label><output id="sfxVolumeValue">25%</output></div><input id="sfxVolume" type="range" min="0" max="100" value="25"></div></div></div></dialog><dialog id="layoutSettings" class="saveDialog layoutDialog"><header class="dlgHead"><h2>설정</h2><button type="button" class="dlgX" aria-label="닫기">×</button></header><div class="dlgBody" tabindex="-1" autofocus><fieldset class="themeOptions"><legend>색상 테마</legend><label>다크<span class="themeSample" data-theme="violet"><i></i></span><input type="radio" name="appTheme" value="violet"></label><label>라이트<span class="themeSample" data-theme="light"><i></i></span><input type="radio" name="appTheme" value="light"></label><label>모노<span class="themeSample" data-theme="mono"><i></i></span><input type="radio" name="appTheme" value="mono"></label></fieldset><fieldset class="qualityOptions"><legend>화면 표시 품질</legend><label><input type="radio" name="displayQuality" value="auto">자동</label><label><input type="radio" name="displayQuality" value="high">선명하게</label><label><input type="radio" name="displayQuality" value="balanced">가볍게</label><p>편집과 플레이 중 화면의 선명도와 기기 부담을 조절합니다.</p></fieldset><button class="btn" id="fpsToggle" title="성능 측정">FPS</button><span class="engineBadge" id="engineBadge" aria-label="렌더러와 프레임레이트" title="그래픽 렌더러 · 최근 FPS · 그래픽 품질">렌더러 확인 중</span></div></dialog><div class="viewer" id="viewer" hidden><div class="viewerStage" id="viewerStage"></div><button class="exitViewer recViewer" id="recViewer" aria-label="녹화 시작" title="녹화 시작"><i aria-hidden="true"></i><span></span></button><button class="exitViewer" id="exitViewer" aria-label="편집으로 돌아가기"><svg class="ic" aria-hidden="true"><use href="#i-back"/></svg></button><div class="viewerAudio compact" id="viewerAudio"><div class="playerHeader"><span class="playerTitle">♪ 음악 플레이어</span><button class="playerHandle" id="playerCollapse" aria-label="음악 플레이어 접기" title="음악 플레이어 접기">_</button></div><div class="playerControls"><div class="playerRow"><button id="musicBtn" class="btn" title="음악 재생·정지">▶ 음악</button><select id="viewerTrack" title="음악 선택"><option value="lounge">느린 라운지</option><option value="dream">몽환</option><option value="mystery">밤의 신스</option><option value="file">내 음악</option></select><label title="음악 볼륨">♫ <input id="viewerMusicVolume" type="range" min="0" max="100" value="40"></label></div><div class="playerRow"><button id="muteViewer" class="btn" title="효과음 켜기·끄기" aria-pressed="true">❚❚ 효과음</button><select id="viewerEffects" class="viewerEffects" aria-label="터치 효과음 종류"><option value="off">끄기</option><option value="soft" selected>부드러운 터치</option><option value="slap">경쾌한 타격</option><option value="jelly">젤리·탄성</option><option value="water">물결·액체</option><option value="wetClip">물기 있는 짧은 터치 · 녹음</option><option value="hardClip">타격음 · 녹음</option><option value="softClip">부드러운 찰싹 · 녹음</option><option value="mudClip">질척한 터치 · 녹음</option><option value="file">불러온 효과음</option></select><label title="효과음 볼륨" class="playerSfx">효과 <input id="viewerSfxVolume" type="range" min="0" max="100" value="25"></label></div></div></div><div class="viewerHint" id="viewerHint">그림을 터치하면 반응합니다.</div></div>
 <dialog id="aboutDialog" class="saveDialog layoutDialog"><header class="dlgHead"><h2>버전 정보</h2><button type="button" class="dlgX" aria-label="닫기">×</button></header><div class="dlgBody aboutBody" tabindex="-1" autofocus><p class="aboutName"><b>MotionPad</b> 1.0</p><p>그림 한 장에 터치 반응과 반복 움직임을 입히는 편집기입니다.</p><dl class="aboutList"><dt>개인정보</dt><dd>그림·프로젝트·음악은 이 기기 안에서만 처리하며 어디로도 전송하지 않습니다.</dd><dt>구성 요소</dt><dd>외부 라이브러리·글꼴·아이콘 묶음을 쓰지 않았습니다. 화면 아이콘, 움짤 인코더, 내장 음악(합성)은 모두 자체 제작입니다.</dd></dl></div></dialog><dialog id="saveAsDialog" class="saveDialog" aria-labelledby="saveAsTitle"><form id="saveAsForm"><header class="dlgHead"><h2 id="saveAsTitle">이름 바꿔 저장</h2><button type="button" class="dlgX" aria-label="닫기">×</button></header><div class="dlgBody"><label for="saveAsName">파일 이름</label><input id="saveAsName" type="text" maxlength="70" autocomplete="off" autofocus><p class="mini">.motionpad.json 파일로 다운로드합니다.</p></div><footer class="dlgFoot"><button class="btn primary" type="submit">다운로드</button><button id="cancelSaveAs" class="btn" type="button">취소</button></footer></form></dialog>
 <dialog id="confirmDialog" class="saveDialog" aria-labelledby="confirmTitle"><header class="dlgHead"><h2 id="confirmTitle">확인</h2></header><div class="dlgBody"><p id="confirmMessage"></p></div><footer class="dlgFoot"><button id="confirmCancel" class="btn" type="button">취소</button><button id="confirmOk" class="btn warn" type="button">확인</button></footer></dialog><dialog id="zoneMenuDialog" class="saveDialog" aria-labelledby="zoneMenuTitle"><header class="dlgHead"><h2 id="zoneMenuTitle">영역</h2><button type="button" class="dlgX" aria-label="닫기">×</button></header><div class="dlgBody" tabindex="-1" autofocus><div class="settingActions"><button id="zoneMenuDuplicate" class="btn" type="button">복제</button><button id="zoneMenuDelete" class="btn warn" type="button">삭제</button><button id="zoneMenuLock" class="btn" type="button">잠금</button></div></div></dialog>
 <input id="imageFile" class="sr" type="file" accept="image/*"><input id="backupFile" class="sr" type="file" accept="application/json,.json"><input id="musicFile" class="sr" type="file" accept="audio/*"><input id="sfxFile" class="sr" type="file" accept="audio/*"><button id="imageBtn" type="button" hidden></button><button id="restoreBtn" type="button" hidden></button>
@@ -648,27 +665,10 @@ button[data-help]:hover::before{color:var(--ink)}
  <button class="btn" id="blinkWhole" type="button">전체 보기</button>
  <button class="dlgX" id="blinkClose" type="button" aria-label="닫기">×</button>
  </div></div>
- <div class="blinkToolbar">
- <label>편집할 눈 <select id="blinkEye"><option value="0">눈 1</option><option value="1">눈 2</option></select></label>
- <button class="btn" id="blinkRemove" type="button">이 눈 제거</button>
- <button class="btn" id="blinkProtect" type="button" aria-pressed="false">앞머리 보호 붓</button>
- <button class="btn" id="blinkUndo" type="button" aria-label="실행 취소">↶</button>
- <button class="btn" id="blinkRedo" type="button" aria-label="다시 실행" disabled>↷</button>
- </div><div class="blinkToolbar" id="blinkBrushOptions" hidden>
-  <label class="blinkControl">붓 굵기 <input id="blinkBrushWidth" type="range" min="4" max="48" value="18"></label>
-  <label class="toggle"><input id="blinkSampleOnly" type="checkbox">피부색 참고에서만 제외</label>
-  <button class="btn" id="blinkUnprotect" type="button">마지막 보호 획 취소</button>
- </div>
- <div class="blinkStage" tabindex="-1" autofocus><canvas id="blinkPreview" aria-label="눈 위치 지정 및 깜빡임 미리보기"></canvas></div>
- <div class="blinkSettings">
- <label class="blinkControl">깜빡임 속도 <input id="blinkSpeed" type="range" min="50" max="160" value="100"></label>
- <label class="blinkControl">깜빡임 간격 <input id="blinkInterval" type="range" min="2" max="10" step="0.5" value="4.5"><output id="blinkIntervalValue">4.5초</output></label>
- <input id="blinkAmount" type="hidden" value="0">
- <label class="blinkControl">감긴 눈 모양 <input id="blinkCurve" type="range" min="-100" max="100" value="0"></label>
- <label class="blinkControl">눈꺼풀 보정 범위 <input id="blinkCover" type="range" min="5" max="65" value="24"></label>
- <button class="btn" id="blinkPlay" type="button">한 번 깜빡이기</button>
- </div>
- <div class="blinkFooter"><p id="blinkHint" role="status"></p><button class="btn primary" id="blinkApply" type="button">현재 눈 적용</button></div>
+ <div class="blinkToolbar"><label>편집할 눈 <select id="blinkEye"><option value="0">눈 1</option><option value="1">눈 2</option></select></label><button class="btn" id="blinkRemove" type="button">이 눈 제거</button><span class="barSep" aria-hidden="true"></span><button class="btn" id="blinkProtect" type="button" aria-pressed="false">앞머리 보호 붓</button><span class="barSep" aria-hidden="true"></span><button class="btn iconBtn" id="blinkUndo" type="button" aria-label="실행 취소" title="실행 취소"><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button><button class="btn iconBtn" id="blinkRedo" type="button" aria-label="다시 실행" title="다시 실행" disabled><svg class="ic" aria-hidden="true"><use href="#i-redo"/></svg></button><span class="blinkBrush" id="blinkBrushOptions" hidden><span class="barSep" aria-hidden="true"></span><label for="blinkBrushWidth">붓 굵기</label><input id="blinkBrushWidth" type="range" min="4" max="48" value="18"><output id="blinkBrushWidthValue">18</output><label class="toggle"><input id="blinkSampleOnly" type="checkbox">피부색 참고에서만 제외</label></span></div>
+ <div class="blinkMain"><div class="blinkStage" tabindex="-1" autofocus><canvas id="blinkPreview" aria-label="눈 위치 지정 및 깜빡임 미리보기"></canvas></div>
+ <div class="blinkSettings"><button class="btn" id="blinkPlay" type="button">한 번 깜빡이기</button><label class="toggle"><input id="blinkHold" type="checkbox">눈 감은 모습 보기</label><div class="field"><div class="fieldhead"><label for="blinkSpeed">깜빡임 속도</label><output id="blinkSpeedValue"></output></div><input id="blinkSpeed" type="range" min="50" max="160" value="100"></div><div class="field"><div class="fieldhead"><label for="blinkInterval">깜빡임 간격</label><output id="blinkIntervalValue"></output></div><input id="blinkInterval" type="range" min="2" max="10" step="0.5" value="4.5"></div><input id="blinkAmount" type="hidden" value="0"><div class="field"><div class="fieldhead"><label for="blinkCurve">감긴 눈 모양</label><output id="blinkCurveValue"></output></div><input id="blinkCurve" type="range" min="-100" max="100" value="0"></div><div class="field"><div class="fieldhead"><label for="blinkCover">눈꺼풀 보정 범위</label><output id="blinkCoverValue"></output></div><input id="blinkCover" type="range" min="5" max="65" value="24"></div><button class="btn primary" id="blinkApply" type="button">현재 눈 적용</button></div></div>
+ <div class="blinkFooter"><p id="blinkHint" role="status"></p></div>
 </dialog>
 <div class="localHelp" id="localHelp" role="tooltip" hidden></div><dialog class="saveDialog layoutDialog" id="maskDialog"><header class="dlgHead"><h2>선택 영역 표시</h2><button type="button" class="dlgX" aria-label="닫기">×</button></header><div class="dlgBody" tabindex="-1" autofocus></div></dialog>
 <script>
@@ -2013,7 +2013,8 @@ function updateBaseTextures(){
  b.width=b.height=TILE;
  const bg=b.getContext('2d');
  if(baseEdge)bg.filter='blur('+baseEdge+'px)';
- bg.drawImage(base,0,0);
+ // 3-M: 얹는 몸체 그림은 선택보다 넓게(빈자리는 2칸 넓게 메우므로 그보다 바깥까지). 좁으면 가만히 있어도 테두리에 메운 자국이 비친다.
+ bg.drawImage(dilateMask(base,3+Math.ceil(baseEdge*.75)),0,0);
  baseMaskCanvas=b;lastBaseEdge=baseEdge;
  baseForegroundSource=null;
 }
@@ -2555,12 +2556,12 @@ if(step%2===0){const bass=base*Math.pow(2,scale[0]/12);tone(bass,t,.65,'sine',.1
 const degree=scale[(step%4)],freq=base*2*Math.pow(2,degree/12);tone(freq,t,type==='dream'?1.25:.38,type==='mystery'?'triangle':'sine',type==='dream'?.065:.075);if(type==='lounge'&&step%4===3)tone(freq*1.5,t+.18,.18,'sine',.025);
 }
 function stopMusic(){musicPlaying=false;clearInterval(musicTimer);musicTimer=null;if(activeAudio){activeAudio.pause();activeAudio.currentTime=0;activeAudio=null}$('musicBtn').textContent='▶ 음악'}
-async function startMusic(){stopMusic();ensureAudio();await audioCtx.resume();const type=$('trackSelect').value;if(type==='file'){if(!audioBlob){setStatus('먼저 음악 파일을 불러와 주세요.');return}if(audioURL)URL.revokeObjectURL(audioURL);audioURL=URL.createObjectURL(audioBlob);activeAudio=new Audio(audioURL);activeAudio.loop=true;activeAudio.volume=Number($('musicVolume').value)/100;try{await activeAudio.play()}catch(e){setStatus('재생하려면 화면에서 다시 ▶ 버튼을 눌러 주세요.');activeAudio=null;return}}musicPlaying=true;musicTick=0;if(type!=='file'){musicStep();musicTimer=setInterval(musicStep,type==='dream'?650:type==='lounge'?430:480)}$('musicBtn').textContent='❚❚ 정지'}
+async function startMusic(){stopMusic();ensureAudio();await audioCtx.resume();const type=$('trackSelect').value;if(type==='file'){if(!audioBlob){setStatus('먼저 음악 파일을 불러와 주세요.');return}if(audioURL)URL.revokeObjectURL(audioURL);audioURL=URL.createObjectURL(audioBlob);activeAudio=new Audio(audioURL);activeAudio.loop=true;activeAudio.volume=Number($('musicVolume').value)/100;try{await activeAudio.play()}catch(e){setStatus('재생하려면 화면에서 다시 ▶ 버튼을 눌러 주세요.');activeAudio=null;return}}musicPlaying=true;musicTick=0;if(type!=='file'){musicStep();musicTimer=setInterval(musicStep,type==='dream'?650:type==='lounge'?430:480)}$('musicBtn').textContent='❚❚ 음악'}
 $('musicBtn').onclick=()=>{if(musicPlaying)stopMusic();else startMusic().catch(e=>setStatus('음악 재생 실패: '+e.message))};
 function setTrack(t){$('trackSelect').value=t;$('viewerTrack').value=t;if(musicPlaying)startMusic().catch(console.warn);scheduleSave()}
 $('trackSelect').onchange=e=>setTrack(e.target.value);$('viewerTrack').onchange=e=>setTrack(e.target.value);
 $('musicVolume').oninput=e=>{$('musicVolumeValue').textContent=e.target.value+'%';$('viewerMusicVolume').value=e.target.value;if(activeAudio)activeAudio.volume=e.target.value/100;scheduleSave()};$('viewerMusicVolume').oninput=e=>{$('musicVolume').value=e.target.value;$('musicVolumeValue').textContent=e.target.value+'%';if(activeAudio)activeAudio.volume=e.target.value/100;scheduleSave()};
-$('sfxVolume').oninput=e=>{$('sfxVolumeValue').textContent=e.target.value+'%';scheduleSave()};$('muteViewer').onclick=()=>{effectMuted=!effectMuted;$('muteViewer').textContent=effectMuted?'효과음 꺼짐':'효과음 켜짐';$('muteViewer').setAttribute('aria-pressed',String(!effectMuted))};
+$('sfxVolume').oninput=e=>{$('sfxVolumeValue').textContent=e.target.value+'%';scheduleSave()};$('muteViewer').onclick=()=>{effectMuted=!effectMuted;$('muteViewer').textContent=effectMuted?'▶ 효과음':'❚❚ 효과음';$('muteViewer').setAttribute('aria-pressed',String(!effectMuted))};
 // 3-M: 내 효과음 파일. 짧은 소리 하나를 불러와 터치할 때마다 낸다(프로젝트에 함께 저장).
 function playFileSfx(power){
  if(!sfxBlob)return;
@@ -2907,7 +2908,7 @@ async function recordGif(plan,opts={}){
  const output=document.createElement('canvas');output.width=W;output.height=H;
  const g=output.getContext('2d',{alpha:false,willReadFrequently:true});
  const first=document.createElement('canvas');first.width=W;first.height=H;const firstG=first.getContext('2d');
- const enc=createGifEncoder(W,H,{colors:plan.gifColors,extra:opts.fx?[[255,248,214],[255,255,255],[60,48,36]]:[]});
+ const enc=createGifEncoder(W,H,{colors:plan.gifColors,extra:opts.fx?[[255,250,232],[255,255,255],[60,48,36]]:[]});
  const fake={state:'recording',stop(){this.state='inactive';finish()}};
  if(!await beginExport(plan,opts))return;
  videoRecorder=fake;videoCancelled=false;videoErrorMessage='';
@@ -2940,6 +2941,8 @@ async function recordGif(plan,opts={}){
  videoAnimationFrame=requestAnimationFrame(nextFrame);
 }
 $('exportVideoBtn').onclick=()=>recordVideo().catch(e=>{console.error(e);exportPreparing=false;endExportRender();$('exportVideoBtn').disabled=false;$('cancelVideoBtn').hidden=true;showNotice('영상 내보내기','영상을 저장하다 문제가 생겼습니다.'+why(e))});
+// 3-M: 내보내기 창에서 바로 플레이 화면 녹화로 넘어간다(크기·화질·형식은 이 창의 값)
+$('liveRecBtn').onclick=async()=>{$('videoDialog').close();await enterViewer();if(viewerOpen&&!liveRecording)$('recViewer').click()};
 $('cancelVideoBtn').onclick=()=>interruptVideoRecording('사용자가 영상 저장을 취소했습니다.');
 
 // 3-F 플레이 화면 녹화(●). 크기·화질·형식은 '영상으로 내보내기' 창의 값을 쓴다. 버튼 자체는 영상에 찍히지 않는다(그림만 그린다).
@@ -3054,7 +3057,7 @@ for(const radio of themeRadios)radio.onchange=()=>{
  paintTheme();
 };
 const playerFrame=$('viewerAudio'),playerCollapse=$('playerCollapse');
-playerCollapse.onclick=()=>{const folded=playerFrame.classList.toggle('compact');playerCollapse.textContent=folded?'♫':'⌄';playerCollapse.title=folded?'음악 플레이어 펼치기':'음악 플레이어 접기';playerCollapse.setAttribute('aria-label',playerCollapse.title)};
+playerCollapse.onclick=()=>{const folded=playerFrame.classList.toggle('compact');playerCollapse.textContent=folded?'♫':'_';playerCollapse.title=folded?'음악 플레이어 펼치기':'음악 플레이어 접기';playerCollapse.setAttribute('aria-label',playerCollapse.title)};
 function setQualityMode(value){qualityMode=value;qualityScale=qualityMode==='balanced'?.7:1;meshSegments=qualityMode==='balanced'?[20,30]:[32,48];if(gl)rebuildMesh();fit();scheduleSave()}
 function paintQuality(){for(const radio of document.querySelectorAll('input[name="displayQuality"]'))radio.checked=radio.value===qualityMode}
 for(const radio of document.querySelectorAll('input[name="displayQuality"]'))radio.onchange=()=>setQualityMode(radio.value);
@@ -3439,26 +3442,47 @@ function dilateMask(source,radius){
   const out=document.createElement('canvas');out.width=w;out.height=h;out.getContext('2d').putImageData(base,0,0);return out;
 }
 
-// 3-F 플레이 화면 터치 이펙트(사용자 선택: 반짝임). 누르면 작은 별빛 몇 개가 톡 튀어 사라지고, 끌면 지나간 자리에 드문드문 생긴다.
+// 3-F 플레이 화면 터치 표시. 3-M: 평소 플레이 중에는 아무것도 그리지 않고, 녹화 중(●)이고 '터치한 자리 표시'가 켜져 있을 때만 그린다.
+// 모양 셋(내보내기 창에서 고름): 물결 고리(누른 자리에서 작은 고리가 퍼짐) · 작은 점 · 반짝임(작은 별빛). 크기는 예전의 절반 이하.
 // 위치는 그림 기준(0~1)이라 화면·영상 크기가 달라도 같은 자리에 그려진다. 밝은 그림에서도 보이게 얇은 어두운 테두리.
 const fxLayer=$('fxLayer'),fxCtx=fxLayer.getContext('2d');
 let sparkles=[],fxDirty=false,fxLastSpawn=0;
-const FX_LIFE=.7;
-function spawnSparkles(x,y,n){const now=performance.now()/1000;for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2;sparkles.push({x,y,t0:now+i*.015,a,d:.5+Math.random()*.5,s:.75+Math.random()*.5})}if(sparkles.length>80)sparkles.splice(0,sparkles.length-80)}
-overlay.addEventListener('pointerdown',e=>{if(!viewerOpen||pointers.size>1)return;const p=pointerPos(e);spawnSparkles(p.x,p.y,5);fxLastSpawn=performance.now()});
-overlay.addEventListener('pointermove',e=>{if(!viewerOpen||!pointers.has(e.pointerId)||pointers.size>1)return;const now=performance.now();if(now-fxLastSpawn<70)return;fxLastSpawn=now;const p=pointerPos(e);spawnSparkles(p.x,p.y,2)});
+const fxOn=()=>viewerOpen&&liveRecording&&$('videoFx').checked;
+function spawnFx(x,y,tap){
+ const now=performance.now()/1000,kind=$('videoFxKind').value;
+ if(kind==='sparkle'){for(let i=0;i<(tap?4:1);i++)sparkles.push({kind,x,y,t0:now+i*.015,life:.6,a:Math.random()*Math.PI*2,d:.5+Math.random()*.5,s:.75+Math.random()*.5})}
+ else if(kind==='ring'&&tap)sparkles.push({kind,x,y,t0:now,life:.45});
+ else sparkles.push({kind:'dot',x,y,t0:now,life:tap?.5:.4,s:tap?1:.7});// 끌 때는 작은 점이 자국처럼 남는다
+ if(sparkles.length>80)sparkles.splice(0,sparkles.length-80);
+}
+overlay.addEventListener('pointerdown',e=>{if(!fxOn()||pointers.size>1)return;const p=pointerPos(e);spawnFx(p.x,p.y,true);fxLastSpawn=performance.now()});
+overlay.addEventListener('pointermove',e=>{if(!fxOn()||!pointers.has(e.pointerId)||pointers.size>1)return;const now=performance.now();if(now-fxLastSpawn<70)return;fxLastSpawn=now;const p=pointerPos(e);spawnFx(p.x,p.y,false)});
 function drawTouchFx(){
  if(!sparkles.length&&!fxDirty)return;
  const dpr=Math.min(window.devicePixelRatio||1,2),W=Math.max(1,Math.round(surface.clientWidth*dpr)),H=Math.max(1,Math.round(surface.clientHeight*dpr));
  if(fxLayer.width!==W||fxLayer.height!==H){fxLayer.width=W;fxLayer.height=H}
  fxCtx.clearRect(0,0,W,H);fxDirty=false;
- const now=performance.now()/1000,unit=Math.max(W,H)/100;// 별 크기 기준: 화면 긴 변의 1%
- sparkles=sparkles.filter(p=>now-p.t0<FX_LIFE);
- for(const p of sparkles){const t=Math.max(0,(now-p.t0)/FX_LIFE),ease=1-(1-t)**2,dist=unit*(1.5+7*ease*p.d),r=unit*1.9*p.s*(1-t*.7);
-  const cx=p.x*W+Math.cos(p.a)*dist,cy=p.y*H+Math.sin(p.a)*dist,alpha=1-t*t;
-  fxCtx.beginPath();for(let k=0;k<8;k++){const rr=k%2?r*.36:r,aa=k/8*Math.PI*2-Math.PI/2;fxCtx.lineTo(cx+Math.cos(aa)*rr,cy+Math.sin(aa)*rr)}fxCtx.closePath();
-  fxCtx.lineWidth=Math.max(1,unit*.16);fxCtx.strokeStyle=`rgba(40,30,20,${.55*alpha})`;fxCtx.stroke();
-  fxCtx.fillStyle=`rgba(255,248,214,${alpha})`;fxCtx.fill();fxDirty=true}
+ const now=performance.now()/1000,unit=Math.max(W,H)/100;// 크기 기준: 화면 긴 변의 1%
+ sparkles=sparkles.filter(p=>now-p.t0<p.life);
+ const dark=a=>`rgba(40,30,20,${a})`,light=a=>`rgba(255,250,232,${a})`;
+ for(const p of sparkles){
+  const t=Math.max(0,(now-p.t0)/p.life),ease=1-(1-t)**2,alpha=1-t*t,x=p.x*W,y=p.y*H;
+  fxCtx.beginPath();
+  if(p.kind==='ring'){
+   fxCtx.arc(x,y,unit*(.7+2.1*ease),0,Math.PI*2);
+   fxCtx.lineWidth=unit*.5*(1-t*.6);fxCtx.strokeStyle=dark(.3*alpha);fxCtx.stroke();
+   fxCtx.lineWidth=unit*.26*(1-t*.6);fxCtx.strokeStyle=light(alpha);fxCtx.stroke();
+  }else if(p.kind==='dot'){
+   fxCtx.arc(x,y,unit*.85*p.s*(1-t*.3),0,Math.PI*2);
+   fxCtx.lineWidth=Math.max(1,unit*.12);fxCtx.strokeStyle=dark(.4*alpha);fxCtx.stroke();
+   fxCtx.fillStyle=light(.85*alpha);fxCtx.fill();
+  }else{
+   const dist=unit*(.8+3*ease*p.d),r=unit*.95*p.s*(1-t*.7),cx=x+Math.cos(p.a)*dist,cy=y+Math.sin(p.a)*dist;
+   for(let k=0;k<8;k++){const rr=k%2?r*.36:r,aa=k/8*Math.PI*2-Math.PI/2;fxCtx.lineTo(cx+Math.cos(aa)*rr,cy+Math.sin(aa)*rr)}fxCtx.closePath();
+   fxCtx.lineWidth=Math.max(1,unit*.12);fxCtx.strokeStyle=dark(.5*alpha);fxCtx.stroke();
+   fxCtx.fillStyle=light(alpha);fxCtx.fill();
+  }
+  fxDirty=true}
 }
 function clearTouchFx(){sparkles=[];fxCtx.clearRect(0,0,fxLayer.width,fxLayer.height);fxDirty=false}
 // Ambient and audio UI are deliberately independent of the selected region.
@@ -4013,15 +4037,17 @@ function drawBlinkPreview(){
 function refreshBlinkSetup(){
  $('blinkHint').textContent=blinkPrompts[blinkPoints.length]||'미리보기를 확인하고 현재 눈 적용을 눌러 주세요.';
  blinkPatch=makeBlinkPatch(blinkPoints,Number($('blinkCover').value),blinkProtection);
- $('blinkUnprotect').disabled=!blinkProtection.length;
  if(blinkPoints.length===4&&!blinkPatch)$('blinkHint').textContent='눈꼬리는 왼쪽부터 찍고, 위아래 점은 눈꼬리를 잇는 선 양쪽에 찍어 주세요.';
  $('blinkApply').disabled=!blinkPatch;
  $('blinkRemove').disabled=!blinkEyes[Number($('blinkEye').value)];
  $('blinkUndo').disabled=!blinkUndoStack.length;
  $('blinkRedo').disabled=!blinkRedoStack.length;
- for(const id of ['blinkAmount','blinkPlay','blinkCurve','blinkCover'])$(id).disabled=!blinkPatch;
+ for(const id of ['blinkAmount','blinkPlay','blinkHold','blinkCurve','blinkCover'])$(id).disabled=!blinkPatch;
+ $('blinkHold').checked=!!blinkPatch&&Number($('blinkAmount').value)>=100;paintBlinkValues();
  drawBlinkPreview();
 }
+// 3-M: 조절 막대 옆 숫자
+function paintBlinkValues(){$('blinkSpeedValue').textContent=$('blinkSpeed').value+'%';$('blinkCurveValue').textContent=$('blinkCurve').value;$('blinkCoverValue').textContent=$('blinkCover').value;$('blinkBrushWidthValue').textContent=$('blinkBrushWidth').value}
 function stopBlinkPreview(){
  cancelAnimationFrame(blinkFrame);
  blinkFrame=0;
@@ -4051,7 +4077,6 @@ $('blinkWhole').onclick=()=>{
 function setBlinkProtection(active){
  blinkProtecting=active;blinkStroke=null;
  $('blinkProtect').setAttribute('aria-pressed',String(active));
- $('blinkProtect').classList.toggle('primary',active);
  $('blinkBrushOptions').hidden=!active;
 }
 function blinkStrokePoint(e){
@@ -4080,7 +4105,6 @@ function stepBlinkEdit(from,to){
  blinkPoints=snapshot.points;blinkProtection=snapshot.protection;
  $('blinkAmount').value=0;refreshBlinkSetup();
 }
-$('blinkUnprotect').onclick=()=>{rememberBlinkEdit();blinkProtection.pop();refreshBlinkSetup()};
 blinkPreview.onpointerdown=e=>{
  if(blinkProtecting){
   if(blinkProtection.length>=40)return;
@@ -4131,10 +4155,13 @@ blinkPreview.onclick=e=>{
 $('blinkUndo').onclick=()=>stepBlinkEdit(blinkUndoStack,blinkRedoStack);
 $('blinkRedo').onclick=()=>stepBlinkEdit(blinkRedoStack,blinkUndoStack);
 $('blinkAmount').oninput=()=>{stopBlinkPreview();drawBlinkPreview()};
-$('blinkCurve').oninput=drawBlinkPreview;
-$('blinkCover').oninput=refreshBlinkSetup;
+// 3-M: 감긴 눈 모양·눈꺼풀 보정 범위를 만지는 동안은 눈을 감긴 채로 보여 준다('눈 감은 모습 보기'가 켜진다). 끄면 뜬 눈으로 돌아간다.
+$('blinkCurve').oninput=()=>{stopBlinkPreview();$('blinkAmount').value=100;$('blinkHold').checked=true;paintBlinkValues();drawBlinkPreview()};
+$('blinkCover').oninput=()=>{stopBlinkPreview();$('blinkAmount').value=100;refreshBlinkSetup()};
+$('blinkHold').onchange=()=>{stopBlinkPreview();$('blinkAmount').value=$('blinkHold').checked?100:0;drawBlinkPreview()};
+$('blinkSpeed').oninput=paintBlinkValues;$('blinkBrushWidth').oninput=paintBlinkValues;
 $('blinkPlay').onclick=()=>{
- stopBlinkPreview();
+ stopBlinkPreview();$('blinkHold').checked=false;
  const start=performance.now();
  function frame(now){
   const t=(now-start)*Number($('blinkSpeed').value)/100;

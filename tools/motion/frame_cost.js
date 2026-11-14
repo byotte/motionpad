@@ -69,7 +69,7 @@ async function measure(page, during, windowMs = 5000) {
     await page.goto('file://' + TARGET);
     await page.setInputFiles('#imageFile', FIX); await page.waitForSelector('.workspace:not([hidden])'); await rafs(page, 3);
     const box = await page.locator('#view').boundingBox(), P = (x, y) => [box.x + box.width * x, box.y + box.height * y];
-    const newZone = () => page.evaluate(() => { const t = document.querySelector('.mode.active'); document.getElementById('newRegionBtn').click(); t?.click(); });
+    const newZone = () => page.evaluate(() => { const t = document.querySelector('.mode.active'); document.getElementById('newRegionBtn').click(); if (t && !t.classList.contains('active')) t.click(); });
     await page.locator('#ellipseMode').click();
     await page.mouse.move(...P(.36, .25)); await page.mouse.down(); await page.mouse.move(...P(.64, .52), { steps: 8 }); await page.mouse.up(); await rafs(page, 2);
     await page.locator('#wandMode').click();

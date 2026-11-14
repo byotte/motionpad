@@ -34,7 +34,7 @@ const stat = a => { const s = a.slice().sort((x, y) => x - y); return { avg: +(a
     await page.setInputFiles('#imageFile', FIX); await page.waitForSelector('.workspace:not([hidden])'); await rafs(page, 3);
     const box = await page.locator('#view').boundingBox(), P = (x, y) => [box.x + box.width * x, box.y + box.height * y];
     const drag = async pts => { await page.mouse.move(...P(...pts[0])); await page.mouse.down(); for (const q of pts.slice(1)) await page.mouse.move(...P(...q), { steps: 8 }); await page.mouse.up(); };
-    const newZone = () => page.evaluate(() => { const t = document.querySelector('.mode.active'); document.getElementById('newRegionBtn').click(); t?.click(); });
+    const newZone = () => page.evaluate(() => { const t = document.querySelector('.mode.active'); document.getElementById('newRegionBtn').click(); if (t && !t.classList.contains('active')) t.click(); });
     const r = { errs };
     await page.locator('#ellipseMode').click(); await drag([[0.36, 0.25], [0.64, 0.52]]); await rafs(page, 2);
     await page.locator('#wandMode').click(); await newZone();

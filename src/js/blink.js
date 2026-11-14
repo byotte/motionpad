@@ -290,15 +290,17 @@ function drawBlinkPreview(){
 function refreshBlinkSetup(){
  $('blinkHint').textContent=blinkPrompts[blinkPoints.length]||'미리보기를 확인하고 현재 눈 적용을 눌러 주세요.';
  blinkPatch=makeBlinkPatch(blinkPoints,Number($('blinkCover').value),blinkProtection);
- $('blinkUnprotect').disabled=!blinkProtection.length;
  if(blinkPoints.length===4&&!blinkPatch)$('blinkHint').textContent='눈꼬리는 왼쪽부터 찍고, 위아래 점은 눈꼬리를 잇는 선 양쪽에 찍어 주세요.';
  $('blinkApply').disabled=!blinkPatch;
  $('blinkRemove').disabled=!blinkEyes[Number($('blinkEye').value)];
  $('blinkUndo').disabled=!blinkUndoStack.length;
  $('blinkRedo').disabled=!blinkRedoStack.length;
- for(const id of ['blinkAmount','blinkPlay','blinkCurve','blinkCover'])$(id).disabled=!blinkPatch;
+ for(const id of ['blinkAmount','blinkPlay','blinkHold','blinkCurve','blinkCover'])$(id).disabled=!blinkPatch;
+ $('blinkHold').checked=!!blinkPatch&&Number($('blinkAmount').value)>=100;paintBlinkValues();
  drawBlinkPreview();
 }
+// 3-M: 조절 막대 옆 숫자
+function paintBlinkValues(){$('blinkSpeedValue').textContent=$('blinkSpeed').value+'%';$('blinkCurveValue').textContent=$('blinkCurve').value;$('blinkCoverValue').textContent=$('blinkCover').value;$('blinkBrushWidthValue').textContent=$('blinkBrushWidth').value}
 function stopBlinkPreview(){
  cancelAnimationFrame(blinkFrame);
  blinkFrame=0;
@@ -328,7 +330,6 @@ $('blinkWhole').onclick=()=>{
 function setBlinkProtection(active){
  blinkProtecting=active;blinkStroke=null;
  $('blinkProtect').setAttribute('aria-pressed',String(active));
- $('blinkProtect').classList.toggle('primary',active);
  $('blinkBrushOptions').hidden=!active;
 }
 function blinkStrokePoint(e){
@@ -357,7 +358,6 @@ function stepBlinkEdit(from,to){
  blinkPoints=snapshot.points;blinkProtection=snapshot.protection;
  $('blinkAmount').value=0;refreshBlinkSetup();
 }
-$('blinkUnprotect').onclick=()=>{rememberBlinkEdit();blinkProtection.pop();refreshBlinkSetup()};
 blinkPreview.onpointerdown=e=>{
  if(blinkProtecting){
   if(blinkProtection.length>=40)return;
@@ -408,10 +408,13 @@ blinkPreview.onclick=e=>{
 $('blinkUndo').onclick=()=>stepBlinkEdit(blinkUndoStack,blinkRedoStack);
 $('blinkRedo').onclick=()=>stepBlinkEdit(blinkRedoStack,blinkUndoStack);
 $('blinkAmount').oninput=()=>{stopBlinkPreview();drawBlinkPreview()};
-$('blinkCurve').oninput=drawBlinkPreview;
-$('blinkCover').oninput=refreshBlinkSetup;
+// 3-M: 감긴 눈 모양·눈꺼풀 보정 범위를 만지는 동안은 눈을 감긴 채로 보여 준다('눈 감은 모습 보기'가 켜진다). 끄면 뜬 눈으로 돌아간다.
+$('blinkCurve').oninput=()=>{stopBlinkPreview();$('blinkAmount').value=100;$('blinkHold').checked=true;paintBlinkValues();drawBlinkPreview()};
+$('blinkCover').oninput=()=>{stopBlinkPreview();$('blinkAmount').value=100;refreshBlinkSetup()};
+$('blinkHold').onchange=()=>{stopBlinkPreview();$('blinkAmount').value=$('blinkHold').checked?100:0;drawBlinkPreview()};
+$('blinkSpeed').oninput=paintBlinkValues;$('blinkBrushWidth').oninput=paintBlinkValues;
 $('blinkPlay').onclick=()=>{
- stopBlinkPreview();
+ stopBlinkPreview();$('blinkHold').checked=false;
  const start=performance.now();
  function frame(now){
   const t=(now-start)*Number($('blinkSpeed').value)/100;

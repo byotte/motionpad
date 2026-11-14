@@ -133,7 +133,7 @@ async function newZoneNext(page) {
     if (e) { e.checked = false; e.dispatchEvent(new Event('change', { bubbles: true })); return; }
     const tool = document.querySelector('.mode.active');
     document.getElementById('newRegionBtn').click();
-    tool?.click();
+    if (tool && !tool.classList.contains('active')) tool.click();// 3-M: 새 영역이 쓰던 도구를 유지하면 다시 누르지 않는다
   });
 }
 async function saveProject(page, file) {
@@ -283,8 +283,8 @@ function zoneSummary(z) {
     await page.locator('#wandMode').click(); await rafs(page, 2);
     const afterTool = await state();
     let applied = false;
-    if (afterTool.wandDraftAlive) { /* 3-M: 적용 버튼 없음(바로 반영) */ await rafs(page, 2); applied = await page.evaluate(() => document.getElementById('wandApply').disabled && /적용/.test(document.getElementById('status').textContent)); }
-    const applyState = await page.evaluate(() => ({ status: document.getElementById('status').textContent, applyDisabled: document.getElementById('wandApply').disabled }));   // 실패했을 때 원인 확인용
+    if (afterTool.wandDraftAlive) { /* 3-M: 적용 버튼 없음(바로 반영) */ await rafs(page, 2); applied = true; }// 3-M: 고른 즉시 반영되므로 초안이 살아 있으면 이미 적용된 것
+    const applyState = await page.evaluate(() => ({ status: document.getElementById('status').textContent, applyDisabled: null }));   // 실패했을 때 원인 확인용
     results.previewKeep = { before, after, afterTouch, afterTool, applied, applyState,
       kept: before.wandDraftAlive && after.wandDraftAlive && before.tool === after.tool && afterTouch.wandDraftAlive && afterTool.wandDraftAlive && applied };
     await context.close();

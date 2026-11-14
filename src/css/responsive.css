@@ -18,6 +18,9 @@
   .status{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
   .side{max-height:var(--panel-height,36dvh)}
   .side>.maskDisplay{display:none}
+  .blinkMain{grid-template-columns:minmax(0,1fr)}
+  .blinkSettings{border-left:0;border-top:1px solid var(--line)}
+  #blinkPreview{max-height:41dvh}
   /* 2-F 폰: 영역 목록은 가로 이름표(효과 이름표는 숨김, 몸체는 별표) */
   .zoneList{flex-direction:row;flex-wrap:wrap;gap:4px;margin:0}
   .zoneItem{width:auto;max-width:100%;padding:2px 10px;border-color:var(--line);background:var(--button)}
@@ -52,10 +55,6 @@
   .loupe{top:6px;right:6px;width:104px;height:104px}
   #lassobar{gap:4px;padding-inline:4px}
   .fileBtn span{display:none}
-  #blinkPreview{max-height:41dvh}
-  .blinkSettings{grid-template-columns:1fr}
-  .blinkFooter{flex-wrap:nowrap}
-  #blinkHint,#blinkApply{min-width:0}
 }
 
 /* ── 11. 터치 기기·좁은 화면: 손가락으로 누르기 쉬운 높이 ── */

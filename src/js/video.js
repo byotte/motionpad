@@ -162,7 +162,7 @@ async function recordGif(plan,opts={}){
  const output=document.createElement('canvas');output.width=W;output.height=H;
  const g=output.getContext('2d',{alpha:false,willReadFrequently:true});
  const first=document.createElement('canvas');first.width=W;first.height=H;const firstG=first.getContext('2d');
- const enc=createGifEncoder(W,H,{colors:plan.gifColors,extra:opts.fx?[[255,248,214],[255,255,255],[60,48,36]]:[]});
+ const enc=createGifEncoder(W,H,{colors:plan.gifColors,extra:opts.fx?[[255,250,232],[255,255,255],[60,48,36]]:[]});
  const fake={state:'recording',stop(){this.state='inactive';finish()}};
  if(!await beginExport(plan,opts))return;
  videoRecorder=fake;videoCancelled=false;videoErrorMessage='';
@@ -195,6 +195,8 @@ async function recordGif(plan,opts={}){
  videoAnimationFrame=requestAnimationFrame(nextFrame);
 }
 $('exportVideoBtn').onclick=()=>recordVideo().catch(e=>{console.error(e);exportPreparing=false;endExportRender();$('exportVideoBtn').disabled=false;$('cancelVideoBtn').hidden=true;showNotice('영상 내보내기','영상을 저장하다 문제가 생겼습니다.'+why(e))});
+// 3-M: 내보내기 창에서 바로 플레이 화면 녹화로 넘어간다(크기·화질·형식은 이 창의 값)
+$('liveRecBtn').onclick=async()=>{$('videoDialog').close();await enterViewer();if(viewerOpen&&!liveRecording)$('recViewer').click()};
 $('cancelVideoBtn').onclick=()=>interruptVideoRecording('사용자가 영상 저장을 취소했습니다.');
 
 // 3-F 플레이 화면 녹화(●). 크기·화질·형식은 '영상으로 내보내기' 창의 값을 쓴다. 버튼 자체는 영상에 찍히지 않는다(그림만 그린다).

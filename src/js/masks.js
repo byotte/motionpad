@@ -137,7 +137,8 @@ function updateBaseTextures(){
  b.width=b.height=TILE;
  const bg=b.getContext('2d');
  if(baseEdge)bg.filter='blur('+baseEdge+'px)';
- bg.drawImage(base,0,0);
+ // 3-M: 얹는 몸체 그림은 선택보다 넓게(빈자리는 2칸 넓게 메우므로 그보다 바깥까지). 좁으면 가만히 있어도 테두리에 메운 자국이 비친다.
+ bg.drawImage(dilateMask(base,3+Math.ceil(baseEdge*.75)),0,0);
  baseMaskCanvas=b;lastBaseEdge=baseEdge;
  baseForegroundSource=null;
 }
