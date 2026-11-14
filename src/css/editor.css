@@ -9,47 +9,35 @@
 .stagebar{grid-row:1;display:flex;flex-direction:column;flex-wrap:wrap;gap:5px;min-width:0;padding:2px 5px;background:var(--panel);border-bottom:1px solid var(--line)}
 :root[data-theme="light"] .stagebar{background:var(--card)}
 .modegroup{display:flex;flex-wrap:wrap;gap:1px;width:100%}
-.mode{border:0;background:transparent;color:var(--sub);font-weight:600;text-align:left;line-height:1.2}
-.stagebar .mode{display:inline-flex;align-items:center;gap:5px;min-height:26px;padding:3px 8px;font-size:var(--toolFont);white-space:nowrap;transition:background .12s}
+.mode{border:0;background:transparent;color:var(--item);font-weight:var(--fw-item);text-align:left;line-height:1.2}
+.stagebar .mode{display:inline-flex;align-items:center;gap:5px;min-height:var(--tool-h);padding:3px 8px;font-size:var(--fs-item);white-space:nowrap;transition:background .12s}
 .stagebar .mode:hover{background:var(--button)}
-.stagebar .mode.active{box-shadow:inset 0 -2px var(--accent);color:var(--accentInk)}
+.stagebar .mode.active{box-shadow:inset 0 -2px var(--accent);color:var(--ink)}
 /* 영역 관리 묶음: 도구와 구분선으로 나눈다 */
 .toolSep{width:1px;align-self:stretch;margin:3px 6px;background:var(--line)}
 .zoneTools{display:inline-flex;align-items:center;gap:3px;margin-left:auto}
-.zoneTools .zoneNew{display:inline-flex;align-items:center;gap:4px;font-weight:700;color:var(--accentInk)}
-.zoneTools .iconBtn{min-width:28px}
+.zoneTools .zoneNew{display:inline-flex;align-items:center;gap:4px;font-weight:var(--fw-title);color:var(--accentInk)}
 /* 도구줄 칸이 좁으면(폰 가로 등) 도구는 아이콘만: 줄바꿈으로 캔버스가 줄지 않게 */
 .stagebox{container-type:inline-size}
 @container (max-width:700px){.stagebar .mode>span{display:none}.stagebar .mode{padding-inline:6px}.modegroup{flex-wrap:nowrap;align-items:center}}
-:root[data-theme="light"] .mode{color:var(--sub)}
-:root[data-theme="light"] .stagebar .mode.active{color:var(--accentInk)}
 .workspace.touchPreview .stagebar .mode.active{opacity:.5}
 
 /* 도구 옵션 줄 */
 .stageOptions{grid-row:2;display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:34px;height:35px;min-width:0;overflow:hidden;background:var(--panel);border-bottom:1px solid var(--line)}
 .stageOptions:not(:has(>.brushbar:not([hidden]))){display:none}
-.brushbar{display:flex;align-items:center;flex-wrap:nowrap;gap:6px;min-width:0;padding:2px 7px;overflow:auto hidden;white-space:nowrap;scrollbar-width:thin;background:var(--panel);color:var(--sub);font-size:11px}
-:root[data-theme="light"] .brushbar{color:var(--ink)}
+.brushbar{display:flex;align-items:center;flex-wrap:nowrap;gap:6px;min-width:0;padding:2px 7px;overflow:auto hidden;white-space:nowrap;scrollbar-width:thin;background:var(--panel);color:var(--item);font-size:var(--fs-item)}
 .brushbar>*{flex-shrink:0}
 .brushbar label{display:inline-flex;align-items:center;margin:0}
-.brushbar .btn{font-size:11px}
 .brushbar input[type=range]{flex:1;width:110px;min-width:70px;max-width:140px;margin:0}
 .brushbar input[type=checkbox]{margin:0 4px 0 0}
 .brushbar select{width:auto}
-/* 선택 방식: 새로 · 더하기 · 빼기 (한 덩어리 세 칸 버튼) */
-.selOp{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
-.selOp label{position:relative;padding:3px 9px;cursor:pointer;color:var(--sub)}
-.selOp label+label{border-left:1px solid var(--line)}
-.selOp input{position:absolute;opacity:0;pointer-events:none}
-.selOp label:has(input:checked){background:var(--accent);color:var(--onAccent)}
-.selOp label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:-2px}
 #brushbar{grid-column:1;grid-row:1}
 #wandbar,#lassobar,#outlineControls{grid-column:2;grid-row:1}
 #editGuide{grid-column:1/-1;grid-row:1;justify-content:space-between;gap:5px}
 #outlineControls{border-top:1px solid var(--line)}
 .stageOptions:has(#outlineControls:not([hidden])) #lassobar{display:none}
 #lassobar .lassoOutlineChoice{border-inline-start:1px solid var(--line);padding-inline-start:7px;margin-inline-start:3px}
-#wandStep,#outlineStep{font-size:11px;font-weight:650;color:var(--ink)}
+#wandStep,#outlineStep{font-size:var(--fs-item);font-weight:var(--fw-item);color:var(--ink)}
 #wandbar.hasPreview #wandStep,#outlineStep{display:none}
 #wandbar label[for=toleranceInput]{order:1}
 #toleranceInput{order:2}
@@ -61,34 +49,33 @@
 #lassobar:has(#encloseInput:checked) :is(label[for=magnetInput],#magnetInput,#magnetValue){display:none}
 #lassobar:not(:has(#lassoSegments:checked)) :is(#lassoFinish,#lassoUndo){display:none}
 .brushbar [data-help]{display:inline-grid;place-items:center;min-width:24px;border:0 none transparent;font-size:0;background:transparent!important}
-button[data-help]::before{content:"i";display:grid;place-items:center;width:13px;height:13px;border:1px solid currentColor;border-radius:50%;font:600 10px/1 sans-serif;color:var(--sub)}
+button[data-help]::before{content:"i";display:grid;place-items:center;width:13px;height:13px;border:1px solid currentColor;border-radius:50%;font:var(--fw-item) var(--fs-help)/1 sans-serif;color:var(--item)}
 button[data-help]:hover::before{color:var(--ink)}
 
 /* 캔버스 */
 .stage{grid-row:3;position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:0;
   background-color:var(--stageInk);
-  background-image:linear-gradient(45deg,color-mix(in srgb,var(--accent) 4%,transparent) 25%,transparent 25%),linear-gradient(-45deg,color-mix(in srgb,var(--accent) 4%,transparent) 25%,transparent 25%),linear-gradient(45deg,transparent 75%,color-mix(in srgb,var(--accent) 4%,transparent) 75%),linear-gradient(-45deg,transparent 75%,color-mix(in srgb,var(--accent) 4%,transparent) 75%);
+  background-image:linear-gradient(45deg,var(--checker) 25%,transparent 25%),linear-gradient(-45deg,var(--checker) 25%,transparent 25%),linear-gradient(45deg,transparent 75%,var(--checker) 75%),linear-gradient(-45deg,transparent 75%,var(--checker) 75%);
   background-size:24px 24px;background-position:0 0,0 12px,12px -12px,-12px 0}
-.surface{position:relative;flex:none;overflow:hidden;box-shadow:0 2px 25px #0008}
+.surface{position:relative;flex:none;overflow:hidden;box-shadow:var(--shadowStage)}
 .surface canvas{position:absolute;inset:0;display:block;width:100%;height:100%}
 #overlay{touch-action:none}
 #fxLayer{pointer-events:none}
-.loupe{position:absolute;top:10px;right:12px;z-index:20;width:152px;height:152px;pointer-events:none;border:2px solid var(--accent);border-radius:12px;box-shadow:0 7px 26px #000a;background:var(--panel);image-rendering:pixelated}
+.loupe{position:absolute;top:10px;right:12px;z-index:20;width:152px;height:152px;pointer-events:none;border:2px solid var(--accent);border-radius:var(--r-box);box-shadow:var(--shadow);background:var(--panel);image-rendering:pixelated}
 
 /* 캔버스 아래 줄 */
 .stagebottom{grid-row:5;align-self:start;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 8px;min-width:0;padding:3px 7px;background:var(--panel);border-top:1px solid var(--line)}
 :root[data-theme="light"] .stagebottom{background:var(--card)}
 .quick{display:flex;flex-wrap:wrap;gap:3px;min-width:0;max-width:100%}
 .quick>*{flex:none}
-.quick .btn{border-color:transparent;background:transparent;font-size:11px;font-weight:550}
+.quick .btn{border-color:transparent;background:transparent}
 .quick .btn:hover{background:var(--button)}
 :root[data-theme="light"] .quick .btn{background:transparent}
-#undoBtn,#redoBtn{min-width:30px}
-#zoomResetBtn{min-width:43px;font-size:10px}
-.precisionSwitch{gap:2px;min-height:31px;padding:4px 6px;border:1px solid var(--line);border-radius:7px;background:var(--panel);font-size:11px;white-space:normal}
+#zoomResetBtn{min-width:43px;font-size:var(--fs-help)}
+.precisionSwitch{gap:var(--sp1);min-height:var(--ctl-h);padding:0 6px;white-space:normal}
 .precisionSwitch input{flex:none}
 /* 3-C 안내줄: 캔버스 바로 아래 전용 한 줄. 모든 안내 문구가 여기 뜬다. PC는 한 줄(넘치면 …, 마우스를 올리면 전체), 폰은 두 줄까지 */
-.guideLine{grid-row:4;display:flex;align-items:center;gap:6px;min-width:0;min-height:24px;padding:3px 10px;background:color-mix(in srgb,var(--accent) 7%,var(--panel));border-top:1px solid var(--line)}
+.guideLine{grid-row:4;display:flex;align-items:center;gap:6px;min-width:0;min-height:24px;padding:3px 10px;background:var(--tint);border-top:1px solid var(--line)}
 .guideLine .ic{width:14px;height:14px;color:var(--accent)}
-.status{display:block;flex:1 1 auto;min-width:0;overflow:hidden;font-size:12px;line-height:1.45;color:var(--ink);text-overflow:ellipsis;white-space:nowrap}
+.status{display:block;flex:1 1 auto;min-width:0;overflow:hidden;font-size:var(--fs-item);line-height:1.45;color:var(--item);text-overflow:ellipsis;white-space:nowrap}
 

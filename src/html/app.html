@@ -20,8 +20,7 @@
 <div class="zoneList" id="zoneList" role="listbox" aria-label="영역 목록"></div>
 <div class="empty" id="noZone">그림에서 영역을 선택하거나 그려 주세요. ‘도형’에서는 두 손가락으로 선택한 도형의 크기·비율·기울기를, 그 외 도구에서는 화면 확대·이동을 할 수 있습니다.</div>
 <div id="editFields" hidden>
-<div class="field"><div class="fieldhead"><label for="nameInput">영역 이름</label></div><input type="text" id="nameInput" maxlength="26" autocomplete="off"></div>
-<div class="regionActionRow"><label class="toggle"><input type="checkbox" id="lockedInput">잠금</label></div>
+<div class="field"><div class="fieldhead"><label for="nameInput">영역 이름</label></div><div class="nameRow"><input type="text" id="nameInput" maxlength="26" autocomplete="off"><label class="lockToggle" title="잠금: 실수로 고치지 않게 이 영역을 잠급니다"><input type="checkbox" id="lockedInput" aria-label="잠금"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></label></div></div>
 <div class="baseButtons"><button class="btn" id="markBaseBtn" type="button" title="몸체는 그림에서 크게 움직일 바탕(예: 인물 전체)입니다. ‘2. 몸체 움직이기’가 몸체에 적용됩니다">이 영역을 몸체로 지정</button><span id="baseHint" class="micro"></span>
  <label class="toggle" id="baseClipRow" hidden title="원래 모양을 지우지 않으며, 끄면 되돌아옵니다"><input id="baseClipInput" type="checkbox">자동 크롭 · 다른 영역을 몸체 안으로 제한</label></div>
 </div>
