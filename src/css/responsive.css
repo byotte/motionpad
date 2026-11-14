@@ -5,7 +5,9 @@
   :root{--fs-title:14px;--fs-item:14px;--fs-help:12px}/* 폰형은 큰 메뉴와 항목의 크기를 같게 두고 굵기·바탕으로만 나눈다 */
   .header{gap:5px}
   .logo{width:23px;height:23px}
-  .brand h1 span{display:none}
+  .brand h1 span,.projectName{display:none}
+  .menuNote{display:block}
+  .phoneOnly{display:flex}
   .toolbar{gap:4px}
   .workspace{grid-template-columns:minmax(0,1fr);height:auto}
   .stagebar{flex-direction:row}
@@ -49,6 +51,7 @@
   .guideLine{padding-inline:8px}
   .loupe{top:6px;right:6px;width:104px;height:104px}
   #lassobar{gap:4px;padding-inline:4px}
+  .fileBtn span{display:none}
   #blinkPreview{max-height:41dvh}
   .blinkSettings{grid-template-columns:1fr}
   .blinkFooter{flex-wrap:nowrap}

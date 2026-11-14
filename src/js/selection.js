@@ -74,12 +74,26 @@ function outlineMask(points){
 }
 
 let wandMap=null,wandDraft=null,outlineDraft=null,lassoSegments=[],wandFrame=0;
+// 3-M: '적용' 버튼 없이 고른 범위를 곧바로 영역에 반영한다. 범위를 다시 조절하면 방금 반영을 걷어내고 새로 반영한다(되돌리기 기록은 한 칸).
+// draftCommit = {base: 반영 전 상태, after: 반영 후 상태}. 그 사이 다른 조작이 있었으면(after와 다르면) 초안은 끝난 것으로 본다.
+let draftCommit=null;
+function draftLive(){return !!draftCommit&&stateSnapshot()===draftCommit.after}
+function commitDraft(bits){
+ const again=draftLive(),base=again?draftCommit.base:stateSnapshot();
+ if(again)historyApply(base);
+ const ok=applySelectionBits(bits);
+ if(ok){draftCommit={base,after:stateSnapshot()}}
+ else{draftCommit=null;if(again&&undoStack.at(-1)===base){undoStack.pop();refreshHistory()}}
+ return ok;
+}
+// 방금 반영한 선택을 걷어낸다('취소')
+function revertDraft(){if(!draftLive()){draftCommit=null;return false}historyApply(draftCommit.base);if(undoStack.at(-1)===draftCommit.base)undoStack.pop();draftCommit=null;refreshHistory();return true}
 let wandPreferredRange=Number($('toleranceInput').value);
 function clearWandDraft(){
  if(mode==='wand')selectionJob++;
  cancelAnimationFrame(wandFrame);
- wandMap=wandDraft=null;
- $('wandApply').disabled=$('wandCancel').disabled=true;
+ wandMap=wandDraft=null;draftCommit=null;
+ $('wandCancel').disabled=true;
  $('wandbar').classList.remove('hasPreview');
  $('wandStep').textContent='1. 그림에서 선택할 부분을 누르세요.';
 }
@@ -87,26 +101,20 @@ function updateWandDraft(){
  if(!wandMap)return;
  const limit=wandLimit(Number($('toleranceInput').value));
  wandDraft=selectionPreview(wandMap,c=>c<=limit);
- $('wandbar').classList.add('hasPreview');
- $('wandStep').textContent='2. 범위를 조절한 뒤 선택을 적용하세요.';
- $('wandApply').disabled=!wandDraft.count;
- setStatus(wandDraft.count>wandDraft.bits.length*.92?'거의 전체가 잡혔습니다. 범위를 좁혀 보세요.':'미리보기입니다. 범위를 조절한 뒤 적용하세요.');
+ $('wandbar').classList.add('hasPreview');$('wandbar').dataset.ready='1';// 시험 도구가 기다리는 신호
+ if(!wandDraft.count){setStatus('선택된 부분이 없습니다. 선택 범위를 넓혀 보세요.');return}
+ if(!commitDraft(wandDraft.bits)){clearWandDraft();return}// 반영하지 못한 이유는 안내줄에 이미 나와 있다
+ setStatus(wandDraft.count>wandDraft.bits.length*.92?'거의 전체가 잡혔습니다. 선택 범위를 좁혀 보세요.':'선택했습니다. 선택 범위를 조절하면 바로 바뀝니다.');
 }
 $('toleranceInput').addEventListener('input',()=>{
  wandPreferredRange=Number($('toleranceInput').value);
  cancelAnimationFrame(wandFrame);
  wandFrame=requestAnimationFrame(updateWandDraft);
 });
-$('wandCancel').onclick=()=>{clearWandDraft();setStatus('마술봉 미리보기를 취소했습니다.');};
-$('wandApply').onclick=()=>{
- cancelAnimationFrame(wandFrame);updateWandDraft();
- if(wandDraft?.count&&applySelectionBits(wandDraft.bits,'마술봉 '+(zones.length+1))){
-  clearWandDraft();setStatus('마술봉 선택을 적용했습니다.');
- }
-};
+$('wandCancel').onclick=()=>{revertDraft();clearWandDraft();setStatus('방금 마술봉 선택을 취소했습니다.');};
 function magicSelect(x,y){
  if(!selectionSource)return;
- clearWandDraft();$('wandCancel').disabled=false;
+ clearWandDraft();$('wandCancel').disabled=false;$('wandbar').dataset.ready='0';
  $('wandStep').textContent='색과 경계를 확인하고 있습니다.';
  setStatus('주변의 색과 경계를 확인하고 있습니다.');
  requestSelection('wand',{seed:selectionIndex(x,y)},map=>{
@@ -117,30 +125,47 @@ function magicSelect(x,y){
   updateWandDraft();
  });
 }
+// 3-M: 자잘한 점 걸러내기. 가장 큰 덩어리의 2%(최소 6칸)보다 작은 조각은 버린다. '남길 곳'으로 찍은 점(256)이 든 조각은 남긴다.
+function despeckle(preview){
+ const bits=preview.bits,n=TILE,label=new Int32Array(bits.length),sizes=[0],stack=[];let id=0,best=0;
+ for(let i=0;i<bits.length;i++){if(!bits[i]||label[i])continue;let cnt=0;label[i]=++id;stack.push(i);
+  while(stack.length){const q=stack.pop(),x=q%n;cnt++;
+   if(x>0&&bits[q-1]&&!label[q-1]){label[q-1]=id;stack.push(q-1)}if(x<n-1&&bits[q+1]&&!label[q+1]){label[q+1]=id;stack.push(q+1)}
+   if(q>=n&&bits[q-n]&&!label[q-n]){label[q-n]=id;stack.push(q-n)}if(q<bits.length-n&&bits[q+n]&&!label[q+n]){label[q+n]=id;stack.push(q+n)}}
+  sizes.push(cnt);best=Math.max(best,cnt)}
+ if(id<2)return;
+ const min=Math.max(6,best*.02);let removed=0;
+ for(let i=0;i<bits.length;i++)if(bits[i]&&sizes[label[i]]<min){bits[i]=0;removed++}
+ if(!removed)return;
+ preview.count-=removed;preview.contour=null;
+ const g=preview.canvas.getContext('2d'),image=g.getImageData(0,0,n,n);for(let i=0;i<bits.length;i++)if(!bits[i])image.data[i*4+3]=0;g.putImageData(image,0,0);
+}
 function clearOutlineDraft(){
  if(mode==='lasso')selectionJob++;
- outlineDraft=null;$('outlineControls').hidden=true;
+ outlineDraft=null;draftCommit=null;$('outlineControls').hidden=true;
 }
 function updateOutlineDraft(){
  const draft=outlineDraft;
  if(!draft?.map)return;
- const threshold=outlineThreshold(Number($('outlineRange').value),draft.hasBoundary);
- draft.preview=selectionPreview(draft.map,c=>c>=threshold);
- $('outlineApply').disabled=!draft.preview.count;
+ const threshold=outlineThreshold(Number($('outlineRange').value),draft.hasBoundary,draft.span);
+ draft.preview=selectionPreview(draft.map,c=>c>=threshold);despeckle(draft.preview);
+ $('outlineRangeValue').textContent=$('outlineRange').value;$('outlineControls').dataset.ready='1';// 시험 도구가 기다리는 신호
+ if(draft.preview.count&&!commitDraft(draft.preview.bits)){clearOutlineDraft();return false}
+ return true;
 }
 function solveOutline(){
  const draft=outlineDraft;
- draft.map=null;draft.preview=null;
- $('outlineApply').disabled=true;
+ draft.map=null;draft.preview=null;$('outlineControls').dataset.ready='0';
  $('outlineStep').textContent='경계를 확인하고 있습니다.';
  setStatus('둘러싼 부분의 경계를 확인하고 있습니다.');
  requestSelection('outline',draft.data,map=>{
   if(outlineDraft!==draft)return;
   draft.map=map;
   draft.hasBoundary||=map.some(value=>value>1&&value<256);
-  updateOutlineDraft();
-  $('outlineStep').textContent='미리보기 · 범위를 조절하거나 보정한 뒤 적용하세요.';
-  setStatus(draft.hasBoundary?'범위를 조절하거나 남길 곳과 뺄 곳을 눌러 보정하세요.':'경계가 약합니다. 남길 곳과 뺄 곳을 눌러 보정하거나 다시 둘러 그리세요.');
+  // 3-M: 선택 범위 막대의 양 끝을 이 그림의 점수 범위에 맞춘다(막대 어디서나 고르게 변하도록)
+  let lo=0,hi=1;for(const v of map){if(v<=-512||v>=256||v<=-256)continue;if(v<lo)lo=v;if(v>hi)hi=v}draft.span=[lo,hi];
+  if(!updateOutlineDraft())return;
+  setStatus(draft.hasBoundary?'선택했습니다. 선택 범위를 조절하거나 남길 곳·뺄 곳을 눌러 다듬을 수 있습니다.':'경계가 약한 그림입니다. 선택 범위를 조절하거나 남길 곳·뺄 곳을 눌러 다듬어 주세요.');
  });
 }
 function beginOutline(points){
@@ -163,7 +188,7 @@ function correctOutline(x,y){
  data.remove=data.remove.filter(point=>point!==i);
  data[target].push(i);solveOutline();
 }
-$('outlineRange').oninput=updateOutlineDraft;
+let outlineFrame=0;$('outlineRange').oninput=()=>{$('outlineRangeValue').textContent=$('outlineRange').value;cancelAnimationFrame(outlineFrame);outlineFrame=requestAnimationFrame(updateOutlineDraft)};
 $('outlineUndo').onclick=()=>{
  const previous=outlineDraft?.history.pop();
  if(!previous)return;
@@ -171,15 +196,9 @@ $('outlineUndo').onclick=()=>{
  $('outlineUndo').disabled=!outlineDraft.history.length;
  solveOutline();
 };
-$('outlineApply').onclick=()=>{
- const preview=outlineDraft?.preview;
- if(preview?.count&&applySelectionBits(preview.bits,'외곽 선택')){
-  clearOutlineDraft();setStatus('외곽 선택을 적용했습니다.');
- }
-};
-$('outlineCancel').onclick=()=>{clearOutlineDraft();setStatus('외곽 미리보기를 취소했습니다.');};
+$('outlineCancel').onclick=()=>{revertDraft();clearOutlineDraft();setStatus('방금 올가미 선택을 취소했습니다.');};
 function refreshLassoDraft(){
- $('lassoUndo').disabled=!lassoSegments.length;
+ $('lassoUndo').disabled=!lassoSegments.length;refreshHistory();
  $('lassoFinish').disabled=lassoSegments.reduce((n,points)=>n+points.length,0)<3;
 }
 function clearSelectionDrafts(){
@@ -272,5 +291,7 @@ function extendLasso(gesture,p,minDistance=Math.max(4,Math.min(renderWidth,rende
 }
 function addPolygon(pts){if(pts.length<3)return;
  if(editableSelected()||selectOp()==='subtract'){const temp=sanitize({kind:'polygon',polygon:pts},zones.length);return applySelectionBits(rasterize(temp),'올가미 '+(zones.length+1))}
- if(zones.length>=LIMIT){setStatus('영역 개수 제한입니다.');return false}remember();const z=sanitize({id:newId(),name:`올가미 ${zones.length+1}`,kind:'polygon',polygon:pts},zones.length);zones.push(z);selected=z.id;markMask();updateUI();scheduleSave()}
+ if(zones.length>=LIMIT){setStatus('영역 개수 제한입니다.');return false}remember();const z=sanitize({id:newId(),name:nextZoneName(),kind:'polygon',polygon:pts},zones.length);zones.push(z);selected=z.id;markMask();updateUI();scheduleSave()}
 
+// 3-M: 교체·더하기·빼기를 바꾸면 방금 선택은 끝난 것으로 본다(이미 반영돼 있다). 다음 선택이 새 방식으로 들어간다.
+for(const r of document.querySelectorAll('input[name="selectOp"]'))r.addEventListener('change',()=>clearSelectionDrafts());

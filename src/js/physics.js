@@ -14,7 +14,7 @@ const MotionPhysics=Object.freeze({
   },
   wave(t,phase=0){return .78*Math.sin(t+phase)+.22*Math.sin(t*.57+phase*.31+.75)},
   wind(z,t){
-    const size=clamp((z.windStrength||0)/100,0,1);
+    const size=clamp((z.windStrength||0)/100,0,1.65);
     if(size===0)return [0,0];
     const speed=z.windSpeed||1,phase=z.phase||0,noise=(z.windNoise||0)/100;
     const gust=clamp(.50+.30*this.wave(t*1.4*speed,phase)+noise*(.15*Math.sin(t*3.1*speed+phase*.7)+.08*Math.sin(t*5.3*speed+phase)),.08,1.15);
@@ -32,7 +32,7 @@ const MotionPhysics=Object.freeze({
       const phaseLag=delay*f*1.0;
       const wave=this.wave(t*(z.windSpeed||1)*1.7-phaseLag*2.1,(z.phase||0)+(key==='branch'?.85:0));
       const dir=(z.windAngle||0)*Math.PI/180;
-      const wiggle=clamp((z.windStrength||0)/100,0,1)*.007*wave*f*f;
+      const wiggle=clamp((z.windStrength||0)/100,0,1.65)*.007*wave*f*f;
       const toward=[p[0]+anchorShift[0]+(wind[0]+motion[0])*(f*f)+Math.cos(dir)*wiggle,
                     p[1]+anchorShift[1]+(wind[1]+motion[1])*(f*f)+Math.sin(dir)*wiggle];
       // A spring follows both its rest position and the preceding segment's displacement.
@@ -65,10 +65,10 @@ const MotionPhysics=Object.freeze({
     const wind=this.wind(z,t).map(v=>v*env);
     const strength=clamp(z.strength??0,0,80)/80;
     const idle=z.auto?this.wave(t*1.18*(z.autoSpeed||1),z.phase)*strength*env:0;
-    const [axisX,axisY]=TAP_DIRECTIONS[z.axis]||[.28,1];
-    const idleX=z.axis==='pulse'?0:idle*.022*axisX;
-    const idleY=z.axis==='pulse'?0:idle*.022*axisY;
-    const idleScale=z.axis==='pulse'?idle*.065:0;
+    const autoAxis=z.autoAxis||z.axis,[axisX,axisY]=TAP_DIRECTIONS[autoAxis]||[0,-1];
+    const idleX=autoAxis==='pulse'?0:idle*.022*axisX;
+    const idleY=autoAxis==='pulse'?0:idle*.022*axisY;
+    const idleScale=autoAxis==='pulse'?idle*.065:0;
     // Distinct wind force; a region may move without a hand-drawn spine.
     const w=wind;
     z.windX=w[0];z.windY=w[1];

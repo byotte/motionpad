@@ -34,4 +34,16 @@ function setTrack(t){$('trackSelect').value=t;$('viewerTrack').value=t;if(musicP
 $('trackSelect').onchange=e=>setTrack(e.target.value);$('viewerTrack').onchange=e=>setTrack(e.target.value);
 $('musicVolume').oninput=e=>{$('musicVolumeValue').textContent=e.target.value+'%';$('viewerMusicVolume').value=e.target.value;if(activeAudio)activeAudio.volume=e.target.value/100;scheduleSave()};$('viewerMusicVolume').oninput=e=>{$('musicVolume').value=e.target.value;$('musicVolumeValue').textContent=e.target.value+'%';if(activeAudio)activeAudio.volume=e.target.value/100;scheduleSave()};
 $('sfxVolume').oninput=e=>{$('sfxVolumeValue').textContent=e.target.value+'%';scheduleSave()};$('muteViewer').onclick=()=>{effectMuted=!effectMuted;$('muteViewer').textContent=effectMuted?'효과음 꺼짐':'효과음 켜짐';$('muteViewer').setAttribute('aria-pressed',String(!effectMuted))};
+// 3-M: 내 효과음 파일. 짧은 소리 하나를 불러와 터치할 때마다 낸다(프로젝트에 함께 저장).
+function playFileSfx(power){
+ if(!sfxBlob)return;
+ if(!sfxBuffer){if(sfxBuffer===null){sfxBuffer=false;sfxBlob.arrayBuffer().then(b=>audioCtx.decodeAudioData(b)).then(buf=>{sfxBuffer=buf}).catch(e=>{sfxBuffer=null;console.warn('효과음 파일',e)})}return}
+ const src=audioCtx.createBufferSource(),gain=audioCtx.createGain();src.buffer=sfxBuffer;
+ gain.gain.value=Math.min(1,Number($('sfxVolume').value)/100*clamp(power,.3,1.7));
+ src.connect(gain);gain.connect(audioMaster);src.start(0,0,Math.min(sfxBuffer.duration,4));
+}
+function paintSfxFile(){for(const id of ['sfxTypeInput','viewerEffects']){const o=$(id).querySelector('option[value="file"]');o.hidden=o.disabled=!sfxBlob;o.textContent=sfxBlob?`불러온 효과음 · ${sfxName}`.slice(0,40):'불러온 효과음'}}
+$('sfxFileBtn').onclick=()=>$('sfxFile').click();
+$('sfxFile').onchange=e=>{const f=e.target.files?.[0];e.target.value='';if(!f)return;if(!f.type.startsWith('audio/')&&!/\.(mp3|m4a|wav|ogg|webm)$/i.test(f.name)){showNotice('효과음 파일','오디오 파일(mp3·wav 등)을 골라 주세요.');return}if(f.size>2*1024*1024){showNotice('효과음 파일','효과음 파일은 2MB 이하의 짧은 소리만 쓸 수 있습니다.');return}sfxBlob=f;sfxName=f.name;sfxBuffer=null;paintSfxFile();$('sfxTypeInput').value='file';$('sfxTypeInput').dispatchEvent(new Event('change'));try{ensureAudio();playFileSfx(1)}catch(_){}setStatus('효과음 파일을 불러왔습니다: '+f.name)};
+paintSfxFile();
 $('musicFileBtn').onclick=()=>$('musicFile').click();$('musicFile').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;if(!f.type.startsWith('audio/')&&!/\.(mp3|m4a|wav|ogg|webm)$/i.test(f.name)){showNotice('음악 파일','오디오 파일(mp3·wav 등)을 골라 주세요.');return}if(f.size>15*1024*1024){showNotice('음악 파일','음악 파일은 15MB 이하만 쓸 수 있습니다. 더 작은 파일을 골라 주세요.');return}audioBlob=f;audioName=f.name;setTrack('file');scheduleSave();setStatus('음악 파일을 불러왔습니다: '+f.name);e.target.value=''};

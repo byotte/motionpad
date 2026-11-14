@@ -8,6 +8,7 @@ const copyPoints=list=>(list||[]).map(p=>[...p]);
 const num=(key,def,min,max,ui)=>({key,save:z=>z[key],read:z=>clamp(zNum(z[key],def),min,max),ui});
 const flag=(key,ui)=>({key,save:z=>z[key],read:z=>!!z[key],ui});
 const pct=v=>`${v}%`,deg=v=>`${Math.round(v)}°`;
+const AUTO_AXES=['x','y','diag','diagBack','pulse'];
 const ZONE_FIELDS=[
  {key:'tailCutout',save:z=>!!z.tailCutout,read:z=>z.tailCutout===true},
  {key:'preset',save:z=>z.preset,read:z=>Object.hasOwn(MOTION_PRESETS,z.preset)?z.preset:"custom"},
@@ -32,13 +33,13 @@ const ZONE_FIELDS=[
  num('spring',14,3,30,{input:'springInput',output:'springValue'}),
  num('damping',62,0,100,{input:'dampingInput',output:'dampingValue',fmt:pct}),
  flag('auto',{input:'autoInput',check:true}),
- num('autoSpeed',1,.2,3,{input:'autoSpeedInput',output:'autoSpeedValue',fmt:v=>v.toFixed(1)}),
+ num('autoSpeed',1,.2,3,{input:'autoSpeedInput'}),
  num('feather',8,0,45,{input:'featherInput',output:'featherValue',mask:true}),
  num('breath',8,0,40,{input:'breathInput',output:'breathValue'}),
  num('wave',0,0,40,{input:'waveInput',output:'waveValue'}),
- num('twist',0,0,35,{input:'twistInput',output:'twistValue'}),
+ num('twist',0,0,60,{input:'twistInput',output:'twistValue'}),
  num('ripple',0,0,40,{input:'rippleInput',output:'rippleValue'}),
- num('flow',0,0,40,{input:'flowInput',output:'flowValue'}),
+ num('flow',0,0,65,{input:'flowInput',output:'flowValue'}),
  num('flowAngle',0,-180,180,{input:'flowAngleInput',output:'flowAngleValue',fmt:deg}),
  num('spread',9,0,26,{input:'spreadInput',output:'spreadValue',mask:true}),
  flag('pivotEnabled',{input:'pivotEnabledInput',check:true}),
@@ -48,9 +49,9 @@ const ZONE_FIELDS=[
  {key:'spine',save:z=>z.spine,read:z=>zPoints(z.spine,40,.5),snap:z=>copyPoints(z.spine)},
  {key:'branch',save:z=>z.branch,read:z=>zPoints(z.branch,30,.5),snap:z=>copyPoints(z.branch)},
  {key:'extraPivots',save:z=>z.extraPivots,read:z=>zPoints(z.extraPivots,2,.5),snap:z=>copyPoints(z.extraPivots)},
- num('windStrength',0,0,100,{input:'windStrengthInput',output:'windStrengthValue',fmt:pct}),
+ num('windStrength',0,0,165,{input:'windStrengthInput',output:'windStrengthValue',fmt:v=>`${Math.round(v/1.65)}%`}),// 3-M: 상한을 올렸다(예전 100 = 지금 약 60%)
  num('windAngle',0,-180,180,{input:'windAngleInput',output:'windAngleValue',fmt:v=>`${v}°`}),
- num('windSpeed',1,.2,3,{input:'windSpeedInput',output:'windSpeedValue',fmt:v=>`${v.toFixed(1)}×`}),
+ num('windSpeed',1,.2,5,{input:'windSpeedInput',output:'windSpeedValue',fmt:v=>`${v.toFixed(1)}×`}),
  num('windNoise',30,0,100,{input:'windNoiseInput',output:'windNoiseValue',fmt:pct}),
  num('windDelay',50,0,100,{input:'windDelayInput',output:'windDelayValue',fmt:pct}),
  num('tapGain',100,0,200,{input:'tapGainInput',output:'tapGainValue',fmt:pct}),
@@ -60,6 +61,8 @@ const ZONE_FIELDS=[
  num('pull',50,0,100,{input:'pullInput',output:'pullValue',fmt:pct}),
  num('autoRest',0,0,6,{input:'autoRestInput',output:'autoRestValue',fmt:v=>v?`${v.toFixed(1)}초`:'쉬지 않음'}),
  flag('locked',{input:'lockedInput',check:true,noPreview:true}),
+ // 3-M: 연속 움직임의 방향. 터치 방향(axis)과 따로 둔다. 예전 파일에는 없으므로 axis에서 정한다(끄는 쪽 = 위아래).
+ {key:'autoAxis',save:z=>z.autoAxis,read:z=>AUTO_AXES.includes(z.autoAxis)?z.autoAxis:AUTO_AXES.includes(z.axis)?z.axis:'y',ui:{input:'quickDirection',fromInput:x=>x}},
 ];
 // 저장하지 않는 실행 중 상태(물리·터치). 불러올 때마다 초기화된다.
 function zoneRuntime(i){return {s:0,v:0,phase:i*1.7+.2,hitDX:0,hitDY:1,hitPulse:0,hitX:.5,hitY:.5,grabX:.5,grabY:.5,hitAt:-20,hitPower:0,physX:0,physY:0,physVX:0,physVY:0,physScale:0,physSV:0,dragging:false,desiredX:0,desiredY:0,desiredScale:0,chainNodes:null,branchNodes:null,spineTip:[0,0],spineMid:[0,0],branchTip:[0,0],windX:0,windY:0,physicsOutput:null}}

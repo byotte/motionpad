@@ -140,7 +140,7 @@ void main(){
  vec4 color;
  if(flowWeight>.0001){
    float phase=fract(u_time*.19),phase2=fract(phase+.5);
-   vec2 flow=clamp(flowVector,vec2(-.014),vec2(.014));
+   vec2 flow=clamp(flowVector,vec2(-.023),vec2(.023));
    vec2 a=clamp(uv-flow*phase,vec2(.001),vec2(.999));
    vec2 b=clamp(uv-flow*phase2,vec2(.001),vec2(.999));
    color=mix(texture2D(u_tex,a),texture2D(u_tex,b),abs(phase*2.0-1.0));

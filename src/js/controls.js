@@ -1,5 +1,5 @@
 // Ambient and audio UI are deliberately independent of the selected region.
-const ambient={enabled:true,breath:35,sway:30,light:25};
+const ambient={enabled:true,breath:35,sway:30,light:0};// 3-M: 조명 숨쉬기는 체감되지 않아 뺐다(늘 0)
 let playerVisible=true, sfxType='soft', zoomLevel=1,panX=0,panY=0;
 let qualityMode='auto',qualityScale=1,meshSegments=[32,48],frames=0,fpsLast=performance.now(),fps=60,slowSeconds=0,fastSeconds=0,visibleRAF=true;
 function applyZoom(){if(viewerOpen){surface.style.transform='';return}if(zoomLevel<=1){panX=panY=0}const limitX=Math.max(0,stage.clientWidth*.55*zoomLevel),limitY=Math.max(0,stage.clientHeight*.55*zoomLevel);panX=clamp(panX,-limitX,limitX);panY=clamp(panY,-limitY,limitY);surface.style.transform=`translate(${panX}px,${panY}px) scale(${zoomLevel})`;const b=$('zoomResetBtn');if(b)b.textContent=Math.round(zoomLevel*100)+'%'}
@@ -7,10 +7,11 @@ function setZoom(next){zoomLevel=clamp(next,1,4);if(zoomLevel===1){panX=panY=0}a
 $('zoomInBtn').onclick=()=>setZoom(zoomLevel+.25);
 $('zoomOutBtn').onclick=()=>setZoom(zoomLevel-.25);
 $('zoomResetBtn').onclick=()=>setZoom(1);
-$('newRegionBtn').onclick=()=>{selected=null;setSelectOp('new');updateUI();setMode('brush');setStatus('새 영역을 그려 주세요. 기존 영역에 더하려면 영역을 다시 선택하세요.')};
+// 3-M: 쓰던 도구를 그대로 둔다(그리는 도구가 아닐 때만 붓으로)
+$('newRegionBtn').onclick=()=>{clearSelectionDrafts();selected=null;setSelectOp('new');updateUI();if(touchPreview||!['brush','wand','lasso','ellipse'].includes(mode))setMode(['wand','lasso','ellipse'].includes(mode)?mode:'brush');setStatus('새 영역을 그려 주세요. 기존 영역에 더하려면 영역을 다시 선택하세요.')};
 function updateRendererBadge(){
   const badge=$('engineBadge');if(!badge)return;
-  const renderer=gl?'WebGL':'Canvas';const quality=qualityMode==='auto'?'자동':qualityMode==='balanced'?'절전':'고화질';
+  const renderer=gl?'WebGL':'Canvas';const quality=qualityMode==='auto'?'자동':qualityMode==='balanced'?'가볍게':'선명하게';
   badge.textContent=`${renderer} · ${Math.max(0,Math.round(fps))} FPS · ${quality}`;
   badge.title=`렌더링: ${renderer} / 속도: ${Math.round(fps)} FPS / 품질: ${quality}`;
 }
@@ -30,32 +31,22 @@ function setTouchPreview(on){
  if(touchPreview===on)return;
  touchPreview=on;
  document.querySelector('.workspace')?.classList.toggle('touchPreview',on);
- if(on)setStatus('터치 미리보기 중입니다. 그림을 눌러 반응을 확인하세요. 도구를 누르면 하던 작업으로 돌아갑니다.');
+ if(on)setStatus('터치 테스트 중입니다. 그림을 눌러 반응을 확인하세요. 도구를 누르면 하던 작업으로 돌아갑니다.');
+ paintTouchTest();
 }
+// 3-M: 터치 테스트 버튼(안내줄 오른쪽). 도구를 쓰던 중에도 눌러서 움직임을 확인하고, 다시 누르면 하던 도구로 돌아간다.
+function paintTouchTest(){const b=$('touchTestBtn'),on=touchPreview||mode==='play';b.setAttribute('aria-pressed',String(on));b.classList.toggle('active',on)}
+$('touchTestBtn').onclick=()=>{if(mode==='play'){setStatus('지금 터치 테스트 중입니다. 그림을 눌러 보세요. 편집하려면 위의 도구를 고르세요.');return}setTouchPreview(!touchPreview);if(!touchPreview)setStatus('하던 작업으로 돌아왔습니다.')};
 function previewMotion(){
  if(!viewerOpen&&mode!=='play')setTouchPreview(true);
 }
-function motionControls(z){
- if(['tail','wind','scarf'].includes(z.preset))return {
-  angle:'windAngleInput',strength:'windStrengthInput',speed:'windSpeedInput',
-  hint:'바람에 흔들리는 움직임입니다. 흔들리는 쪽으로 방향을 맞추고, 고정점이 필요하면 ‘1. 영역 → 고정점과 가이드’에서 축을 지정해 주세요.'
- };
- if(z.preset==='breathing')return {
-  strength:'breathInput',speed:'breathSpeed',
-  hint:'숨 쉬듯 부풀었다 줄어드는 움직임입니다.'
- };
- if(z.preset==='flow')return {
-  angle:'flowAngleInput',strength:'flowInput',
-  hint:'무늬가 흐르는 움직임입니다. 흐를 방향을 각도로 정해 주세요.'
- };
- // 2-F: 3-1의 세기·속도는 자동 움직임의 것. 이 종류의 자동 움직임은 터치 반응을 스스로 되풀이하므로 세기는 3-2 '반응 세기'와 같은 값이다.
- return {axis:true,strength:'strengthInput',speed:'autoSpeedInput',hint:'‘자동으로 움직이기’를 켜면 이 세기·속도로 계속 흔들립니다. 세기는 터치 움직임의 ‘반응 세기’와 같은 값입니다.'};
-}
+// 3-M: 3-1 연속 움직임은 프리셋과 상관없이 늘 방향·세기·속도 셋이다. 세기는 3-2 '반응 세기'와 같은 값, 속도는 자동 움직임 속도.
+const QUICK_LINKS=[['quickStrength','strengthInput'],['quickSpeed','autoSpeedInput']];
 $('tailCutoutInput').onchange=e=>{
  const z=getSelected();
  if(!z||z.isBase)return;
  remember();
- if(e.target.checked&&tailCutoutZones().length>=TAIL_MAX){e.target.checked=false;setStatus(`외곽까지 흔들기는 영역 ${TAIL_MAX}개까지 켤 수 있습니다.`);return}
+ if(e.target.checked&&tailCutoutZones().length>=TAIL_MAX){e.target.checked=false;setStatus(`빈자리 채우기는 영역 ${TAIL_MAX}개까지 켤 수 있습니다.`);return}
  z.tailCutout=e.target.checked;
  markMask();
  scheduleSave();
@@ -65,53 +56,15 @@ $('tailCutoutInput').onchange=e=>{
 function updateQuickMotion(z){
  $('tailCutoutRow').hidden=z.isBase;
  $('tailCutoutInput').checked=!!z.tailCutout;
- const controls=motionControls(z);
  $('presetInput').value=z.preset;
- $('quickDirectionRow').hidden=!controls.angle&&!controls.axis;
- $('quickDirectionRow').querySelector('label').htmlFor=controls.axis?'quickDirection':'quickAngle';
- $('quickDirection').hidden=!controls.axis;
- $('quickDirection').value=z.axis;
- $('quickAngle').hidden=$('quickAngleValue').hidden=!controls.angle;
- if(controls.angle){
-  $('quickAngle').value=$(controls.angle).value;
-  $('quickAngleValue').textContent=$('quickAngle').value+'°';
- }
- for(const [key,id] of [['strength','quickStrength'],['speed','quickSpeed']]){
-  const name=controls[key],input=$(id);
-  if(!name)continue;
-  if(name==='breathSpeed'){
-   input.min=.2;input.max=3;input.step=.1;input.value=z.breathSpeed;
-  }else{
-   const advanced=$(name);
-   input.min=advanced.min;input.max=advanced.max;input.step=advanced.step;input.value=advanced.value;
-  }
-  const unit=name==='windStrengthInput'?'%':['windSpeedInput','breathSpeed','autoSpeedInput'].includes(name)?'×':'';
-  $(id+'Value').textContent=(name==='autoSpeedInput'?Number(input.value).toFixed(1):input.value)+unit;
- }
- const kind=z.preset==='breathing'?'호흡 ':controls.angle&&controls.speed?'바람 ':z.preset==='flow'?'흐름 ':'';
- $('quickStrengthLabel').textContent=kind+'세기';$('quickSpeedLabel').textContent=kind+'속도';
- $('quickSpeedRow').hidden=!controls.speed;
- $('autoSpeedRow').hidden=controls.speed==='autoSpeedInput';
- $('quickMotionHint').textContent=controls.hint;
+ for(const [id,name] of QUICK_LINKS){const input=$(id),adv=$(name);input.min=adv.min;input.max=adv.max;input.step=adv.step;input.value=adv.value}
+ $('quickStrengthValue').textContent=$('quickStrength').value;$('quickSpeedValue').textContent=Number($('quickSpeed').value).toFixed(1)+'×';
 }
-for(const [id,key] of [['quickDirection','axis'],['quickAngle','angle'],['quickStrength','strength'],['quickSpeed','speed']]){
+for(const [id,name] of QUICK_LINKS){
  const input=$(id);
  input.addEventListener('pointerdown',()=>{if(getSelected())remember()},{passive:true});
  input.addEventListener('focus',()=>{if(getSelected())remember()});
- input.oninput=()=>{
-  const z=getSelected();if(!z)return;
-  const name=key==='axis'?'axisInput':motionControls(z)[key];
-  if(!name)return;
-  if(name==='breathSpeed'){
-   const speed=Number(input.value);
-   if(speed===z.breathSpeed)return;
-   z.breathSpeed=speed;
-   updateQuickMotion(z);scheduleSave();previewMotion();
-   return;
-  }
-  $(name).value=input.value;
-  $(name).dispatchEvent(new Event('input'));
- };
+ input.oninput=()=>{if(!getSelected())return;$(name).value=input.value;$(name).dispatchEvent(new Event('input'))};
 }
 function applyMotionPreset(z,preset){
  if(!Object.hasOwn(MOTION_PRESETS,preset))return false;
@@ -149,6 +102,7 @@ function playSfx(power=1){
     let lastN=0;for(let i=0;i<buf.length;i++){const a=(Math.random()*2-1);lastN=lastN*.42+a*.58;buf[i]=lastN}
     const n=audioCtx.createBufferSource(),gain=audioCtx.createGain(),filter=audioCtx.createBiquadFilter();n.buffer=noise;
     let length=.085,pitch=900,peak=.12;
+    if(sfxType==='file'){playFileSfx(power);return}
     if(['wetClip','hardClip','softClip','mudClip'].includes(sfxType)){if(playBuiltinSfx(sfxType,power))return;}
     if(sfxType==='slap'){length=.115;pitch=1400;peak=.24}
     if(sfxType==='jelly'){length=.14;pitch=480;peak=.11}
@@ -173,9 +127,9 @@ function restoreExtra(d){
   $('sfxVolume').value=d?.sfxVolume??25;
   $('viewerSfxVolume').value=$('sfxVolume').value;
   $('sfxVolumeValue').textContent=$('sfxVolume').value+'%';
-  sfxType=['soft','slap','jelly','water','wetClip','hardClip','softClip','mudClip','off'].includes(d?.sfxType)?d.sfxType:'soft';$('sfxTypeInput').value=sfxType;
+  sfxType=['soft','slap','jelly','water','wetClip','hardClip','softClip','mudClip','off'].includes(d?.sfxType)||(d?.sfxType==='file'&&sfxBlob)?d.sfxType:'soft';$('sfxTypeInput').value=$('viewerEffects').value=sfxType;
   playerVisible=d?.playerVisible!==false;$('playerVisibleInput').checked=playerVisible;
-  for(const k of ['enabled','breath','sway','light'])if(d?.ambient?.[k]!=null)ambient[k]=d.ambient[k];
+  for(const k of ['enabled','breath','sway'])if(d?.ambient?.[k]!=null)ambient[k]=d.ambient[k];ambient.light=0;
   $('ambientOn').checked=ambient.enabled;refreshBaseUI();
   for(const [k,id] of [['breath','ambientBreath'],['sway','ambientSway'],['light','ambientLight']])$(id).value=ambient[k];
   updateAmbientLabels();applyPlayerVisibility();setTrack(d?.track||'lounge');
@@ -190,7 +144,7 @@ $('maskOpacityInput').oninput=e=>{
  scheduleSave();
 };
 $('imageFile').addEventListener('change',()=>{setZoom(1) });
-let editCheckpoint=null;
+let editCheckpoint=null,placeReturn='play';// placeReturn: 축·가이드 선 지정을 마치면 돌아갈 도구
 document.querySelector('.stagebar .modegroup').addEventListener('click',event=>{
  const tool=event.target.closest('[data-mode]');
  if(!tool)return;
@@ -201,6 +155,10 @@ document.querySelector('.stagebar .modegroup').addEventListener('click',event=>{
 },true);
 function setMode(m){
   setTouchPreview(false);
+  const PLACE=['pivot','extraPivot','spine','branch'];
+  if(PLACE.includes(m)&&!PLACE.includes(mode))placeReturn=mode;
+  // 3-M: 나눠 그리던 올가미가 남아 있으면 도구를 바꿀 때 닫아서 반영한다(그린 사람은 쓰려고 그린 것)
+  if(mode!==m&&mode==='lasso'&&lassoSegments.flat().length>=3)finishSegmentedLasso();
   if(mode!==m)clearSelectionDrafts();
   if(m==='play')editCheckpoint=null;
   else if(mode==='play'&&ready&&!viewerOpen){
@@ -210,12 +168,7 @@ function setMode(m){
   const editing=m!=='play';
   const workspace=document.querySelector('.workspace');
   workspace.classList.toggle('editing',editing);
-  workspace.classList.toggle('placing',['pivot','extraPivot','spine','flowdir'].includes(m));
-  $('editGuide').hidden=!workspace.classList.contains('placing');
   for(const b of document.querySelectorAll('.mode'))b.setAttribute('aria-pressed',String(b.dataset.mode===m));
-  $('leaveEdit').hidden=!editCheckpoint;
-  $('finishEdit').textContent='완료';
-  $('editInstruction').textContent=({pivot:'고정할 곳을 눌러 주세요.',extraPivot:'고정점을 더 놓을 곳을 눌러 주세요.',spine:'붙어 있는 곳에서 끝까지 그어 주세요.',flowdir:'흐를 방향으로 그어 주세요.'})[m]||'그림에서 부분을 선택하거나 다듬어 주세요.';
   if(ready&&!viewerOpen)requestAnimationFrame(fit);
   for(const b of document.querySelectorAll('.mode'))b.classList.toggle('active',b.dataset.mode===m);
   $('brushbar').hidden=!['brush','erase','lasso','wand','ellipse'].includes(m);
@@ -225,11 +178,11 @@ function setMode(m){
   $('brushLabel').textContent=m==='erase'?'지우개 굵기':'붓 굵기';
   $('brushLabel').hidden=$('brushInput').hidden=$('brushValue').hidden=!['brush','erase'].includes(m);
   $('showZones').checked=m!=='play';
+  paintTouchTest();refreshHistory();
   if(m==='play')setStatus('그림을 터치하면 설정한 반응을 확인할 수 있습니다.');
-  if(m==='pivot')setStatus('선택 영역 안에서 기본 축을 놓을 위치를 눌러 주세요.');
-  if(m==='extraPivot')setStatus('선택 영역 안에서 추가 축을 놓을 위치를 한 번 눌러 주세요.');
-  if(m==='spine')setStatus('선택 영역 안에서 고정할 뿌리부터 흔들릴 끝까지 한 획을 그려 주세요.');
-  if(m==='flowdir')setStatus('흐름 시작점에서 끝점으로 드래그하세요.');
+  if(m==='pivot')setStatus('축 지정: 선택한 영역 안에서 고정할 곳을 누르세요. 다른 곳을 누르면 옮겨집니다.');
+  if(m==='extraPivot')setStatus('축 추가: 선택한 영역 안에서 축을 더 놓을 곳을 누르세요.');
+  if(m==='spine')setStatus('가이드 선: 선택한 영역 안에서 고정할 뿌리부터 흔들릴 끝까지 한 획을 그으세요.');
   if(m==='pan')setStatus('화면 이동을 선택했습니다. 끌어서 확대한 화면을 옮기세요.');
   if(m==='wand')setStatus('마술봉을 선택했습니다. 선택할 부분을 누른 뒤 범위를 조절하세요.');
   if(m==='lasso')setStatus($('encloseInput').checked?'올가미를 선택했습니다. 대상을 대략 둘러 그리면 윤곽에 맞춰 선택됩니다.':'올가미를 선택했습니다. 원하는 범위를 둘러 그려 주세요.');
@@ -293,3 +246,15 @@ window.MotionPadDebug=Object.freeze({
   dev:{addEllipse:(x,y,rx,ry)=>addEllipse(x,y,rx,ry),sampleBackground:(x,y)=>{if(!backgroundPlate)return null;const c=backgroundPlate,g=c.getContext('2d');return [...g.getImageData(Math.max(0,Math.min(c.width-1,Math.round(x*c.width))),Math.max(0,Math.min(c.height-1,Math.round(y*c.height))),1,1).data]},sfxLoaded:()=>[...builtinSfxBuffers.values()].filter(v=>v&&v.duration>0).length,baseMaskAlpha:(x,y)=>{if(!baseMaskCanvas)return null;const c=baseMaskCanvas;return c.getContext('2d').getImageData(Math.round(x*383),Math.round(y*383),1,1).data[3]}},
   maskStats(){return zones.map(z=>{const c=rawMaskCanvas(z),d=c.getContext('2d').getImageData(0,0,TILE,TILE).data;let count=0,cx=0,cy=0;for(let i=0;i<TILE*TILE;i++){if(d[i*4+3]>100){count++;cx+=i%TILE;cy+=Math.floor(i/TILE)}}return {id:z.id,name:z.name,kind:z.kind,count,centroid:count?[cx/count/TILE,cy/count/TILE]:null}})},state(){return {base:{name:getBase()?.name||null,clip:baseClipEnabled,exclude:baseBackgroundExclude,edge:baseEdge,backgroundReady:!!backgroundPlate},renderer:gl?'webgl':'canvas',fps,theme:document.documentElement.dataset.theme||'violet',image:[renderWidth,renderHeight],zones:zones.map(z=>({name:z.name,kind:z.kind,pivot:[z.pivotX,z.pivotY],motion:[z.motionX,z.motionY,z.motionScale],gesture:[z.tapGain,z.dragGain,z.holdGain,z.flickGain]})),ambient:{...ambient},chains:zones.map(z=>({spineTip:z.spineTip,spineMid:z.spineMid,branchTip:z.branchTip,wind:[z.windX,z.windY],extraPivots:z.extraPivots?.length||0}))}}
 });
+// 3-M 방향 다이얼: 바람·흐름 방향을 끌어서 돌린다. 값은 숨은 input(각도, 오른쪽 0° · 아래 90°)에 담겨 기존 연결을 그대로 쓴다.
+for(const dial of document.querySelectorAll('.dirDial')){
+ const input=$(dial.dataset.for);
+ dial.innerHTML='<svg viewBox="-13 -13 26 26" aria-hidden="true"><circle r="11.5"/><path class="ticks" d="M9.5 0h2M-9.5 0h-2M0 9.5v2M0 -9.5v-2"/><g class="needle"><path d="M-6 0H7M3.5 -3.5 7 0 3.5 3.5"/></g></svg>';
+ const paint=()=>{dial.style.setProperty('--a',input.value+'deg');dial.setAttribute('aria-valuenow',input.value)};
+ const set=v=>{v=Math.round(v/5)*5;while(v>180)v-=360;while(v<-180)v+=360;if(String(v)===input.value)return;input.value=v;input.dispatchEvent(new Event('input',{bubbles:true}));paint()};
+ const fromEvent=e=>{const r=dial.getBoundingClientRect();set(Math.atan2(e.clientY-(r.top+r.height/2),e.clientX-(r.left+r.width/2))*180/Math.PI)};
+ dial.addEventListener('pointerdown',e=>{if(getSelected())remember();dial.setPointerCapture(e.pointerId);fromEvent(e)});
+ dial.addEventListener('pointermove',e=>{if(dial.hasPointerCapture(e.pointerId))fromEvent(e)});
+ dial.addEventListener('keydown',e=>{const d={ArrowLeft:-5,ArrowDown:-5,ArrowRight:5,ArrowUp:5}[e.key];if(d){e.preventDefault();if(getSelected())remember();set(Number(input.value)+d)}});
+ dial.paint=paint;paint();
+}

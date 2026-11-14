@@ -6,6 +6,10 @@
   background:var(--accent);box-shadow:none}
 .brand h1{margin:0;color:var(--ink);font-family:system-ui,sans-serif;font-size:var(--fs-title);font-weight:var(--fw-title);letter-spacing:-.35px;white-space:nowrap}
 .brand h1 span{color:var(--help);font-size:var(--fs-help);font-weight:var(--fw-help)}
+/* 지금 프로젝트 이름(PC). 폰형은 파일 메뉴 맨 위(.menuNote) */
+.projectName{min-width:0;max-width:34vw;margin-left:4px;padding-left:10px;border-left:1px solid var(--line);overflow:hidden;color:var(--item);font-size:var(--fs-item);text-overflow:ellipsis;white-space:nowrap}
+.menuNote{display:none;margin:0;padding:4px 14px 6px;border-bottom:1px solid var(--line);overflow:hidden;color:var(--help);font-size:var(--fs-help);text-overflow:ellipsis;white-space:nowrap;max-width:240px}
+.phoneOnly{display:none}
 .toolbar{display:flex;flex:1;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:5px;min-width:0}
 .starting .toolbar{visibility:hidden}
 #viewerBtn{flex:0 0 auto;margin-left:4px;background:var(--accent);border-color:var(--accent);color:var(--onAccent);font-weight:var(--fw-title)}
@@ -15,8 +19,10 @@
 .topMenu>summary::-webkit-details-marker{display:none}
 .topMenu>summary:is(:hover,:focus-visible),.topMenu[open]>summary{background:var(--hover)}
 .topMenuItems{position:absolute;top:100%;left:0;z-index:20;display:grid;min-width:200px;padding:4px 0;background:var(--panel);border:1px solid var(--line);border-radius:0 0 var(--r-box) var(--r-box);box-shadow:var(--shadow)}
-.topMenu:last-of-type .topMenuItems{left:auto;right:0}
-.topMenuItems>.btn{min-height:var(--ctl-h);padding:4px 24px 4px 14px;text-align:left;font-weight:var(--fw-item);background:transparent;border:0 none transparent;border-radius:0}
+.topMenuItems>.btn{display:flex;align-items:center;justify-content:space-between;gap:22px;min-height:var(--ctl-h);padding:4px 14px;text-align:left;font-weight:var(--fw-item);background:transparent;border:0 none transparent;border-radius:0}
 .topMenuItems>.btn:is(:hover,:focus-visible){background:var(--accentSoft)}
 .menuSep{height:1px;margin:4px 8px;border:0;background:var(--line)}
 
+/* 단축키 표기: 마우스를 쓰는 넓은 화면에서만 */
+.topMenuItems kbd{font:inherit;font-size:var(--fs-help);color:var(--help)}
+@media (pointer:coarse),(hover:none),(max-width:779px),(orientation:portrait){.topMenuItems kbd{display:none}}

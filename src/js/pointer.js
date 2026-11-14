@@ -19,13 +19,13 @@ function placePivot(z,p,additional){
  remember();
  if(additional){
   z.extraPivots.push([p.x,p.y]);
-  setMode('edit');
  }else{
   z.pivotX=p.x;z.pivotY=p.y;
  }
  z.pivotEnabled=true;
  updateUI();scheduleSave();
- setStatus(additional?'추가 축을 지정했습니다.':'기본 축 위치를 지정했습니다.');
+ if(additional)setMode(placeReturn);
+ setStatus(additional?'축을 추가했습니다.':'축을 지정했습니다. 다른 곳을 누르면 옮겨집니다.');
  return true;
 }
 function pointerPos(e){const r=overlay.getBoundingClientRect(),offset=e.pointerType==='touch'&&$('offsetInput').checked&&['brush','erase','lasso'].includes(mode)?Math.min(54,r.height*.14):0;return {x:clamp((e.clientX-r.left)/r.width,0,1),y:clamp((e.clientY-r.top-offset)/r.height,0,1)}}
@@ -287,18 +287,18 @@ function finishPointer(e,cancelled=false){
     const z=getSelected();if(z&&!z.locked&&g.points.length>=2){remember();const pts=g.points,n=6;
       z.spine=Array.from({length:n},(_,i)=>{const q=spinePoint(pts,i/(n-1));return q});
       z.pivotEnabled=true;z.pivotX=z.spine[0][0];z.pivotY=z.spine[0][1];z.chainNodes=null;
-      updateUI();scheduleSave();gesture=null;setMode('edit');setStatus('움직임 가이드 선을 지정했습니다. 시작점은 고정되고 끝부분이 늦게 반응합니다.');return;
-    }gesture=null;setMode('edit');return;
+      updateUI();scheduleSave();gesture=null;setMode(placeReturn);setStatus('가이드 선을 지정했습니다. 시작점은 고정되고 끝부분이 늦게 반응합니다.');return;
+    }gesture=null;return;
   }
   if(g.type==='branch'){
     const z=getSelected();if(z&&!z.locked&&g.points.length>=2){remember();z.branch=Array.from({length:5},(_,i)=>spinePoint(g.points,i/4));z.branchNodes=null;updateUI();scheduleSave();setStatus('가지 선을 지정했습니다. 시작점은 분기점으로 유지됩니다.')}
-    gesture=null;setMode('edit');return;
+    gesture=null;setMode(placeReturn);return;
   }
   if(g.type==='flowdir'){
     const z=getSelected();if(z&&!z.locked&&g.points.length>=2){remember();const a=g.points[0],b=g.points[g.points.length-1];
       z.flowAngle=clamp(Math.atan2((b[1]-a[1])*renderHeight,(b[0]-a[0])*renderWidth)*180/Math.PI,-180,180);
       if(z.flow<1)z.flow=17;updateUI();scheduleSave();setStatus('흐름 방향을 지정했습니다.');
-    }gesture=null;setMode('edit');return;
+    }gesture=null;setMode(placeReturn);return;
   }
   gesture=null;
 }

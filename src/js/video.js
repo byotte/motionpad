@@ -71,7 +71,7 @@ function refreshVideoPlan(){
  const sizeOrig=document.querySelector('input[name="videoSize"][value="orig"]+span');
  if(sizeOrig){const o=videoPlan('orig');sizeOrig.textContent=`원본 ${o.OW}×${o.OH}`}
  const fmt=document.querySelector('input[name="videoFormat"][value="video"]+span');if(fmt)fmt.textContent=ext?`영상 (${ext})`:'영상';
- const q=Number($('videoQuality').value);$('videoQualityValue').textContent=`${q} · ${q<17?'낮음':q<50?'보통':q<84?'높음':'최고'}`;
+ const q=Number($('videoQuality').value);$('videoQualityValue').textContent=String(q);
  $('videoCustomRow').hidden=!p.custom;
  // 직접 입력 칸: 고르지 않았을 때는 지금 크기를 따라가고, 비율 유지면 세로는 가로에서 계산해 보여 준다.
  if(!p.custom){$('videoW').value=p.OW;$('videoH').value=p.OH}else if($('videoKeepRatio').checked&&document.activeElement!==$('videoH'))$('videoH').value=p.OH;$('exportVideoBtn').textContent=p.format==='gif'?'움짤 저장':'영상 저장';

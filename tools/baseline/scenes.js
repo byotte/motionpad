@@ -36,7 +36,7 @@ async function prep(page, state) {
     let [x, y] = await view(...pts[0]); await page.mouse.move(x, y); await page.mouse.down();
     for (const p of pts.slice(1)) { [x, y] = await view(...p); await page.mouse.move(x, y, { steps: 8 }); }
     await page.mouse.up();
-    await page.waitForFunction(() => !document.getElementById('outlineApply').disabled, null, { timeout: 60000 });
+    await page.waitForFunction(() => document.getElementById('outlineControls').dataset.ready === '1', null, { timeout: 60000 });
   }
   if (state === 'help') { await page.locator('#wandMode').click(); await page.locator('#wandbar [data-help]').first().click(); }
   if (state === 'touchprev') {
@@ -48,7 +48,7 @@ async function prep(page, state) {
   if (state === 'wand') {
     await page.locator('#wandMode').click();
     const [x, y] = await view(.42, .75); await page.mouse.click(x, y);
-    await page.waitForFunction(() => !document.getElementById('wandApply').disabled);
+    await page.waitForFunction(() => document.getElementById('wandbar').dataset.ready === '1');
   }
   if (state === 'lasso') {
     await page.locator('#lassoMode').click();

@@ -48,11 +48,12 @@
 .nameRow input{flex:1;min-width:0}
 .empty{padding:var(--sp1) 0;font-size:var(--fs-help);color:var(--help)}
 /* 2-F 영역 목록. PC: 세로 목록(이름 · 켜진 효과 이름표 · 잠금). 이름표가 넘치면 뒤쪽(덜 중요한 것)부터 다음 줄로 밀려 숨는다 */
-.zoneList{display:flex;flex-direction:column;gap:2px;margin:0 -4px;padding:4px 0 6px}
+.zoneList{display:flex;flex-direction:column;gap:3px;margin:0;padding:4px 0 6px}
 .chip{background:var(--button);color:var(--item);font-size:var(--fs-item);border-color:var(--line);border-radius:var(--r-ctl)}
 .chip.active{background:var(--accentSoft);border-color:var(--accent);color:var(--ink)}
-.zoneItem{display:flex;align-items:center;gap:6px;width:100%;min-height:var(--ctl-h);padding:2px 7px;border-color:transparent;background:transparent;text-align:left;font-weight:var(--fw-item)}
-.zoneItem.active{box-shadow:inset 3px 0 var(--accent)}
+/* 3-M: 목록의 칸마다 흐린 테두리, 고른 칸은 강조색 굵은 테두리(고르는 버튼 규칙과 같다) */
+.zoneItem{display:flex;align-items:center;gap:6px;width:100%;min-height:var(--ctl-h);padding:2px 7px;border-color:var(--line);background:transparent;text-align:left;font-weight:var(--fw-item)}
+.zoneItem.active{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:transparent;color:var(--ink)}
 .zoneName{flex:1 1 auto;min-width:3em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .baseMark{color:var(--mark)}
 .zoneTags{display:flex;flex-wrap:wrap;justify-content:flex-end;flex:0 1 auto;gap:3px;max-width:62%;height:18px;overflow:hidden}
@@ -62,6 +63,9 @@
 .settingActions{display:flex;gap:var(--sp1);margin-top:var(--sp3)}
 .settingActions .btn{flex:1}
 .side .settingActions{flex-wrap:wrap}
+/* 축 지정·추가·삭제·가이드 선: 한 줄, 흐린 테두리 버튼 */
+.side .axisActions{flex-wrap:nowrap;gap:3px;margin-top:var(--sp2)}
+.side .axisActions .btn{flex:1 1 0;min-width:0;padding-inline:2px;border:1px solid var(--line);background:transparent;text-align:center;white-space:nowrap}
 .side .settingActions .btn{flex:1 1 auto;max-width:100%;white-space:normal;overflow-wrap:anywhere}
 .baseButtons{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp1);margin:var(--sp2) 0}
 .baseButtons .micro{font-size:var(--fs-help)}
