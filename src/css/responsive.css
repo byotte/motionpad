@@ -67,7 +67,8 @@
 @media (pointer:coarse){
   /* 손가락으로 누르는 기기: 버튼·입력칸·제목줄 높이를 한 값으로 키운다 */
   :root{--ctl-h:36px;--head-h:40px;--tool-h:40px}
-  :is(dialog,.side,.topMenuItems,.viewerAudio,.brushbar) button:not(.btn,.chip,.playerHandle){min-height:var(--ctl-h)}
+  :is(dialog,.side,.topMenuItems,.viewerAudio,.brushbar) button:not(.btn,.chip,.playerHandle,.helpDot){min-height:var(--ctl-h)}
+  .helpDot{width:28px;height:28px}
   input[type=range]{height:var(--ctl-h)}
   .selOp label{padding:0 12px}
 }

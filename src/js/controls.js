@@ -239,6 +239,8 @@ function setMode(m){
   branch:'가지 선 도구를 선택했습니다. 기존 선에서 이어질 방향을 그려 주세요.'
  };
  if(toolHints[m])setStatus(toolHints[m]);
+ // 폰형 화면은 안내줄이 좁다: '○○을 선택했습니다.'를 빼고 할 일만 남긴다
+ if(matchMedia('(orientation:portrait),(max-width:779px)').matches){const e=$('status'),t=e.textContent.replace(/^[^.]*선택했습니다\.\s*/,'');if(t&&t!==e.textContent)setStatus(t)}
 }
 function fit(){
   if(!ready)return;
