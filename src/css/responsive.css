@@ -13,7 +13,6 @@
   .stage{height:43dvh;min-height:210px}
   .stagebottom{align-self:stretch}
   .quick{width:auto}
-  .stagebottom :is(.btn,.toggle){font-size:var(--fs-help)}
   .status{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
   .side{max-height:var(--panel-height,36dvh)}
   .side>.maskDisplay{display:none}
@@ -42,10 +41,11 @@
   .stage{height:42dvh;min-height:195px}
   .quick{flex:0 1 auto;gap:0 1px}
   .quick .btn{min-width:22px}
-  .stagebottom{gap:2px 4px}
-  .quick .iconBtn{min-width:26px;padding-inline:2px}
-  #zoomResetBtn{min-width:36px;padding-inline:2px}
-  .quick .precisionSwitch{gap:2px;padding:0 1px}
+  .stagebottom{gap:2px 2px;padding-inline:4px}
+  .quick .iconBtn{min-width:24px;padding-inline:1px}
+  #zoomResetBtn{min-width:34px;padding-inline:0}
+  .stagebottom input[type=checkbox]{margin:0 3px 0 0}
+  .quick .precisionSwitch{gap:2px;padding:0 2px}
   .guideLine{padding-inline:8px}
   .loupe{top:6px;right:6px;width:104px;height:104px}
   #lassobar{gap:4px;padding-inline:4px}

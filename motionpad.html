@@ -230,7 +230,8 @@ button[data-help]:hover::before{color:var(--ink)}
 .quick .btn{border-color:transparent;background:transparent}
 .quick .btn:hover{background:var(--button)}
 :root[data-theme="light"] .quick .btn{background:transparent}
-#zoomResetBtn{min-width:43px;font-size:var(--fs-help)}
+#zoomResetBtn{min-width:43px}
+.quick .ic{width:18px;height:18px}
 .precisionSwitch{gap:var(--sp1);min-height:var(--ctl-h);padding:0 6px;white-space:normal}
 .precisionSwitch input{flex:none}
 /* 3-C 안내줄: 캔버스 바로 아래 전용 한 줄. 모든 안내 문구가 여기 뜬다. PC는 한 줄(넘치면 …, 마우스를 올리면 전체), 폰은 두 줄까지 */
@@ -424,7 +425,6 @@ button[data-help]:hover::before{color:var(--ink)}
   .stage{height:43dvh;min-height:210px}
   .stagebottom{align-self:stretch}
   .quick{width:auto}
-  .stagebottom :is(.btn,.toggle){font-size:var(--fs-help)}
   .status{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
   .side{max-height:var(--panel-height,36dvh)}
   .side>.maskDisplay{display:none}
@@ -453,10 +453,11 @@ button[data-help]:hover::before{color:var(--ink)}
   .stage{height:42dvh;min-height:195px}
   .quick{flex:0 1 auto;gap:0 1px}
   .quick .btn{min-width:22px}
-  .stagebottom{gap:2px 4px}
-  .quick .iconBtn{min-width:26px;padding-inline:2px}
-  #zoomResetBtn{min-width:36px;padding-inline:2px}
-  .quick .precisionSwitch{gap:2px;padding:0 1px}
+  .stagebottom{gap:2px 2px;padding-inline:4px}
+  .quick .iconBtn{min-width:24px;padding-inline:1px}
+  #zoomResetBtn{min-width:34px;padding-inline:0}
+  .stagebottom input[type=checkbox]{margin:0 3px 0 0}
+  .quick .precisionSwitch{gap:2px;padding:0 2px}
   .guideLine{padding-inline:8px}
   .loupe{top:6px;right:6px;width:104px;height:104px}
   #lassobar{gap:4px;padding-inline:4px}

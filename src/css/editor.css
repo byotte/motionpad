@@ -76,7 +76,8 @@ button[data-help]:hover::before{color:var(--ink)}
 .quick .btn{border-color:transparent;background:transparent}
 .quick .btn:hover{background:var(--button)}
 :root[data-theme="light"] .quick .btn{background:transparent}
-#zoomResetBtn{min-width:43px;font-size:var(--fs-help)}
+#zoomResetBtn{min-width:43px}
+.quick .ic{width:18px;height:18px}
 .precisionSwitch{gap:var(--sp1);min-height:var(--ctl-h);padding:0 6px;white-space:normal}
 .precisionSwitch input{flex:none}
 /* 3-C 안내줄: 캔버스 바로 아래 전용 한 줄. 모든 안내 문구가 여기 뜬다. PC는 한 줄(넘치면 …, 마우스를 올리면 전체), 폰은 두 줄까지 */
