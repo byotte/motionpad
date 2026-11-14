@@ -28,11 +28,15 @@ function restoreBlink(settings){
  blinkPatches=blinkEyes.map(eye=>eye?makeBlinkPatch(eye.points.map(p=>({x:p.x*renderWidth,y:p.y*renderHeight})),eye.cover,eye.protection):null);
  blinkEpoch=elapsed;blinkLastTail=null;
  blinkScene=blinkOriginal=blinkComposite=blinkTailComposite=blinkOverlay=null;
+ paintEyeEntryState();
 }
+// 옵션의 '4. 눈 깜빡임' 줄 오른쪽에 적용한 눈 개수를 보인다.
+function paintEyeEntryState(){const n=blinkEyes.filter(Boolean).length;$('eyeEntryState').textContent=n?`눈 ${n}개 적용됨`:''}
 function blinkEyesForSave(){let n=blinkEyes.length;while(n>2&&!blinkEyes[n-1])n--;return blinkEyes.slice(0,n)}
 // '편집할 눈' 목록: 적용한 눈 + 빈 칸 하나(처음에는 눈 1·눈 2). 적용한 눈에는 ✓.
 function paintBlinkEyeOptions(){
  const sel=$('blinkEye'),keep=sel.value||'0';let last=-1;blinkEyes.forEach((eye,i)=>{if(eye)last=i});
+ paintEyeEntryState();
  const count=clamp(Math.max(last+2,Number(keep)+1),2,BLINK_MAX_EYES);
  sel.replaceChildren(...Array.from({length:count},(_,i)=>{const o=document.createElement('option');o.value=String(i);o.textContent=`눈 ${i+1}`+(blinkEyes[i]?' ✓':'');return o}));
  sel.value=Number(keep)<count?keep:'0';

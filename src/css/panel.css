@@ -19,6 +19,8 @@
 .side details details[open]>summary{margin-bottom:var(--sp1);border-bottom:1px solid var(--groupLine);color:var(--ink)}
 .side :is(summary,button):not(:disabled):is(:hover,:focus-visible){background:var(--hover)}
 .side>.eyeEntry{display:flex;align-items:center;gap:7px;align-self:stretch;width:100%;min-height:var(--head-h);margin:0;padding:0 10px;border:0;border-bottom:1px solid var(--line);border-radius:0;background:var(--head);color:var(--ink);font:inherit;font-size:var(--fs-title);font-weight:var(--fw-title);line-height:1.45;text-align:left;cursor:pointer}
+/* 적용한 눈 개수: 제목 오른쪽 끝에 도움말 크기로 */
+.side>.eyeEntry .eyeEntryState{margin-inline-start:auto;font-size:var(--fs-help);font-weight:var(--fw-help);color:var(--help)}
 /* 눈 깜빡임은 창으로 열린다: 꺾쇠를 오른쪽 방향으로 고정 */
 .side>.eyeEntry::before{content:"";flex:none;width:5px;height:5px;margin:0 2px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:rotate(-45deg);opacity:.7}
 .side .lead{margin:6px 0 2px}
@@ -35,6 +37,8 @@
 .field{margin:var(--sp2) 0;min-width:0;overflow-wrap:anywhere}
 .fieldhead{display:flex;align-items:center;justify-content:space-between;min-width:0;margin:0 0 var(--sp1)}
 .fieldhead label{min-width:0;padding-right:5px;overflow-wrap:anywhere}
+/* 항목 이름 뒤 도움말 점: 문구 바로 뒤에 붙고 값은 오른쪽 끝 */
+.fieldhead>.helpDot{margin-inline-end:auto}
 .field label{font-size:var(--fs-item);color:var(--item)}
 .field output{font-size:var(--fs-item);font-weight:var(--fw-item);color:var(--accent);font-variant-numeric:tabular-nums}
 .field input[type=range]{width:100%}

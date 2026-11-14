@@ -88,6 +88,8 @@ function updateQuickMotion(z){
   const unit=name==='windStrengthInput'?'%':['windSpeedInput','breathSpeed','autoSpeedInput'].includes(name)?'×':'';
   $(id+'Value').textContent=(name==='autoSpeedInput'?Number(input.value).toFixed(1):input.value)+unit;
  }
+ const kind=z.preset==='breathing'?'호흡 ':controls.angle&&controls.speed?'바람 ':z.preset==='flow'?'흐름 ':'';
+ $('quickStrengthLabel').textContent=kind+'세기';$('quickSpeedLabel').textContent=kind+'속도';
  $('quickSpeedRow').hidden=!controls.speed;
  $('autoSpeedRow').hidden=controls.speed==='autoSpeedInput';
  $('quickMotionHint').textContent=controls.hint;
