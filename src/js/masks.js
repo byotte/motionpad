@@ -153,14 +153,13 @@ function updateBaseTextures(){
  if(!baseBackgroundExclude)return;
  if(!maskChanged&&baseMaskCanvas&&lastBaseEdge===baseEdge)return;
  const base=rawMaskCanvas(z);
- // 3-O: 몸체는 4칸 넓게 파서 테두리 띠(윤곽 자국)까지 메우고, 얹는 그림은 그보다 넓게(아래) 덮어 가만히 있을 때 원본과 같게 한다
- if(!baseMaskCanvas)backgroundPlate=buildBackgroundPlate(base,dilateMask(base,4));
+ if(!baseMaskCanvas)backgroundPlate=buildBackgroundPlate(base);
  const b=document.createElement('canvas');
  b.width=b.height=TILE;
  const bg=b.getContext('2d');
  if(baseEdge)bg.filter='blur('+baseEdge+'px)';
  // 3-M: 얹는 몸체 그림은 선택보다 넓게(빈자리는 2칸 넓게 메우므로 그보다 바깥까지). 좁으면 가만히 있어도 테두리에 메운 자국이 비친다.
- bg.drawImage(dilateMask(base,5+Math.ceil(baseEdge*.75)),0,0);
+ bg.drawImage(dilateMask(base,3+Math.ceil(baseEdge*.75)),0,0);
  baseMaskCanvas=b;lastBaseEdge=baseEdge;
  baseForegroundSource=null;
 }
@@ -222,9 +221,7 @@ function updateTailCutout(){
   const g=both.getContext('2d');
   g.drawImage(rawMasks[baseIndex],0,0);
   g.drawImage(union,0,0);
-  const foot=document.createElement('canvas');foot.width=foot.height=TILE;const fg=foot.getContext('2d');
-  fg.drawImage(dilateMask(rawMasks[baseIndex],4),0,0);fg.drawImage(dilateMask(union,2),0,0);
-  tailBasePlate=buildBackgroundPlate(both,foot);
+  tailBasePlate=buildBackgroundPlate(both);
  }
 }
 
