@@ -2,8 +2,7 @@
 .app{padding:0}
 .header{position:relative;display:flex;align-items:center;justify-content:space-between;flex-wrap:nowrap;gap:12px;min-height:34px;padding:2px 8px;border-bottom:1px solid var(--line)}
 .brand{display:flex;flex:none;align-items:center;gap:7px;min-width:0}
-.logo{display:grid;place-items:center;width:25px;height:25px;border-radius:var(--r-ctl);font-size:var(--fs-glyph);font-weight:var(--fw-title);color:var(--accentInk);
-  background:var(--accent);box-shadow:none}
+.logo{flex:none;width:25px;height:25px}
 .brand h1{margin:0;color:var(--ink);font-family:system-ui,sans-serif;font-size:var(--fs-title);font-weight:var(--fw-title);letter-spacing:-.35px;white-space:nowrap}
 .brand h1 span{color:var(--help);font-size:var(--fs-help);font-weight:var(--fw-help)}
 /* 지금 프로젝트 이름(PC). 폰형은 파일 메뉴 맨 위(.menuNote) */
