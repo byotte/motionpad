@@ -174,7 +174,9 @@ function initialWandRange(map,requested){
 // 마술봉: 범위 슬라이더 값 → 비용 상한(이하이면 선택)
 function wandLimit(range){return Math.min(255,2*range)}// 256 = 선화에 막혀 닿지 못한 곳(어떤 범위로도 잡지 않음)
 // 간략 범위지정: 범위 슬라이더 값(-24~24) → 점수 하한(이상이면 선택)
-function outlineThreshold(range,hasBoundary){
+function outlineThreshold(range,hasBoundary,span){
+ // 3-M: span=[이 그림의 가장 낮은 점수, 가장 높은 점수]를 주면 막대 양 끝이 거기에 닿도록 고르게 편다(0은 예전과 같은 기준)
+ if(span&&range){const t0=hasBoundary?1:0,k=(Math.abs(range)/24)**1.3;return Math.round(range>0?t0-(t0-span[0])*k:t0+(span[1]+1-t0)*k)}
  const bias=Math.sign(range)*Math.round(Math.abs(range)+232*(Math.abs(range)/24)**4);
  return (hasBoundary?1:0)-bias;
 }

@@ -3,6 +3,7 @@ attribute vec2 a_uv;
 varying vec2 v_uv;
 uniform float u_time;
 uniform vec4 u_ambient;
+uniform vec2 u_bodyCenter;
 uniform float u_baseExclude;
 void main(){
   v_uv=a_uv;
@@ -10,7 +11,12 @@ void main(){
   // Smooth, continuous motion: different non-integer oscillation periods suppress mechanical repetition.
   float inhale=.76*sin(u_time*1.40-.30)+.24*sin(u_time*.72+.34);
   float drift=.80*sin(u_time*.98)+.20*sin(u_time*1.51+1.7);
-  vec2 delta=vec2(.013*u_ambient.z*drift,.018*u_ambient.y*inhale)*topWeight;
+  // 3-N 호흡: 가슴(중심)이 좌우로 부풀고 그 위쪽이 살짝 들린다. 중심은 거의 안 움직이고 멀수록 많이 움직인다.
+  vec2 bd=a_uv-u_bodyCenter;
+  float lift=pow(clamp((u_bodyCenter.y+.12-a_uv.y)/(u_bodyCenter.y+.12),0.0,1.0),1.3);
+  float widen=1.0-.65*smoothstep(u_bodyCenter.y,1.0,a_uv.y);
+  vec2 breath=vec2(.030*bd.x*widen,-.014*lift)*u_ambient.y*inhale;
+  vec2 delta=vec2(.013*u_ambient.z*drift*topWeight,0.0)+vec2(breath.x,-breath.y);
   gl_Position=vec4(a_pos+2.0*delta*(1.0-u_baseExclude),0.0,1.0);
 }`;
 const FRAG=`precision highp float;
@@ -27,6 +33,7 @@ uniform vec4 u_chainMid[12],u_branchLine[12],u_branchMotion[12],u_pivotExtra[12]
 uniform int u_count;
 uniform float u_time;
 uniform vec4 u_ambient;
+uniform vec2 u_bodyCenter;
 float anchoredDistance(vec2 uv,vec4 piv,vec4 extra){
  float d=distance(uv,piv.xy);
  if(extra.x>=0.0)d=min(d,distance(uv,extra.xy));
@@ -132,15 +139,22 @@ void main(){
    float tw=pow(clamp(1.0-v_uv.y,0.0,1.0),1.5);
    float inhale=.76*sin(u_time*1.40-.30)+.24*sin(u_time*.72+.34);
    float drift=.80*sin(u_time*.98)+.20*sin(u_time*1.51+1.7);
-   vec2 ambientShift=vec2(.013*u_ambient.z*drift,.018*u_ambient.y*inhale)*tw;
+   vec2 bd=v_uv-u_bodyCenter;
+   float lift=pow(clamp((u_bodyCenter.y+.12-v_uv.y)/(u_bodyCenter.y+.12),0.0,1.0),1.3);
+   float widen=1.0-.65*smoothstep(u_bodyCenter.y,1.0,v_uv.y);
+   vec2 ambientShift=vec2(.013*u_ambient.z*drift*tw,0.0)+vec2(.030*bd.x*widen,-.014*lift)*u_ambient.y*inhale;
    shift+=ambientShift;
    cs0+=ambientShift;cs1+=ambientShift;cs2+=ambientShift;cs3+=ambientShift;
  }
+ // 3-N 가장자리 붙잡기: 그림 테두리의 픽셀은 움직이지 않고 안쪽으로 갈수록(약 4.5%) 원래대로 움직인다.
+ // 테두리에 닿아 잘린 부위를 당겨도 그림 밖(없는 곳)이 드러나지 않고 그 부위가 늘어나며 따라온다.
+ float edgePin=smoothstep(0.0,.045,min(min(v_uv.x,1.0-v_uv.x),min(v_uv.y,1.0-v_uv.y)));
+ shift*=edgePin;cs0*=edgePin;cs1*=edgePin;cs2*=edgePin;cs3*=edgePin;
  vec2 uv=clamp(v_uv-clamp(shift,vec2(-.08),vec2(.08)),vec2(.001),vec2(.999));
  vec4 color;
  if(flowWeight>.0001){
    float phase=fract(u_time*.19),phase2=fract(phase+.5);
-   vec2 flow=clamp(flowVector,vec2(-.014),vec2(.014));
+   vec2 flow=clamp(flowVector,vec2(-.023),vec2(.023));
    vec2 a=clamp(uv-flow*phase,vec2(.001),vec2(.999));
    vec2 b=clamp(uv-flow*phase2,vec2(.001),vec2(.999));
    color=mix(texture2D(u_tex,a),texture2D(u_tex,b),abs(phase*2.0-1.0));

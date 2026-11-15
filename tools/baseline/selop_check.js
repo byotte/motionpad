@@ -49,8 +49,8 @@ const TILE = 384;
   };
   const wand = async (x, y) => {
     const p = await toScreen(x, y); await page.mouse.click(p.x, p.y);
-    await page.waitForFunction(() => !document.getElementById('wandApply').disabled, null, { timeout: 30000 });
-    await page.locator('#wandApply').click();
+    await page.waitForFunction(() => document.getElementById('wandbar').dataset.ready === '1', null, { timeout: 30000 });
+    /* 3-M: 적용 버튼 없음(바로 반영) */
     const st = await status(); await rafs(); return st;// 적용 직후 안내(화질 자동 조정 같은 다른 안내가 곧 덮을 수 있다)
   };
 
@@ -76,8 +76,8 @@ const TILE = 384;
   await tool('lassoMode'); await op('add');
   if (!(await page.locator('#encloseInput').isChecked())) await page.locator('#encloseInput').check({ force: true });
   await drag([[0.64, 0.40], [0.92, 0.40], [0.92, 0.76], [0.64, 0.76], [0.64, 0.41]], 10);
-  await page.waitForFunction(() => !document.getElementById('outlineApply').disabled, null, { timeout: 60000 });
-  await page.locator('#outlineApply').click(); await rafs();
+  await page.waitForFunction(() => document.getElementById('outlineControls').dataset.ready === '1', null, { timeout: 60000 });
+  /* 3-M: 적용 버튼 없음(바로 반영) */ await rafs();
   const z5 = await check('5 간략 범위지정 더하기 → 옷+꼬리', (z) => z.length === 1 && z[0].area > z4[0].area + 1500);
   // 6 빼기: 올가미(자유 그리기)로 옷 아래쪽 잘라내기
   await tool('lassoMode'); await op('subtract'); await page.locator('#encloseInput').uncheck({ force: true });

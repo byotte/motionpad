@@ -19,6 +19,8 @@
 .side details details[open]>summary{margin-bottom:var(--sp1);border-bottom:1px solid var(--groupLine);color:var(--ink)}
 .side :is(summary,button):not(:disabled):is(:hover,:focus-visible){background:var(--hover)}
 .side>.eyeEntry{display:flex;align-items:center;gap:7px;align-self:stretch;width:100%;min-height:var(--head-h);margin:0;padding:0 10px;border:0;border-bottom:1px solid var(--line);border-radius:0;background:var(--head);color:var(--ink);font:inherit;font-size:var(--fs-title);font-weight:var(--fw-title);line-height:1.45;text-align:left;cursor:pointer}
+/* 적용한 눈 개수: 제목 오른쪽 끝에 도움말 크기로 */
+.side>.eyeEntry .eyeEntryState{margin-inline-start:auto;font-size:var(--fs-help);font-weight:var(--fw-help);color:var(--help)}
 /* 눈 깜빡임은 창으로 열린다: 꺾쇠를 오른쪽 방향으로 고정 */
 .side>.eyeEntry::before{content:"";flex:none;width:5px;height:5px;margin:0 2px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:rotate(-45deg);opacity:.7}
 .side .lead{margin:6px 0 2px}
@@ -35,6 +37,8 @@
 .field{margin:var(--sp2) 0;min-width:0;overflow-wrap:anywhere}
 .fieldhead{display:flex;align-items:center;justify-content:space-between;min-width:0;margin:0 0 var(--sp1)}
 .fieldhead label{min-width:0;padding-right:5px;overflow-wrap:anywhere}
+/* 항목 이름 뒤 도움말 점: 문구 바로 뒤에 붙고 값은 오른쪽 끝 */
+.fieldhead>.helpDot{margin-inline-end:auto}
 .field label{font-size:var(--fs-item);color:var(--item)}
 .field output{font-size:var(--fs-item);font-weight:var(--fw-item);color:var(--accent);font-variant-numeric:tabular-nums}
 .field input[type=range]{width:100%}
@@ -44,11 +48,12 @@
 .nameRow input{flex:1;min-width:0}
 .empty{padding:var(--sp1) 0;font-size:var(--fs-help);color:var(--help)}
 /* 2-F 영역 목록. PC: 세로 목록(이름 · 켜진 효과 이름표 · 잠금). 이름표가 넘치면 뒤쪽(덜 중요한 것)부터 다음 줄로 밀려 숨는다 */
-.zoneList{display:flex;flex-direction:column;gap:2px;margin:0 -4px;padding:4px 0 6px}
+.zoneList{display:flex;flex-direction:column;gap:3px;margin:0;padding:4px 0 6px}
 .chip{background:var(--button);color:var(--item);font-size:var(--fs-item);border-color:var(--line);border-radius:var(--r-ctl)}
 .chip.active{background:var(--accentSoft);border-color:var(--accent);color:var(--ink)}
-.zoneItem{display:flex;align-items:center;gap:6px;width:100%;min-height:var(--ctl-h);padding:2px 7px;border-color:transparent;background:transparent;text-align:left;font-weight:var(--fw-item)}
-.zoneItem.active{box-shadow:inset 3px 0 var(--accent)}
+/* 3-M: 목록의 칸마다 흐린 테두리, 고른 칸은 강조색 굵은 테두리(고르는 버튼 규칙과 같다) */
+.zoneItem{display:flex;align-items:center;gap:6px;width:100%;min-height:var(--ctl-h);padding:2px 7px;border-color:var(--line);background:transparent;text-align:left;font-weight:var(--fw-item)}
+.zoneItem.active{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:transparent;color:var(--ink)}
 .zoneName{flex:1 1 auto;min-width:3em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .baseMark{color:var(--mark)}
 .zoneTags{display:flex;flex-wrap:wrap;justify-content:flex-end;flex:0 1 auto;gap:3px;max-width:62%;height:18px;overflow:hidden}
@@ -58,11 +63,15 @@
 .settingActions{display:flex;gap:var(--sp1);margin-top:var(--sp3)}
 .settingActions .btn{flex:1}
 .side .settingActions{flex-wrap:wrap}
+/* 축 지정·추가·삭제·가이드 선: 한 줄, 흐린 테두리 버튼 */
+.side .axisActions{flex-wrap:nowrap;gap:3px;margin-top:var(--sp2)}
+.side .axisActions .btn{flex:1 1 0;min-width:0;padding-inline:2px;border:1px solid var(--line);background:transparent;text-align:center;white-space:nowrap}
 .side .settingActions .btn{flex:1 1 auto;max-width:100%;white-space:normal;overflow-wrap:anywhere}
 .baseButtons{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp1);margin:var(--sp2) 0}
 .baseButtons .micro{font-size:var(--fs-help)}
 .maskDisplay{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:auto!important;padding:6px 8px}
-.side>.maskDisplay{border-top:1px solid var(--line)}
+/* 선택 영역 표시(색·투명도)는 설정 메뉴의 창에서만 연다(PC·폰 공통) */
+.side>.maskDisplay{display:none}
 .maskDisplay label{display:inline-flex;align-items:center;gap:4px;margin:0}
 .maskDisplay input[type=color]{width:24px;height:18px;padding:0}
 .maskDisplay input[type=range]{width:70px;padding:0}

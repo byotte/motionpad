@@ -5,7 +5,8 @@
   :root{--fs-title:14px;--fs-item:14px;--fs-help:12px}/* 폰형은 큰 메뉴와 항목의 크기를 같게 두고 굵기·바탕으로만 나눈다 */
   .header{gap:5px}
   .logo{width:23px;height:23px}
-  .brand h1 span{display:none}
+  .brand h1 span,.projectName{display:none}
+  .menuNote{display:block}
   .toolbar{gap:4px}
   .workspace{grid-template-columns:minmax(0,1fr);height:auto}
   .stagebar{flex-direction:row}
@@ -15,7 +16,29 @@
   .quick{width:auto}
   .status{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
   .side{max-height:var(--panel-height,36dvh)}
-  .side>.maskDisplay{display:none}
+  /* 안내줄: 누르면 접히고 펴진다(오른쪽 꺾쇠가 표시) */
+  .guideLine{cursor:pointer}
+  .guideFold{display:block;flex:none;width:6px;height:6px;margin:0 4px 3px;border:solid var(--item);border-width:0 1.5px 1.5px 0;transform:rotate(45deg)}
+  .guideLine.folded{min-height:0;padding-block:1px}
+  .guideLine.folded .status{visibility:hidden;height:0}
+  .guideLine.folded .guideFold{margin-bottom:0;transform:rotate(-135deg)}
+  .aboutKeys{display:none}
+  /* 눈 깜빡임 창: 윗줄은 한 줄, 앞머리 붓 옵션은 아랫줄로(옆으로 밀지 않아도 보이게). 그림은 옵션을 내려 보는 동안에도 위에 붙어 있다 */
+  .blinkToolbar{flex-wrap:wrap;gap:4px;padding:5px 6px;white-space:nowrap}
+  .blinkToolbar>*{flex:none}
+  .blinkToolbar>label{font-size:0}
+  .blinkToolbar>label select{font-size:var(--fs-item)}
+  .blinkToolbar .btn{padding-inline:5px}
+  .blinkZoom,.blinkToolbar .barSep{display:none}
+  .blinkHead{flex-wrap:nowrap}
+  .blinkHead h2{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .blinkHead .btn{padding-inline:6px}
+  .blinkToolbar>.blinkBrush{display:flex;flex:1 0 100%;flex-wrap:nowrap;gap:4px;min-width:0}
+  .blinkBrush input[type=range]{flex:1 1 0;width:0;min-width:36px;max-width:160px}
+  .blinkStage{position:sticky;top:0;z-index:2}
+  .blinkMain{grid-template-columns:minmax(0,1fr)}
+  .blinkSettings{border-left:0;border-top:1px solid var(--line)}
+  .blinkStage{height:38dvh}
   /* 2-F 폰: 영역 목록은 가로 이름표(효과 이름표는 숨김, 몸체는 별표) */
   .zoneList{flex-direction:row;flex-wrap:wrap;gap:4px;margin:0}
   .zoneItem{width:auto;max-width:100%;padding:2px 10px;border-color:var(--line);background:var(--button)}
@@ -29,7 +52,7 @@
 @media (max-width:520px){
   .header{gap:4px}
   .toolbar{flex:0 1 auto;justify-content:flex-start;margin-left:auto}
-  .topMenu>summary{padding-inline:6px}
+  .topMenu>summary,.topMenuBtn{padding-inline:6px}
   .stagebar{padding-inline:2px}
   /* 좁은 폰: 도구는 아이콘만(이름은 title·안내줄), '새 영역'은 글자 유지 */
   .modegroup{flex-wrap:nowrap;align-items:center}
@@ -46,13 +69,23 @@
   #zoomResetBtn{min-width:34px;padding-inline:0}
   .stagebottom input[type=checkbox]{margin:0 3px 0 0}
   .quick .precisionSwitch{gap:2px;padding:0 2px}
+  .tog{padding:0 4px;font-size:var(--fs-help)}
+  .viewToggles{gap:2px}
   .guideLine{padding-inline:8px}
   .loupe{top:6px;right:6px;width:104px;height:104px}
   #lassobar{gap:4px;padding-inline:4px}
-  #blinkPreview{max-height:41dvh}
-  .blinkSettings{grid-template-columns:1fr}
-  .blinkFooter{flex-wrap:nowrap}
-  #blinkHint,#blinkApply{min-width:0}
+  .fileBtn span{display:none}
+}
+
+/* 펼친 폴드 가로 등 PC보다 좁은 가로 화면: 눈 깜빡임 윗줄을 조여 붓 옵션까지 한 줄에(구분선은 자리 때문에 뺀다) */
+@media (orientation:landscape) and (min-width:780px) and (max-width:959px){
+  .blinkToolbar{gap:4px;padding-inline:6px}
+  .blinkToolbar>label{font-size:0}
+  .blinkToolbar>label select{font-size:var(--fs-item)}
+  .blinkToolbar .btn{padding-inline:5px}
+  .blinkToolbar .barSep{display:none}
+  .blinkBrush{gap:4px}
+  .blinkBrush input[type=range]{width:90px}
 }
 
 /* ── 11. 터치 기기·좁은 화면: 손가락으로 누르기 쉬운 높이 ── */
@@ -62,7 +95,10 @@
   #outlineControls label{font-size:0}
   #outlineControls input[type=range]{width:90px}
   #wandbar.hasPreview{grid-column:1/-1}
-  .stageOptions:has(#wandbar.hasPreview,#outlineControls:not([hidden])) #brushbar{display:none}
+  /* 3-N: 고른 뒤에도 교체·더하기·빼기가 보이게 두 줄로(윗줄 = 선택 방식, 아랫줄 = 범위 조절) */
+  .stageOptions:has(#wandbar.hasPreview,#outlineControls:not([hidden])){grid-template-rows:42px 42px;height:85px}
+  .stageOptions:has(#wandbar.hasPreview,#outlineControls:not([hidden])) #brushbar{grid-column:1/-1}
+  .stageOptions:has(#wandbar.hasPreview,#outlineControls:not([hidden])) :is(#wandbar,#outlineControls){grid-row:2}
 }
 @media (pointer:coarse){
   /* 손가락으로 누르는 기기: 버튼·입력칸·제목줄 높이를 한 값으로 키운다 */

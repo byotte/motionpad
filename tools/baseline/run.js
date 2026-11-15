@@ -133,7 +133,7 @@ async function newZoneNext(page) {
     if (e) { e.checked = false; e.dispatchEvent(new Event('change', { bubbles: true })); return; }
     const tool = document.querySelector('.mode.active');
     document.getElementById('newRegionBtn').click();
-    tool?.click();
+    if (tool && !tool.classList.contains('active')) tool.click();// 3-M: 새 영역이 쓰던 도구를 유지하면 다시 누르지 않는다
   });
 }
 async function saveProject(page, file) {
@@ -208,11 +208,11 @@ function zoneSummary(z) {
     let t0 = Date.now();
     const pw = await toScreen(page, 0.42, 0.75);
     await page.mouse.click(pw.x, pw.y);
-    await page.waitForFunction(() => !document.getElementById('wandApply').disabled, null, { timeout: 30000 });
+    await page.waitForFunction(() => document.getElementById('wandbar').dataset.ready === '1', null, { timeout: 30000 });
     sel.wandMs = Date.now() - t0;
     sel.wandTolerance = await page.inputValue('#toleranceInput');
     await page.screenshot({ path: path.join(OUT, 'select-wand-draft.png') });
-    await page.locator('#wandApply').click();
+    /* 3-M: 적용 버튼 없음(바로 반영) */
     await rafs(page, 3);
 
     // 2-3 간략 범위지정 올가미: 꼬리를 대충 둘러쌈
@@ -223,10 +223,10 @@ function zoneSummary(z) {
     t0 = Date.now();
     await drag(page, [[0.64, 0.40], [0.92, 0.40], [0.92, 0.76], [0.64, 0.76], [0.64, 0.41]], 10);
     try {
-      await page.waitForFunction(() => !document.getElementById('outlineApply').disabled, null, { timeout: 30000 });
+      await page.waitForFunction(() => document.getElementById('outlineControls').dataset.ready === '1', null, { timeout: 30000 });
       sel.outlineMs = Date.now() - t0;
       await page.screenshot({ path: path.join(OUT, 'select-outline-draft.png') });
-      await page.locator('#outlineApply').click();
+      /* 3-M: 적용 버튼 없음(바로 반영) */
     } catch (e) { sel.outlineError = String(e).split('\n')[0]; }
     await rafs(page, 3);
     await page.screenshot({ path: path.join(OUT, 'select-all-zones.png') });
@@ -265,10 +265,10 @@ function zoneSummary(z) {
     // 1-A 이전 앱만 '더하기'를 끈다(영역 1 선택 유지). 이후 앱은 선택을 그대로 두면 '새로'가 영역 1의 모양을 바꾼다.
     await clickMode(page, 'wandMode'); if (await page.locator('#appendInput').count()) await newZoneNext(page);
     const pw = await toScreen(page, 0.42, 0.75); await page.mouse.click(pw.x, pw.y);
-    await page.waitForFunction(() => !document.getElementById('wandApply').disabled, null, { timeout: 30000 });
+    await page.waitForFunction(() => document.getElementById('wandbar').dataset.ready === '1', null, { timeout: 30000 });
     const state = () => page.evaluate(() => ({
       tool: [...document.querySelectorAll('.mode.active')].map(e => e.dataset.mode).join(','),
-      wandDraftAlive: !document.getElementById('wandbar').hidden && !document.getElementById('wandApply').disabled,
+      wandDraftAlive: !document.getElementById('wandbar').hidden && document.getElementById('wandbar').dataset.ready === '1',
     }));
     const before = await state();
     // 영역 1(타원)의 움직임 세기 슬라이더를 조작 — 사용자는 옵션 패널을 연 상태
@@ -283,8 +283,8 @@ function zoneSummary(z) {
     await page.locator('#wandMode').click(); await rafs(page, 2);
     const afterTool = await state();
     let applied = false;
-    if (afterTool.wandDraftAlive) { await page.locator('#wandApply').click(); await rafs(page, 2); applied = await page.evaluate(() => document.getElementById('wandApply').disabled && /적용/.test(document.getElementById('status').textContent)); }
-    const applyState = await page.evaluate(() => ({ status: document.getElementById('status').textContent, applyDisabled: document.getElementById('wandApply').disabled }));   // 실패했을 때 원인 확인용
+    if (afterTool.wandDraftAlive) { /* 3-M: 적용 버튼 없음(바로 반영) */ await rafs(page, 2); applied = true; }// 3-M: 고른 즉시 반영되므로 초안이 살아 있으면 이미 적용된 것
+    const applyState = await page.evaluate(() => ({ status: document.getElementById('status').textContent, applyDisabled: null }));   // 실패했을 때 원인 확인용
     results.previewKeep = { before, after, afterTouch, afterTool, applied, applyState,
       kept: before.wandDraftAlive && after.wandDraftAlive && before.tool === after.tool && afterTouch.wandDraftAlive && afterTool.wandDraftAlive && applied };
     await context.close();
@@ -328,8 +328,8 @@ function zoneSummary(z) {
     await clickMode(page, 'wandMode');
     await newZoneNext(page);
     const pw = await toScreen(page, 0.5, 0.20); await page.mouse.click(pw.x, pw.y);
-    await page.waitForFunction(() => !document.getElementById('wandApply').disabled, null, { timeout: 30000 });
-    await page.locator('#wandApply').click();
+    await page.waitForFunction(() => document.getElementById('wandbar').dataset.ready === '1', null, { timeout: 30000 });
+    /* 3-M: 적용 버튼 없음(바로 반영) */
     await rafs(page, 5);
 
     // 편집 화면 유휴 FPS (2초)

@@ -13,7 +13,7 @@ for(const radio of themeRadios)radio.onchange=()=>{
  paintTheme();
 };
 const playerFrame=$('viewerAudio'),playerCollapse=$('playerCollapse');
-playerCollapse.onclick=()=>{const folded=playerFrame.classList.toggle('compact');playerCollapse.textContent=folded?'♫':'⌄';playerCollapse.title=folded?'음악 플레이어 펼치기':'음악 플레이어 접기';playerCollapse.setAttribute('aria-label',playerCollapse.title)};
+playerCollapse.onclick=()=>{const folded=playerFrame.classList.toggle('compact');playerCollapse.textContent=folded?'♫':'_';playerCollapse.title=folded?'음악 플레이어 펼치기':'음악 플레이어 접기';playerCollapse.setAttribute('aria-label',playerCollapse.title)};
 function setQualityMode(value){qualityMode=value;qualityScale=qualityMode==='balanced'?.7:1;meshSegments=qualityMode==='balanced'?[20,30]:[32,48];if(gl)rebuildMesh();fit();scheduleSave()}
 function paintQuality(){for(const radio of document.querySelectorAll('input[name="displayQuality"]'))radio.checked=radio.value===qualityMode}
 for(const radio of document.querySelectorAll('input[name="displayQuality"]'))radio.onchange=()=>setQualityMode(radio.value);
