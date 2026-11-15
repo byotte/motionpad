@@ -2038,6 +2038,21 @@ function buildBackgroundPlate(mask,footprintOverride){
    col[p]=data[p]*a;col[p+1]=data[p+1]*a;col[p+2]=data[p+2]*a;col[p+3]=data[p+3];known[i]=banned[i]?0:1;
   }
   smoothFillF(col,known,width,height,4);
+  // 3-P: 가장자리 근처는 평균 낸 색 대신 '가장 가까운 깨끗한 색'을 그대로 잇는다(밝은 색이 어두운 쪽으로 번져 회색이 되던 것).
+  // 깊이 들어갈수록 부드럽게 채운 색으로 넘어간다. 드러나는 띠는 가장자리 쪽이라 이 부분이 실제로 보이는 색이다.
+  {const near=new Int32Array(size).fill(-1),depth=new Uint16Array(size),queue=new Int32Array(size);let head=0,tail=0;
+   for(let i=0;i<size;i++){if(!known[i])continue;near[i]=i;const x=i%width;
+    if((x>0&&!known[i-1])||(x<width-1&&!known[i+1])||(i>=width&&!known[i-width])||(i<size-width&&!known[i+width]))queue[tail++]=i}
+   const steps=[-1,1,-width,width,-width-1,-width+1,width-1,width+1];
+   while(head<tail){const i=queue[head++],x=i%width;
+    for(let k=0;k<8;k++){const j=i+steps[k];if(j<0||j>=size||near[j]>=0)continue;const jx=j%width;if(Math.abs(jx-x)>1)continue;near[j]=near[i];depth[j]=depth[i]+1;queue[tail++]=j}}
+   const unit=Math.max(width,height)/850,d0=12*unit,d1=46*unit;
+   for(let i=0;i<size;i++){if(known[i]||near[i]<0)continue;
+    const t=clamp((depth[i]-d0)/(d1-d0),0,1),w=t*t*(3-2*t),p=i*4,s=near[i]*4;
+    for(let ch=0;ch<4;ch++)col[p+ch]=col[s+ch]*(1-w)+col[p+ch]*w}
+   // 이어 붙인 줄무늬가 거칠지 않게 구멍 안쪽만 살짝 다듬는다
+   for(let pass=0;pass<2;pass++)for(let i=width+1;i<size-width-1;i++){if(known[i]||depth[i]>d1)continue;const p=i*4;
+    for(let ch=0;ch<4;ch++)col[p+ch]=(col[p+ch]*2+col[p-4+ch]+col[p+4+ch]+col[p-width*4+ch]+col[p+width*4+ch])/6}}
   for(let i=0;i<size;i++){
    if(!inside[i])continue;
    const p=i*4,a=col[p+3]/255;
