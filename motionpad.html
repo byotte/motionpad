@@ -413,9 +413,11 @@ button[data-help]:hover::before{color:var(--ink)}
 #blinkUndo:not(:disabled):hover,#blinkRedo:not(:disabled):hover{background:var(--button)}
 #blinkUndo .ic,#blinkRedo .ic{width:18px;height:18px}
 /* 왼쪽 그림 · 오른쪽 옵션 */
-.blinkMain{display:grid;grid-template-columns:minmax(0,1fr) 240px;min-height:0}
-.blinkStage{display:grid;place-items:center;min-height:100px;overflow:hidden;background:repeating-conic-gradient(var(--panel) 0 25%,var(--stageInk) 0 50%) 0/16px 16px}
-#blinkPreview{display:block;width:auto;height:auto;max-width:100%;max-height:calc(94dvh - 150px);margin:auto;cursor:crosshair}
+.blinkMain{display:grid;grid-template-columns:minmax(0,1fr) 272px;min-height:0}
+.blinkStage{height:min(72dvh,760px);min-height:100px;overflow:hidden;background:repeating-conic-gradient(var(--panel) 0 25%,var(--stageInk) 0 50%) 0/16px 16px}
+#blinkPreview{display:block;width:100%;height:100%;cursor:crosshair}
+.blinkRow{display:flex;flex-wrap:wrap;gap:var(--sp1)}
+.blinkRow .btn{flex:1 1 auto;padding-inline:6px}
 .blinkSettings{display:flex;flex-direction:column;gap:var(--sp1);min-width:0;padding:10px;background:var(--panel);border-left:1px solid var(--line)}
 .blinkSettings .field{margin:var(--sp1) 0}
 .blinkSettings .toggle{margin:var(--sp1) 0 var(--sp2)}
@@ -535,7 +537,7 @@ button[data-help]:hover::before{color:var(--ink)}
   .blinkStage{position:sticky;top:0;z-index:2}
   .blinkMain{grid-template-columns:minmax(0,1fr)}
   .blinkSettings{border-left:0;border-top:1px solid var(--line)}
-  #blinkPreview{max-height:36dvh}
+  .blinkStage{height:38dvh}
   /* 2-F 폰: 영역 목록은 가로 이름표(효과 이름표는 숨김, 몸체는 별표) */
   .zoneList{flex-direction:row;flex-wrap:wrap;gap:4px;margin:0}
   .zoneItem{width:auto;max-width:100%;padding:2px 10px;border-color:var(--line);background:var(--button)}
@@ -712,14 +714,10 @@ button[data-help]:hover::before{color:var(--ink)}
 <dialog id="confirmDialog" class="saveDialog" aria-labelledby="confirmTitle"><header class="dlgHead"><h2 id="confirmTitle">확인</h2></header><div class="dlgBody"><p id="confirmMessage"></p></div><footer class="dlgFoot"><button id="confirmCancel" class="btn" type="button">취소</button><button id="confirmOk" class="btn warn" type="button">확인</button></footer></dialog><dialog id="zoneMenuDialog" class="saveDialog" aria-labelledby="zoneMenuTitle"><header class="dlgHead"><h2 id="zoneMenuTitle">영역</h2><button type="button" class="dlgX" aria-label="닫기">×</button></header><div class="dlgBody" tabindex="-1" autofocus><div class="settingActions"><button id="zoneMenuDuplicate" class="btn" type="button">복제</button><button id="zoneMenuDelete" class="btn warn" type="button">삭제</button><button id="zoneMenuLock" class="btn" type="button">잠금</button></div></div></dialog>
 <input id="imageFile" class="sr" type="file" accept="image/*"><input id="backupFile" class="sr" type="file" accept="application/json,.json"><input id="musicFile" class="sr" type="file" accept="audio/*"><input id="sfxFile" class="sr" type="file" accept="audio/*"><button id="imageBtn" type="button" hidden></button><button id="restoreBtn" type="button" hidden></button>
 <dialog id="blinkDialog" aria-labelledby="blinkTitle">
- <div class="blinkHead"><h2 id="blinkTitle">눈 깜빡임 설정</h2><div class="settingActions">
- <button class="btn" id="blinkCrop" type="button">눈 주변 확대</button>
- <button class="btn" id="blinkWhole" type="button">전체 보기</button>
- <button class="dlgX" id="blinkClose" type="button" aria-label="닫기">×</button>
- </div></div>
+ <div class="blinkHead"><h2 id="blinkTitle">눈 깜빡임 설정</h2><button class="dlgX" id="blinkClose" type="button" aria-label="닫기">×</button></div>
  <div class="blinkToolbar"><label>편집할 눈 <select id="blinkEye"><option value="0">눈 1</option><option value="1">눈 2</option></select></label><button class="btn" id="blinkRemove" type="button" title="이 눈의 깜빡임 설정을 지웁니다">초기화</button><span class="barSep" aria-hidden="true"></span><button class="btn" id="blinkProtect" type="button" aria-pressed="false">앞머리 영역</button><span class="barSep" aria-hidden="true"></span><button class="btn iconBtn" id="blinkUndo" type="button" aria-label="실행 취소" title="실행 취소"><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button><button class="btn iconBtn" id="blinkRedo" type="button" aria-label="다시 실행" title="다시 실행" disabled><svg class="ic" aria-hidden="true"><use href="#i-redo"/></svg></button><span class="blinkZoom"><span class="barSep" aria-hidden="true"></span><button class="btn iconBtn" id="blinkZoomOut" type="button" aria-label="축소" title="축소"><svg class="ic" aria-hidden="true"><use href="#i-minus"/></svg></button><button class="btn" id="blinkZoomReset" type="button" title="전체 보기">100%</button><button class="btn iconBtn" id="blinkZoomIn" type="button" aria-label="확대" title="확대"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></button></span><span class="blinkBrush" id="blinkBrushOptions" hidden><span class="barSep" aria-hidden="true"></span><label for="blinkBrushWidth">붓 굵기</label><input id="blinkBrushWidth" type="range" min="4" max="48" value="18"><output id="blinkBrushWidthValue">18</output><label class="toggle"><input id="blinkSampleOnly" type="checkbox">피부색 참고에서만 제외</label></span></div>
  <div class="blinkMain"><div class="blinkStage" tabindex="-1" autofocus><canvas id="blinkPreview" aria-label="눈 위치 지정 및 깜빡임 미리보기"></canvas></div>
- <div class="blinkSettings"><button class="btn" id="blinkPlay" type="button">한 번 깜빡이기</button><label class="toggle"><input id="blinkHold" type="checkbox">눈 감은 모습 보기</label><div class="field"><div class="fieldhead"><label for="blinkSpeed">깜빡임 속도</label><output id="blinkSpeedValue"></output></div><input id="blinkSpeed" type="range" min="50" max="160" value="100"></div><div class="field"><div class="fieldhead"><label for="blinkInterval">깜빡임 간격</label><output id="blinkIntervalValue"></output></div><input id="blinkInterval" type="range" min="2" max="10" step="0.5" value="4.5"></div><input id="blinkAmount" type="hidden" value="0"><div class="field"><div class="fieldhead"><label for="blinkCurve">감긴 눈 모양</label><output id="blinkCurveValue"></output></div><input id="blinkCurve" type="range" min="-100" max="100" value="0"></div><div class="field"><div class="fieldhead"><label for="blinkCover">눈꺼풀 보정 범위</label><output id="blinkCoverValue"></output></div><input id="blinkCover" type="range" min="5" max="65" value="24"></div><button class="btn primary" id="blinkApply" type="button">현재 눈 적용</button></div></div>
+ <div class="blinkSettings"><div class="blinkRow"><button class="btn" id="blinkPlay" type="button">한 번 깜빡이기</button><button class="btn" id="blinkCrop" type="button" title="확대할 곳을 네모로 끌어 고릅니다">눈 주변 확대</button><button class="btn" id="blinkWhole" type="button">전체 보기</button></div><label class="toggle"><input id="blinkHold" type="checkbox">눈 감은 모습 보기</label><div class="field"><div class="fieldhead"><label for="blinkSpeed">깜빡임 속도</label><output id="blinkSpeedValue"></output></div><input id="blinkSpeed" type="range" min="50" max="160" value="100"></div><div class="field"><div class="fieldhead"><label for="blinkInterval">깜빡임 간격</label><output id="blinkIntervalValue"></output></div><input id="blinkInterval" type="range" min="2" max="10" step="0.5" value="4.5"></div><input id="blinkAmount" type="hidden" value="0"><div class="field"><div class="fieldhead"><label for="blinkCurve">감긴 눈 모양</label><output id="blinkCurveValue"></output></div><input id="blinkCurve" type="range" min="-100" max="100" value="0"></div><div class="field"><div class="fieldhead"><label for="blinkCover">눈꺼풀 보정 범위</label><output id="blinkCoverValue"></output></div><input id="blinkCover" type="range" min="5" max="65" value="24"></div><button class="btn primary" id="blinkApply" type="button">현재 눈 적용</button></div></div>
  <div class="blinkFooter"><p id="blinkHint" role="status"></p></div>
 </dialog>
 <div class="localHelp" id="localHelp" role="tooltip" hidden></div><dialog class="saveDialog layoutDialog" id="maskDialog"><header class="dlgHead"><h2>선택 영역 표시</h2><button type="button" class="dlgX" aria-label="닫기">×</button></header><div class="dlgBody" tabindex="-1" autofocus></div></dialog>
@@ -4102,21 +4100,32 @@ function paintBlinkPatch(amount,patch=blinkPatch,curve=Number($('blinkCurve').va
 }
 let blinkProtCanvas=null,blinkPan=null,blinkPanned=false,blinkSpace=false,blinkHover=false;
 // 3-N 눈 창의 보기 범위(확대·이동). rect=null 이면 전체 보기. 캔버스 크기도 여기서 맞춘다.
+// 3-Q: 캔버스는 그림 모양이 아니라 창의 그림 칸 전체를 쓴다. 보기 범위(rect)는 늘 그 칸과 같은 비율이고, 그림 밖은 빈 바탕으로 보인다.
+function blinkWholeView(){const st=blinkPreview.parentElement,A=Math.max(.2,st.clientWidth/Math.max(1,st.clientHeight)),w=Math.max(renderWidth,renderHeight*A),h=w/A;return {x:(renderWidth-w)/2,y:(renderHeight-h)/2,w,h,A}}
 function setBlinkView(rect){
- if(rect){const w=clamp(rect.w,20,renderWidth),h=clamp(rect.h,20,renderHeight);rect={x:clamp(rect.x,0,renderWidth-w),y:clamp(rect.y,0,renderHeight-h),w,h};if(w>=renderWidth-1&&h>=renderHeight-1)rect=null}
- blinkRect=rect;
- const w=rect?rect.w:renderWidth,h=rect?rect.h:renderHeight,scale=rect?Math.min(3,1000/Math.max(w,h)):Math.min(1,1200/Math.max(w,h));
- const W=Math.max(1,Math.round(w*scale)),H=Math.max(1,Math.round(h*scale));
+ const whole=blinkWholeView(),A=whole.A;
+ if(!rect)rect=whole;
+ else{// 가운데와 크기를 지키면서 칸 비율에 맞춘다. 전체 보기보다 넓어지지 않고, 그림이 화면 밖으로 완전히 나가지 않는다.
+  const cx=clamp(rect.x+rect.w/2,0,renderWidth),cy=clamp(rect.y+rect.h/2,0,renderHeight);
+  const w=clamp(Math.max(rect.w,rect.h*A),24,whole.w),h=w/A;
+  rect=w>=whole.w*.999?whole:{x:cx-w/2,y:cy-h/2,w,h};
+ }
+ blinkRect={x:rect.x,y:rect.y,w:rect.w,h:rect.h};
+ const st=blinkPreview.parentElement,dpr=Math.min(window.devicePixelRatio||1,2),W=Math.max(1,Math.round(st.clientWidth*dpr)),H=Math.max(1,Math.round(st.clientHeight*dpr));
  if(blinkPreview.width!==W||blinkPreview.height!==H){blinkPreview.width=W;blinkPreview.height=H}
- $('blinkZoomReset').textContent=Math.round(renderWidth/w*100)+'%';drawBlinkPreview();
+ $('blinkZoomReset').textContent=Math.round(whole.w/rect.w*100)+'%';drawBlinkPreview();
 }
-function zoomBlink(f,cx,cy){const r=blinkRect||{x:0,y:0,w:renderWidth,h:renderHeight};cx??=r.x+r.w/2;cy??=r.y+r.h/2;setBlinkView({x:cx-(cx-r.x)/f,y:cy-(cy-r.y)/f,w:r.w/f,h:r.h/f})}
+// f배 확대. (cx,cy)=그림 좌표의 기준점이 화면에서 제자리에 머문다
+function zoomBlink(f,cx,cy){const r=blinkRect||blinkWholeView();cx??=r.x+r.w/2;cy??=r.y+r.h/2;setBlinkView({x:cx-(cx-r.x)/f,y:cy-(cy-r.y)/f,w:r.w/f,h:r.h/f})}
+// 두 손가락 확대·이동(폰)
+const blinkTouches=new Map();let blinkPinch=null;
+function blinkPinchState(){const [a,b]=[...blinkTouches.values()];return {d:Math.max(8,Math.hypot(a.x-b.x,a.y-b.y)),mx:(a.x+b.x)/2,my:(a.y+b.y)/2}}
 function drawBlinkPreview(){
  if(!bitmap)return;
  const rect=blinkRect||{x:0,y:0,w:renderWidth,h:renderHeight};
  const sx=blinkPreview.width/rect.w,sy=blinkPreview.height/rect.h;
  blinkView.setTransform(sx,0,0,sy,-rect.x*sx,-rect.y*sy);
- blinkView.clearRect(0,0,renderWidth,renderHeight);
+ blinkView.save();blinkView.resetTransform();blinkView.clearRect(0,0,blinkPreview.width,blinkPreview.height);blinkView.restore();
  blinkView.drawImage(bitmap,0,0);
  const amount=Number($('blinkAmount').value)/100;
  if(blinkPatch&&amount>0){
@@ -4163,8 +4172,8 @@ $('eyeEntry').onclick=()=>{
  if(!ready){setStatus('먼저 그림을 열어 주세요.');return}
  blinkRect=null;blinkCropping=false;$('blinkEye').value='0';paintBlinkEyeOptions();$('blinkSpeed').value=blinkSpeed;paintBlinkInterval();
  loadBlinkEye();
- blinkUndoStack.length=blinkRedoStack.length=0;setBlinkView(null);
- blinkDialog.showModal();refreshBlinkSetup();
+ blinkUndoStack.length=blinkRedoStack.length=0;
+ blinkDialog.showModal();setBlinkView(null);refreshBlinkSetup();
 };
 function blinkPointer(e){
  const r=blinkPreview.getBoundingClientRect();
@@ -4175,7 +4184,7 @@ function blinkPointer(e){
 blinkPreview.style.touchAction='none';
 $('blinkCrop').onclick=()=>{stopBlinkPreview();setBlinkProtection(false);blinkCropping=true;$('blinkHint').textContent='확대할 눈 주변을 네모로 드래그해 주세요.'};
 $('blinkWhole').onclick=()=>{
- blinkCropping=false;if(blinkRect)rememberBlinkEdit();setBlinkView(null);refreshBlinkSetup();
+ blinkCropping=false;rememberBlinkEdit();setBlinkView(null);refreshBlinkSetup();
 };
 function setBlinkProtection(active){
  blinkProtecting=active;blinkStroke=null;
@@ -4209,6 +4218,9 @@ function stepBlinkEdit(from,to){
  $('blinkAmount').value=0;refreshBlinkSetup();
 }
 blinkPreview.onpointerdown=e=>{
+ if(e.pointerType==='touch'){blinkTouches.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(blinkTouches.size===2){blinkStroke=null;blinkCropStart=null;blinkPan=null;blinkPinch={...blinkPinchState(),rect:{...blinkRect}};drawBlinkPreview();return}
+  if(blinkTouches.size>2)return}
  if(blinkSpace&&blinkRect){blinkPan={sx:e.clientX,sy:e.clientY,rect:{...blinkRect}};blinkPreview.setPointerCapture(e.pointerId);return}
  if(blinkProtecting){
   if(blinkProtection.length>=40)return;
@@ -4223,6 +4235,11 @@ blinkPreview.onpointerdown=e=>{
  blinkPreview.setPointerCapture(e.pointerId);
 };
 blinkPreview.onpointermove=e=>{
+ if(blinkTouches.has(e.pointerId))blinkTouches.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(blinkPinch){if(blinkTouches.size<2)return;const s=blinkPinchState(),b=blinkPreview.getBoundingClientRect(),r=blinkPinch.rect,f=s.d/blinkPinch.d,w=r.w/f,h=r.h/f;
+  // 처음 두 손가락 가운데에 있던 그림의 점이 지금 가운데 아래에 오도록
+  const ix=r.x+(blinkPinch.mx-b.left)/b.width*r.w,iy=r.y+(blinkPinch.my-b.top)/b.height*r.h;
+  setBlinkView({x:ix-(s.mx-b.left)/b.width*w,y:iy-(s.my-b.top)/b.height*h,w,h});return}
  if(blinkPan){const b=blinkPreview.getBoundingClientRect(),r=blinkPan.rect;setBlinkView({...r,x:r.x-(e.clientX-blinkPan.sx)*r.w/b.width,y:r.y-(e.clientY-blinkPan.sy)*r.h/b.height});return}
  if(blinkStroke){
   if(blinkStroke.points.length<800)blinkStroke.points.push(blinkStrokePoint(e));
@@ -4235,6 +4252,8 @@ blinkPreview.onpointermove=e=>{
  blinkView.strokeRect(blinkCropStart.x,blinkCropStart.y,p.x-blinkCropStart.x,p.y-blinkCropStart.y);
 };
 blinkPreview.onpointerup=e=>{
+ blinkTouches.delete(e.pointerId);
+ if(blinkPinch){if(blinkTouches.size<2){blinkPinch=null;blinkPanned=true;setTimeout(()=>{blinkPanned=false},350)}return}
  if(blinkPan){blinkPan=null;blinkPanned=true;return}
  if(blinkStroke){
   rememberBlinkEdit();blinkProtection.push(blinkStroke);blinkStroke=null;refreshBlinkSetup();return;
@@ -4246,7 +4265,7 @@ blinkPreview.onpointerup=e=>{
  rememberBlinkEdit();setBlinkView({x:Math.min(p.x,start.x),y:Math.min(p.y,start.y),w,h});refreshBlinkSetup();
  $('blinkHint').textContent=blinkPrompts[blinkPoints.length]||'확대한 눈의 감김 정도를 확인해 보세요.';
 };
-blinkPreview.onpointercancel=()=>{blinkCropStart=null;blinkStroke=null;drawBlinkPreview()};
+blinkPreview.onpointercancel=e=>{blinkTouches.delete(e.pointerId);blinkPinch=null;blinkCropStart=null;blinkStroke=null;drawBlinkPreview()};
 blinkPreview.onclick=e=>{
  if(blinkPanned){blinkPanned=false;return}
  if(blinkProtecting)return;
@@ -4307,6 +4326,7 @@ blinkPreview.addEventListener('wheel',e=>{e.preventDefault();const p=blinkPointe
 blinkPreview.addEventListener('pointerenter',()=>{blinkHover=true});blinkPreview.addEventListener('pointerleave',()=>{blinkHover=false});
 document.addEventListener('keydown',e=>{if(e.code==='Space'&&blinkDialog.open&&blinkHover&&!e.target.closest?.('input[type=text],select')){blinkSpace=true;e.preventDefault();blinkPreview.style.cursor='grab'}},true);
 document.addEventListener('keyup',e=>{if(e.code==='Space'){blinkSpace=false;blinkPreview.style.cursor=''}});
+window.addEventListener('resize',()=>{if(blinkDialog.open)setBlinkView(blinkRect)});
 const localHelp=$('localHelp');
 function showLocalHelp(button){
  (button.closest('dialog')||document.body).append(localHelp);// 대화창 안에서는 창 위에 떠야 보인다

@@ -261,21 +261,32 @@ function paintBlinkPatch(amount,patch=blinkPatch,curve=Number($('blinkCurve').va
 }
 let blinkProtCanvas=null,blinkPan=null,blinkPanned=false,blinkSpace=false,blinkHover=false;
 // 3-N 눈 창의 보기 범위(확대·이동). rect=null 이면 전체 보기. 캔버스 크기도 여기서 맞춘다.
+// 3-Q: 캔버스는 그림 모양이 아니라 창의 그림 칸 전체를 쓴다. 보기 범위(rect)는 늘 그 칸과 같은 비율이고, 그림 밖은 빈 바탕으로 보인다.
+function blinkWholeView(){const st=blinkPreview.parentElement,A=Math.max(.2,st.clientWidth/Math.max(1,st.clientHeight)),w=Math.max(renderWidth,renderHeight*A),h=w/A;return {x:(renderWidth-w)/2,y:(renderHeight-h)/2,w,h,A}}
 function setBlinkView(rect){
- if(rect){const w=clamp(rect.w,20,renderWidth),h=clamp(rect.h,20,renderHeight);rect={x:clamp(rect.x,0,renderWidth-w),y:clamp(rect.y,0,renderHeight-h),w,h};if(w>=renderWidth-1&&h>=renderHeight-1)rect=null}
- blinkRect=rect;
- const w=rect?rect.w:renderWidth,h=rect?rect.h:renderHeight,scale=rect?Math.min(3,1000/Math.max(w,h)):Math.min(1,1200/Math.max(w,h));
- const W=Math.max(1,Math.round(w*scale)),H=Math.max(1,Math.round(h*scale));
+ const whole=blinkWholeView(),A=whole.A;
+ if(!rect)rect=whole;
+ else{// 가운데와 크기를 지키면서 칸 비율에 맞춘다. 전체 보기보다 넓어지지 않고, 그림이 화면 밖으로 완전히 나가지 않는다.
+  const cx=clamp(rect.x+rect.w/2,0,renderWidth),cy=clamp(rect.y+rect.h/2,0,renderHeight);
+  const w=clamp(Math.max(rect.w,rect.h*A),24,whole.w),h=w/A;
+  rect=w>=whole.w*.999?whole:{x:cx-w/2,y:cy-h/2,w,h};
+ }
+ blinkRect={x:rect.x,y:rect.y,w:rect.w,h:rect.h};
+ const st=blinkPreview.parentElement,dpr=Math.min(window.devicePixelRatio||1,2),W=Math.max(1,Math.round(st.clientWidth*dpr)),H=Math.max(1,Math.round(st.clientHeight*dpr));
  if(blinkPreview.width!==W||blinkPreview.height!==H){blinkPreview.width=W;blinkPreview.height=H}
- $('blinkZoomReset').textContent=Math.round(renderWidth/w*100)+'%';drawBlinkPreview();
+ $('blinkZoomReset').textContent=Math.round(whole.w/rect.w*100)+'%';drawBlinkPreview();
 }
-function zoomBlink(f,cx,cy){const r=blinkRect||{x:0,y:0,w:renderWidth,h:renderHeight};cx??=r.x+r.w/2;cy??=r.y+r.h/2;setBlinkView({x:cx-(cx-r.x)/f,y:cy-(cy-r.y)/f,w:r.w/f,h:r.h/f})}
+// f배 확대. (cx,cy)=그림 좌표의 기준점이 화면에서 제자리에 머문다
+function zoomBlink(f,cx,cy){const r=blinkRect||blinkWholeView();cx??=r.x+r.w/2;cy??=r.y+r.h/2;setBlinkView({x:cx-(cx-r.x)/f,y:cy-(cy-r.y)/f,w:r.w/f,h:r.h/f})}
+// 두 손가락 확대·이동(폰)
+const blinkTouches=new Map();let blinkPinch=null;
+function blinkPinchState(){const [a,b]=[...blinkTouches.values()];return {d:Math.max(8,Math.hypot(a.x-b.x,a.y-b.y)),mx:(a.x+b.x)/2,my:(a.y+b.y)/2}}
 function drawBlinkPreview(){
  if(!bitmap)return;
  const rect=blinkRect||{x:0,y:0,w:renderWidth,h:renderHeight};
  const sx=blinkPreview.width/rect.w,sy=blinkPreview.height/rect.h;
  blinkView.setTransform(sx,0,0,sy,-rect.x*sx,-rect.y*sy);
- blinkView.clearRect(0,0,renderWidth,renderHeight);
+ blinkView.save();blinkView.resetTransform();blinkView.clearRect(0,0,blinkPreview.width,blinkPreview.height);blinkView.restore();
  blinkView.drawImage(bitmap,0,0);
  const amount=Number($('blinkAmount').value)/100;
  if(blinkPatch&&amount>0){
@@ -322,8 +333,8 @@ $('eyeEntry').onclick=()=>{
  if(!ready){setStatus('먼저 그림을 열어 주세요.');return}
  blinkRect=null;blinkCropping=false;$('blinkEye').value='0';paintBlinkEyeOptions();$('blinkSpeed').value=blinkSpeed;paintBlinkInterval();
  loadBlinkEye();
- blinkUndoStack.length=blinkRedoStack.length=0;setBlinkView(null);
- blinkDialog.showModal();refreshBlinkSetup();
+ blinkUndoStack.length=blinkRedoStack.length=0;
+ blinkDialog.showModal();setBlinkView(null);refreshBlinkSetup();
 };
 function blinkPointer(e){
  const r=blinkPreview.getBoundingClientRect();
@@ -334,7 +345,7 @@ function blinkPointer(e){
 blinkPreview.style.touchAction='none';
 $('blinkCrop').onclick=()=>{stopBlinkPreview();setBlinkProtection(false);blinkCropping=true;$('blinkHint').textContent='확대할 눈 주변을 네모로 드래그해 주세요.'};
 $('blinkWhole').onclick=()=>{
- blinkCropping=false;if(blinkRect)rememberBlinkEdit();setBlinkView(null);refreshBlinkSetup();
+ blinkCropping=false;rememberBlinkEdit();setBlinkView(null);refreshBlinkSetup();
 };
 function setBlinkProtection(active){
  blinkProtecting=active;blinkStroke=null;
@@ -368,6 +379,9 @@ function stepBlinkEdit(from,to){
  $('blinkAmount').value=0;refreshBlinkSetup();
 }
 blinkPreview.onpointerdown=e=>{
+ if(e.pointerType==='touch'){blinkTouches.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(blinkTouches.size===2){blinkStroke=null;blinkCropStart=null;blinkPan=null;blinkPinch={...blinkPinchState(),rect:{...blinkRect}};drawBlinkPreview();return}
+  if(blinkTouches.size>2)return}
  if(blinkSpace&&blinkRect){blinkPan={sx:e.clientX,sy:e.clientY,rect:{...blinkRect}};blinkPreview.setPointerCapture(e.pointerId);return}
  if(blinkProtecting){
   if(blinkProtection.length>=40)return;
@@ -382,6 +396,11 @@ blinkPreview.onpointerdown=e=>{
  blinkPreview.setPointerCapture(e.pointerId);
 };
 blinkPreview.onpointermove=e=>{
+ if(blinkTouches.has(e.pointerId))blinkTouches.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(blinkPinch){if(blinkTouches.size<2)return;const s=blinkPinchState(),b=blinkPreview.getBoundingClientRect(),r=blinkPinch.rect,f=s.d/blinkPinch.d,w=r.w/f,h=r.h/f;
+  // 처음 두 손가락 가운데에 있던 그림의 점이 지금 가운데 아래에 오도록
+  const ix=r.x+(blinkPinch.mx-b.left)/b.width*r.w,iy=r.y+(blinkPinch.my-b.top)/b.height*r.h;
+  setBlinkView({x:ix-(s.mx-b.left)/b.width*w,y:iy-(s.my-b.top)/b.height*h,w,h});return}
  if(blinkPan){const b=blinkPreview.getBoundingClientRect(),r=blinkPan.rect;setBlinkView({...r,x:r.x-(e.clientX-blinkPan.sx)*r.w/b.width,y:r.y-(e.clientY-blinkPan.sy)*r.h/b.height});return}
  if(blinkStroke){
   if(blinkStroke.points.length<800)blinkStroke.points.push(blinkStrokePoint(e));
@@ -394,6 +413,8 @@ blinkPreview.onpointermove=e=>{
  blinkView.strokeRect(blinkCropStart.x,blinkCropStart.y,p.x-blinkCropStart.x,p.y-blinkCropStart.y);
 };
 blinkPreview.onpointerup=e=>{
+ blinkTouches.delete(e.pointerId);
+ if(blinkPinch){if(blinkTouches.size<2){blinkPinch=null;blinkPanned=true;setTimeout(()=>{blinkPanned=false},350)}return}
  if(blinkPan){blinkPan=null;blinkPanned=true;return}
  if(blinkStroke){
   rememberBlinkEdit();blinkProtection.push(blinkStroke);blinkStroke=null;refreshBlinkSetup();return;
@@ -405,7 +426,7 @@ blinkPreview.onpointerup=e=>{
  rememberBlinkEdit();setBlinkView({x:Math.min(p.x,start.x),y:Math.min(p.y,start.y),w,h});refreshBlinkSetup();
  $('blinkHint').textContent=blinkPrompts[blinkPoints.length]||'확대한 눈의 감김 정도를 확인해 보세요.';
 };
-blinkPreview.onpointercancel=()=>{blinkCropStart=null;blinkStroke=null;drawBlinkPreview()};
+blinkPreview.onpointercancel=e=>{blinkTouches.delete(e.pointerId);blinkPinch=null;blinkCropStart=null;blinkStroke=null;drawBlinkPreview()};
 blinkPreview.onclick=e=>{
  if(blinkPanned){blinkPanned=false;return}
  if(blinkProtecting)return;
@@ -466,3 +487,4 @@ blinkPreview.addEventListener('wheel',e=>{e.preventDefault();const p=blinkPointe
 blinkPreview.addEventListener('pointerenter',()=>{blinkHover=true});blinkPreview.addEventListener('pointerleave',()=>{blinkHover=false});
 document.addEventListener('keydown',e=>{if(e.code==='Space'&&blinkDialog.open&&blinkHover&&!e.target.closest?.('input[type=text],select')){blinkSpace=true;e.preventDefault();blinkPreview.style.cursor='grab'}},true);
 document.addEventListener('keyup',e=>{if(e.code==='Space'){blinkSpace=false;blinkPreview.style.cursor=''}});
+window.addEventListener('resize',()=>{if(blinkDialog.open)setBlinkView(blinkRect)});

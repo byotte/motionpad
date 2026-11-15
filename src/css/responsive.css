@@ -38,7 +38,7 @@
   .blinkStage{position:sticky;top:0;z-index:2}
   .blinkMain{grid-template-columns:minmax(0,1fr)}
   .blinkSettings{border-left:0;border-top:1px solid var(--line)}
-  #blinkPreview{max-height:36dvh}
+  .blinkStage{height:38dvh}
   /* 2-F 폰: 영역 목록은 가로 이름표(효과 이름표는 숨김, 몸체는 별표) */
   .zoneList{flex-direction:row;flex-wrap:wrap;gap:4px;margin:0}
   .zoneItem{width:auto;max-width:100%;padding:2px 10px;border-color:var(--line);background:var(--button)}
