@@ -70,7 +70,8 @@
 .baseButtons{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp1);margin:var(--sp2) 0}
 .baseButtons .micro{font-size:var(--fs-help)}
 .maskDisplay{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:auto!important;padding:6px 8px}
-.side>.maskDisplay{border-top:1px solid var(--line)}
+/* 선택 영역 표시(색·투명도)는 설정 메뉴의 창에서만 연다(PC·폰 공통) */
+.side>.maskDisplay{display:none}
 .maskDisplay label{display:inline-flex;align-items:center;gap:4px;margin:0}
 .maskDisplay input[type=color]{width:24px;height:18px;padding:0}
 .maskDisplay input[type=range]{width:70px;padding:0}

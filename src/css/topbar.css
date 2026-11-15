@@ -9,7 +9,7 @@
 /* 지금 프로젝트 이름(PC). 폰형은 파일 메뉴 맨 위(.menuNote) */
 .projectName{min-width:0;max-width:34vw;margin-left:4px;padding-left:10px;border-left:1px solid var(--line);overflow:hidden;color:var(--item);font-size:var(--fs-item);text-overflow:ellipsis;white-space:nowrap}
 .menuNote{display:none;margin:0;padding:4px 14px 6px;border-bottom:1px solid var(--line);overflow:hidden;color:var(--help);font-size:var(--fs-help);text-overflow:ellipsis;white-space:nowrap;max-width:240px}
-.phoneOnly{display:none}
+
 .toolbar{display:flex;flex:1;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:5px;min-width:0}
 .starting .toolbar{visibility:hidden}
 #viewerBtn{flex:0 0 auto;margin-left:4px;background:var(--accent);border-color:var(--accent);color:var(--onAccent);font-weight:var(--fw-title)}

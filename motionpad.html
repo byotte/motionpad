@@ -150,7 +150,7 @@ input:is([type=text],[type=number]):hover{border-color:var(--line)}
 /* 지금 프로젝트 이름(PC). 폰형은 파일 메뉴 맨 위(.menuNote) */
 .projectName{min-width:0;max-width:34vw;margin-left:4px;padding-left:10px;border-left:1px solid var(--line);overflow:hidden;color:var(--item);font-size:var(--fs-item);text-overflow:ellipsis;white-space:nowrap}
 .menuNote{display:none;margin:0;padding:4px 14px 6px;border-bottom:1px solid var(--line);overflow:hidden;color:var(--help);font-size:var(--fs-help);text-overflow:ellipsis;white-space:nowrap;max-width:240px}
-.phoneOnly{display:none}
+
 .toolbar{display:flex;flex:1;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:5px;min-width:0}
 .starting .toolbar{visibility:hidden}
 #viewerBtn{flex:0 0 auto;margin-left:4px;background:var(--accent);border-color:var(--accent);color:var(--onAccent);font-weight:var(--fw-title)}
@@ -344,7 +344,8 @@ button[data-help]:hover::before{color:var(--ink)}
 .baseButtons{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp1);margin:var(--sp2) 0}
 .baseButtons .micro{font-size:var(--fs-help)}
 .maskDisplay{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:auto!important;padding:6px 8px}
-.side>.maskDisplay{border-top:1px solid var(--line)}
+/* 선택 영역 표시(색·투명도)는 설정 메뉴의 창에서만 연다(PC·폰 공통) */
+.side>.maskDisplay{display:none}
 .maskDisplay label{display:inline-flex;align-items:center;gap:4px;margin:0}
 .maskDisplay input[type=color]{width:24px;height:18px;padding:0}
 .maskDisplay input[type=range]{width:70px;padding:0}
@@ -503,7 +504,6 @@ button[data-help]:hover::before{color:var(--ink)}
   .logo{width:23px;height:23px}
   .brand h1 span,.projectName{display:none}
   .menuNote{display:block}
-  .phoneOnly{display:flex}
   .toolbar{gap:4px}
   .workspace{grid-template-columns:minmax(0,1fr);height:auto}
   .stagebar{flex-direction:row}
@@ -513,7 +513,6 @@ button[data-help]:hover::before{color:var(--ink)}
   .quick{width:auto}
   .status{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
   .side{max-height:var(--panel-height,36dvh)}
-  .side>.maskDisplay{display:none}
   /* 안내줄: 누르면 접히고 펴진다(오른쪽 꺾쇠가 표시) */
   .guideLine{cursor:pointer}
   .guideFold{display:block;flex:none;width:6px;height:6px;margin:0 4px 3px;border:solid var(--item);border-width:0 1.5px 1.5px 0;transform:rotate(45deg)}
@@ -601,7 +600,7 @@ button[data-help]:hover::before{color:var(--ink)}
 <svg class="iconSprite" aria-hidden="true"><defs><symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.5v.01"/></symbol><symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol><symbol id="i-brush" viewBox="0 0 24 24"><path d="M4 20c2.6 0 4.5-1.3 4.5-3.4a2.2 2.2 0 0 0-4.4 0c0 1.5-.4 2.6-.1 3.4z"/><path d="M8 15.4 18.6 4.8a1.7 1.7 0 0 1 2.4 2.4L10.4 17.8"/></symbol><symbol id="i-erase" viewBox="0 0 24 24"><path d="M9 20h11"/><path d="M5.2 15.3 13.6 6.9a2 2 0 0 1 2.8 0l2.4 2.4a2 2 0 0 1 0 2.8L11 20H8.2l-3-3a1.2 1.2 0 0 1 0-1.7z"/><path d="m9.5 11 5 5"/></symbol><symbol id="i-wand" viewBox="0 0 24 24"><path d="m4 20 11-11"/><path d="m13.5 7.5 3 3"/><path d="M18 3v4M16 5h4M20 11v2.5M18.8 12.2h2.5M10 3v2.5M8.8 4.2h2.5"/></symbol><symbol id="i-lasso" viewBox="0 0 24 24"><path d="M12 4c4.7 0 8 2.3 8 5.3s-3.3 5.2-8 5.2-8-2.3-8-5.2S7.3 4 12 4z" stroke-dasharray="2.6 2.4"/><path d="M8.5 14c-1.4 1.6-1 3.6.8 3.9 1.6.3 2 1.5 1 3.1"/></symbol><symbol id="i-ellipse" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8.5" ry="6.5" stroke-dasharray="2.6 2.4"/></symbol><symbol id="i-move" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/><path d="m9 6 3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></symbol><symbol id="i-pan" viewBox="0 0 24 24"><path d="M8 13V6a1.5 1.5 0 0 1 3 0v5.5M11 11V4.5a1.5 1.5 0 0 1 3 0v7M14 11.5V6a1.5 1.5 0 0 1 3 0v8.5c0 3.8-2.4 6.5-5.8 6.5-2.4 0-3.9-1.1-5.3-3.3L4.2 15.4a1.5 1.5 0 0 1 2.5-1.7L8 15.4"/></symbol><symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol><symbol id="i-redo" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></symbol><symbol id="i-minus" viewBox="0 0 24 24"><path d="M6 12h12"/></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></symbol><symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="1.5"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/></symbol><symbol id="i-folder" viewBox="0 0 24 24"><path d="M3.5 7.5a1.5 1.5 0 0 1 1.5-1.5h4l2 2.2h8a1.5 1.5 0 0 1 1.5 1.5v8.3a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5z"/></symbol><symbol id="i-touch" viewBox="0 0 24 24"><path d="M9 11.5V5.2a1.6 1.6 0 0 1 3.2 0v5.3l4.3 1a2 2 0 0 1 1.5 2.3l-.7 4.2a2.5 2.5 0 0 1-2.5 2H11a3 3 0 0 1-2.4-1.2L5.5 14.6a1.4 1.4 0 0 1 2.2-1.7z"/></symbol><symbol id="i-tip" viewBox="0 0 24 24"><path d="M9 17.5h6M10 20.5h4M8.2 14.5a6 6 0 1 1 7.6 0c-.6.5-.8 1-.8 1.5H9c0-.5-.2-1-.8-1.5z"/></symbol><symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m11 18-6-6 6-6"/></symbol></defs></svg>
 <div class="app">
 <header class="header starting"><div class="brand"><div class="logo" aria-hidden="true">∿</div><h1>MotionPad <span>1.0</span></h1><span class="projectName" id="projectNameLabel" hidden></span></div>
-<nav class="toolbar"><details class="topMenu"><summary>파일</summary><div class="topMenuItems"><p class="menuNote" id="menuProjectName" hidden></p><button class="btn" id="menuNew">새 그림 열기…</button><button class="btn" id="menuOpen">프로젝트 열기…<kbd>Ctrl+O</kbd></button><button class="btn" id="menuClose">프로젝트 닫기</button><hr class="menuSep"><button class="btn" id="backupBtn" type="button" title="다시 열어 편집할 프로젝트 저장">프로젝트 저장<kbd>Ctrl+S</kbd></button><button class="btn" id="saveAsBtn" type="button" aria-haspopup="dialog" >다른 이름으로 저장…<kbd>Ctrl+Shift+S</kbd></button><hr class="menuSep"><button class="btn" data-dialog="videoDialog">영상으로 내보내기…<kbd>Ctrl+E</kbd></button><hr class="menuSep" id="legacySep" hidden><button class="btn" id="legacyMenu" data-dialog="filesDialog" hidden>임시 보관된 프로젝트…</button></div></details><details class="topMenu"><summary>소리</summary><div class="topMenuItems"><button class="btn" id="openMusic" data-dialog="soundDialog">배경음악…</button><button class="btn" id="openEffects" data-dialog="soundDialog">터치 효과음…</button></div></details><details class="topMenu"><summary>설정</summary><div class="topMenuItems"><button class="btn" data-dialog="layoutSettings">색상 테마 · 화면 표시 품질…</button><button class="btn phoneOnly" id="maskMenu">선택 영역 표시…</button><button class="btn" data-dialog="aboutDialog">프로그램 정보…</button></div></details><button class="btn primary" id="viewerBtn">플레이</button></nav></header>
+<nav class="toolbar"><details class="topMenu"><summary>파일</summary><div class="topMenuItems"><p class="menuNote" id="menuProjectName" hidden></p><button class="btn" id="menuNew">새 그림 열기…</button><button class="btn" id="menuOpen">프로젝트 열기…<kbd>Ctrl+O</kbd></button><button class="btn" id="menuClose">프로젝트 닫기</button><hr class="menuSep"><button class="btn" id="backupBtn" type="button" title="다시 열어 편집할 프로젝트 저장">프로젝트 저장<kbd>Ctrl+S</kbd></button><button class="btn" id="saveAsBtn" type="button" aria-haspopup="dialog" >다른 이름으로 저장…<kbd>Ctrl+Shift+S</kbd></button><hr class="menuSep"><button class="btn" data-dialog="videoDialog">영상으로 내보내기…<kbd>Ctrl+E</kbd></button><hr class="menuSep" id="legacySep" hidden><button class="btn" id="legacyMenu" data-dialog="filesDialog" hidden>임시 보관된 프로젝트…</button></div></details><details class="topMenu"><summary>소리</summary><div class="topMenuItems"><button class="btn" id="openMusic" data-dialog="soundDialog">배경음악…</button><button class="btn" id="openEffects" data-dialog="soundDialog">터치 효과음…</button></div></details><details class="topMenu"><summary>설정</summary><div class="topMenuItems"><button class="btn" data-dialog="layoutSettings">색상 테마 · 화면 표시 품질…</button><button class="btn" id="maskMenu">선택 영역 표시…</button><button class="btn" data-dialog="aboutDialog">프로그램 정보…</button></div></details><button class="btn primary" id="viewerBtn">플레이</button></nav></header>
 <section class="welcome" id="welcome"><h2>MotionPad</h2><div class="welcomeActions"><button class="btn primary" id="startImage">새 그림 열기</button><button class="btn" id="startProject">프로젝트 열기</button><button class="btn" id="resumeProject" hidden>이전 작업 이어하기</button><button class="btn" id="sampleBtn">샘플 그림으로 체험하기</button></div></section><main class="workspace" hidden>
 <section class="stagebox" aria-label="이미지 영역 편집"><div class="stagebar"><div class="modegroup"><button class="mode active" id="brushMode" title="붓" aria-label="붓" data-mode="brush"><svg class="ic" aria-hidden="true"><use href="#i-brush"/></svg><span>붓</span></button><button class="mode" id="eraseMode" title="지우개" aria-label="지우개" data-mode="erase"><svg class="ic" aria-hidden="true"><use href="#i-erase"/></svg><span>지우개</span></button><button class="mode" id="wandMode" title="마술봉" aria-label="마술봉" data-mode="wand"><svg class="ic" aria-hidden="true"><use href="#i-wand"/></svg><span>마술봉</span></button><button class="mode" id="lassoMode" title="올가미" aria-label="올가미" data-mode="lasso"><svg class="ic" aria-hidden="true"><use href="#i-lasso"/></svg><span>올가미</span></button><button class="mode" id="ellipseMode" title="도형" aria-label="도형" data-mode="ellipse"><svg class="ic" aria-hidden="true"><use href="#i-ellipse"/></svg><span>도형</span></button><button class="mode" id="editMode" title="이동" aria-label="이동" data-mode="edit"><svg class="ic" aria-hidden="true"><use href="#i-move"/></svg><span>이동</span></button><button hidden class="mode" id="branchMode" data-mode="branch">가지 선</button><button class="mode" id="panMode" title="화면 이동" aria-label="화면 이동" data-mode="pan"><svg class="ic" aria-hidden="true"><use href="#i-pan"/></svg><span>화면 이동</span></button><span class="toolSep" aria-hidden="true"></span><div class="zoneTools" role="group" aria-label="영역 관리"><button class="btn zoneNew" id="newRegionBtn" title="새 영역을 만듭니다. 다음에 그리는 선택이 새 영역이 됩니다"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>새 영역</button><button class="btn iconBtn" id="toolDuplicateBtn" title="선택한 영역 복제" aria-label="선택한 영역 복제"><svg class="ic" aria-hidden="true"><use href="#i-copy"/></svg></button><button class="btn iconBtn" id="toolDeleteBtn" title="선택한 영역 삭제" aria-label="선택한 영역 삭제"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button></div></div></div>
 <div class="stageOptions"><div class="brushbar" id="brushbar"><label for="brushInput" id="brushLabel">붓 굵기</label><input type="range" min="2" max="32" step="1" value="10" id="brushInput"><output id="brushValue">10%</output><div class="selOp" id="shapeKind" role="radiogroup" aria-label="도형 모양"><label title="타원(원)"><input type="radio" name="shapeKind" value="ellipse" checked>타원</label><label title="사각형"><input type="radio" name="shapeKind" value="rect">사각형</label></div><div class="selOp" id="selOp" role="radiogroup" aria-label="선택 방식"><label title="선택한 영역의 모양을 지우고 새로 그린 모양으로 바꿉니다(움직임 설정은 유지)"><input type="radio" name="selectOp" value="new" checked>교체</label><label title="선택한 영역에 더합니다"><input type="radio" name="selectOp" value="add">더하기</label><label title="선택한 영역에서 뺍니다"><input type="radio" name="selectOp" value="subtract">빼기</label></div></div>
@@ -1967,6 +1966,7 @@ function pumpFill(){
  if(!job.steps){
   const {image,inside,width,height}=job,n=width*height,data=image.data,col=new Float32Array(n*3);
   for(let i=0;i<n;i++){const a=data[i*4+3]/255;col[i*3]=data[i*4]*a;col[i*3+1]=data[i*4+1]*a;col[i*3+2]=data[i*4+2]*a}
+  if(job.clean)for(let i=0;i<n;i++)if(job.banned[i]&&!inside[i]){col[i*3]=job.clean[i*4];col[i*3+1]=job.clean[i*4+1];col[i*3+2]=job.clean[i*4+2]}
   job.col=col;
   // 드러나는 띠(이동 상한 5.5% + 전체 움직임)까지만, 큰 그림은 절반 크기에서
   job.steps=patchFillSteps(col,inside,width,height,{top:Math.max(width,height)>500?1:0,em:3,pm:3,band:Math.ceil(.075*Math.max(width,height))});
@@ -1989,7 +1989,9 @@ function pumpFill(){
  if(fillJobs.length)fillTimer=setTimeout(pumpFill,0);
 }
 
-function buildBackgroundPlate(mask){
+// 3-O: footprint = 파서 메울 자리(기본: 선택보다 2칸 넓게). 메울 색은 그 바깥 3칸(테두리에 붙은 탁한 띠)을 건너뛴 곳에서 가져온다.
+// 띠 자체는 원본 그대로 둔다(가만히 있을 때 원본과 같아야 하므로). 띠의 탁한 색이 안쪽으로 번져 회색 줄이 생기던 것을 막는다.
+function buildBackgroundPlate(mask,footprintOverride){
  const scale=Math.min(1,850/Math.max(renderWidth,renderHeight));
  const width=Math.max(1,Math.round(renderWidth*scale)),height=Math.max(1,Math.round(renderHeight*scale));
  const work=document.createElement('canvas');
@@ -1997,28 +1999,31 @@ function buildBackgroundPlate(mask){
  const g=work.getContext('2d',{willReadFrequently:true});
  g.drawImage(bitmap,0,0,width,height);
  const image=g.getImageData(0,0,width,height),data=image.data;
- const footprint=dilateMask(mask,2);
+ const footprint=footprintOverride||dilateMask(mask,2);
  const maskAtWorkSize=source=>{
   g.clearRect(0,0,width,height);g.drawImage(source,0,0,width,height);
   return g.getImageData(0,0,width,height).data;
  };
  const covered=maskAtWorkSize(footprint);
+ const ring=maskAtWorkSize(dilateMask(footprint,3));
  const nearby=maskAtWorkSize(dilateMask(mask,8));
- const size=width*height,inside=new Uint8Array(size);
+ const size=width*height,inside=new Uint8Array(size),banned=new Uint8Array(size);
  let count=0,nearCount=0,visibleCount=0;
  const sum=[0,0,0,0],squares=[0,0,0,0],visible=[0,0,0,0];
  for(let i=0;i<size;i++){
   const p=i*4;
-  if(covered[p+3]>=128){inside[i]=1;count++;continue}
+  if(covered[p+3]>=128){inside[i]=banned[i]=1;count++;continue}
+  if(ring[p+3]>=128)banned[i]=1;
   visibleCount++;
   for(let channel=0;channel<4;channel++)visible[channel]+=data[p+channel];
-  if(nearby[p+3]<128)continue;
+  if(nearby[p+3]<128||banned[i])continue;
   nearCount++;
   for(let channel=0;channel<4;channel++){
    const value=data[p+channel];
    sum[channel]+=value;squares[channel]+=value*value;
   }
  }
+ let clean=null;// 띠까지 깨끗하게 메운 색(조각 붙이기가 띠의 탁한 색을 베끼지 않게 재료로 쓴다)
  // A whole-image selection leaves no visible background to estimate.
  if(!count||!visibleCount)return null;
  const nearbyMean=nearCount?sum.map(value=>value/nearCount):null;
@@ -2027,10 +2032,10 @@ function buildBackgroundPlate(mask){
   for(let i=0;i<size;i++)if(inside[i])data.set(nearbyMean,i*4);
  }else{
   // 투명한 그림도 다루도록 색에 불투명도를 곱해 함께 채운다
-  const col=new Float32Array(size*4),known=new Uint8Array(size);
+  const col=clean=new Float32Array(size*4),known=new Uint8Array(size);
   for(let i=0;i<size;i++){
    const p=i*4,a=data[p+3]/255;
-   col[p]=data[p]*a;col[p+1]=data[p+1]*a;col[p+2]=data[p+2]*a;col[p+3]=data[p+3];known[i]=inside[i]?0:1;
+   col[p]=data[p]*a;col[p+1]=data[p+1]*a;col[p+2]=data[p+2]*a;col[p+3]=data[p+3];known[i]=banned[i]?0:1;
   }
   smoothFillF(col,known,width,height,4);
   for(let i=0;i<size;i++){
@@ -2042,7 +2047,7 @@ function buildBackgroundPlate(mask){
  }
  let plate=work;
  if(scale!==1){plate=document.createElement('canvas');plate.width=renderWidth;plate.height=renderHeight}
- const job={plate,work,image,inside,width,height,source:bitmap};
+ const job={plate,work,image,inside,width,height,source:bitmap,banned,clean};
  writePlate(job);
  if(!flat)queueFill(job);
  return plate;
@@ -2063,13 +2068,14 @@ function updateBaseTextures(){
  if(!baseBackgroundExclude)return;
  if(!maskChanged&&baseMaskCanvas&&lastBaseEdge===baseEdge)return;
  const base=rawMaskCanvas(z);
- if(!baseMaskCanvas)backgroundPlate=buildBackgroundPlate(base);
+ // 3-O: 몸체는 4칸 넓게 파서 테두리 띠(윤곽 자국)까지 메우고, 얹는 그림은 그보다 넓게(아래) 덮어 가만히 있을 때 원본과 같게 한다
+ if(!baseMaskCanvas)backgroundPlate=buildBackgroundPlate(base,dilateMask(base,4));
  const b=document.createElement('canvas');
  b.width=b.height=TILE;
  const bg=b.getContext('2d');
  if(baseEdge)bg.filter='blur('+baseEdge+'px)';
  // 3-M: 얹는 몸체 그림은 선택보다 넓게(빈자리는 2칸 넓게 메우므로 그보다 바깥까지). 좁으면 가만히 있어도 테두리에 메운 자국이 비친다.
- bg.drawImage(dilateMask(base,3+Math.ceil(baseEdge*.75)),0,0);
+ bg.drawImage(dilateMask(base,5+Math.ceil(baseEdge*.75)),0,0);
  baseMaskCanvas=b;lastBaseEdge=baseEdge;
  baseForegroundSource=null;
 }
@@ -2131,7 +2137,9 @@ function updateTailCutout(){
   const g=both.getContext('2d');
   g.drawImage(rawMasks[baseIndex],0,0);
   g.drawImage(union,0,0);
-  tailBasePlate=buildBackgroundPlate(both);
+  const foot=document.createElement('canvas');foot.width=foot.height=TILE;const fg=foot.getContext('2d');
+  fg.drawImage(dilateMask(rawMasks[baseIndex],4),0,0);fg.drawImage(dilateMask(union,2),0,0);
+  tailBasePlate=buildBackgroundPlate(both,foot);
  }
 }
 

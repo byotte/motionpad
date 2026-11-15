@@ -7,7 +7,6 @@
   .logo{width:23px;height:23px}
   .brand h1 span,.projectName{display:none}
   .menuNote{display:block}
-  .phoneOnly{display:flex}
   .toolbar{gap:4px}
   .workspace{grid-template-columns:minmax(0,1fr);height:auto}
   .stagebar{flex-direction:row}
@@ -17,7 +16,6 @@
   .quick{width:auto}
   .status{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
   .side{max-height:var(--panel-height,36dvh)}
-  .side>.maskDisplay{display:none}
   /* 안내줄: 누르면 접히고 펴진다(오른쪽 꺾쇠가 표시) */
   .guideLine{cursor:pointer}
   .guideFold{display:block;flex:none;width:6px;height:6px;margin:0 4px 3px;border:solid var(--item);border-width:0 1.5px 1.5px 0;transform:rotate(45deg)}

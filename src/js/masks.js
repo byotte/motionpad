@@ -36,6 +36,7 @@ function pumpFill(){
  if(!job.steps){
   const {image,inside,width,height}=job,n=width*height,data=image.data,col=new Float32Array(n*3);
   for(let i=0;i<n;i++){const a=data[i*4+3]/255;col[i*3]=data[i*4]*a;col[i*3+1]=data[i*4+1]*a;col[i*3+2]=data[i*4+2]*a}
+  if(job.clean)for(let i=0;i<n;i++)if(job.banned[i]&&!inside[i]){col[i*3]=job.clean[i*4];col[i*3+1]=job.clean[i*4+1];col[i*3+2]=job.clean[i*4+2]}
   job.col=col;
   // 드러나는 띠(이동 상한 5.5% + 전체 움직임)까지만, 큰 그림은 절반 크기에서
   job.steps=patchFillSteps(col,inside,width,height,{top:Math.max(width,height)>500?1:0,em:3,pm:3,band:Math.ceil(.075*Math.max(width,height))});
@@ -58,7 +59,9 @@ function pumpFill(){
  if(fillJobs.length)fillTimer=setTimeout(pumpFill,0);
 }
 
-function buildBackgroundPlate(mask){
+// 3-O: footprint = 파서 메울 자리(기본: 선택보다 2칸 넓게). 메울 색은 그 바깥 3칸(테두리에 붙은 탁한 띠)을 건너뛴 곳에서 가져온다.
+// 띠 자체는 원본 그대로 둔다(가만히 있을 때 원본과 같아야 하므로). 띠의 탁한 색이 안쪽으로 번져 회색 줄이 생기던 것을 막는다.
+function buildBackgroundPlate(mask,footprintOverride){
  const scale=Math.min(1,850/Math.max(renderWidth,renderHeight));
  const width=Math.max(1,Math.round(renderWidth*scale)),height=Math.max(1,Math.round(renderHeight*scale));
  const work=document.createElement('canvas');
@@ -66,28 +69,31 @@ function buildBackgroundPlate(mask){
  const g=work.getContext('2d',{willReadFrequently:true});
  g.drawImage(bitmap,0,0,width,height);
  const image=g.getImageData(0,0,width,height),data=image.data;
- const footprint=dilateMask(mask,2);
+ const footprint=footprintOverride||dilateMask(mask,2);
  const maskAtWorkSize=source=>{
   g.clearRect(0,0,width,height);g.drawImage(source,0,0,width,height);
   return g.getImageData(0,0,width,height).data;
  };
  const covered=maskAtWorkSize(footprint);
+ const ring=maskAtWorkSize(dilateMask(footprint,3));
  const nearby=maskAtWorkSize(dilateMask(mask,8));
- const size=width*height,inside=new Uint8Array(size);
+ const size=width*height,inside=new Uint8Array(size),banned=new Uint8Array(size);
  let count=0,nearCount=0,visibleCount=0;
  const sum=[0,0,0,0],squares=[0,0,0,0],visible=[0,0,0,0];
  for(let i=0;i<size;i++){
   const p=i*4;
-  if(covered[p+3]>=128){inside[i]=1;count++;continue}
+  if(covered[p+3]>=128){inside[i]=banned[i]=1;count++;continue}
+  if(ring[p+3]>=128)banned[i]=1;
   visibleCount++;
   for(let channel=0;channel<4;channel++)visible[channel]+=data[p+channel];
-  if(nearby[p+3]<128)continue;
+  if(nearby[p+3]<128||banned[i])continue;
   nearCount++;
   for(let channel=0;channel<4;channel++){
    const value=data[p+channel];
    sum[channel]+=value;squares[channel]+=value*value;
   }
  }
+ let clean=null;// 띠까지 깨끗하게 메운 색(조각 붙이기가 띠의 탁한 색을 베끼지 않게 재료로 쓴다)
  // A whole-image selection leaves no visible background to estimate.
  if(!count||!visibleCount)return null;
  const nearbyMean=nearCount?sum.map(value=>value/nearCount):null;
@@ -96,10 +102,10 @@ function buildBackgroundPlate(mask){
   for(let i=0;i<size;i++)if(inside[i])data.set(nearbyMean,i*4);
  }else{
   // 투명한 그림도 다루도록 색에 불투명도를 곱해 함께 채운다
-  const col=new Float32Array(size*4),known=new Uint8Array(size);
+  const col=clean=new Float32Array(size*4),known=new Uint8Array(size);
   for(let i=0;i<size;i++){
    const p=i*4,a=data[p+3]/255;
-   col[p]=data[p]*a;col[p+1]=data[p+1]*a;col[p+2]=data[p+2]*a;col[p+3]=data[p+3];known[i]=inside[i]?0:1;
+   col[p]=data[p]*a;col[p+1]=data[p+1]*a;col[p+2]=data[p+2]*a;col[p+3]=data[p+3];known[i]=banned[i]?0:1;
   }
   smoothFillF(col,known,width,height,4);
   for(let i=0;i<size;i++){
@@ -111,7 +117,7 @@ function buildBackgroundPlate(mask){
  }
  let plate=work;
  if(scale!==1){plate=document.createElement('canvas');plate.width=renderWidth;plate.height=renderHeight}
- const job={plate,work,image,inside,width,height,source:bitmap};
+ const job={plate,work,image,inside,width,height,source:bitmap,banned,clean};
  writePlate(job);
  if(!flat)queueFill(job);
  return plate;
@@ -132,13 +138,14 @@ function updateBaseTextures(){
  if(!baseBackgroundExclude)return;
  if(!maskChanged&&baseMaskCanvas&&lastBaseEdge===baseEdge)return;
  const base=rawMaskCanvas(z);
- if(!baseMaskCanvas)backgroundPlate=buildBackgroundPlate(base);
+ // 3-O: 몸체는 4칸 넓게 파서 테두리 띠(윤곽 자국)까지 메우고, 얹는 그림은 그보다 넓게(아래) 덮어 가만히 있을 때 원본과 같게 한다
+ if(!baseMaskCanvas)backgroundPlate=buildBackgroundPlate(base,dilateMask(base,4));
  const b=document.createElement('canvas');
  b.width=b.height=TILE;
  const bg=b.getContext('2d');
  if(baseEdge)bg.filter='blur('+baseEdge+'px)';
  // 3-M: 얹는 몸체 그림은 선택보다 넓게(빈자리는 2칸 넓게 메우므로 그보다 바깥까지). 좁으면 가만히 있어도 테두리에 메운 자국이 비친다.
- bg.drawImage(dilateMask(base,3+Math.ceil(baseEdge*.75)),0,0);
+ bg.drawImage(dilateMask(base,5+Math.ceil(baseEdge*.75)),0,0);
  baseMaskCanvas=b;lastBaseEdge=baseEdge;
  baseForegroundSource=null;
 }
@@ -200,7 +207,9 @@ function updateTailCutout(){
   const g=both.getContext('2d');
   g.drawImage(rawMasks[baseIndex],0,0);
   g.drawImage(union,0,0);
-  tailBasePlate=buildBackgroundPlate(both);
+  const foot=document.createElement('canvas');foot.width=foot.height=TILE;const fg=foot.getContext('2d');
+  fg.drawImage(dilateMask(rawMasks[baseIndex],4),0,0);fg.drawImage(dilateMask(union,2),0,0);
+  tailBasePlate=buildBackgroundPlate(both,foot);
  }
 }
 
