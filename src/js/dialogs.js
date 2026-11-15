@@ -36,8 +36,8 @@ const namedProjects=$('projectSelect');
 const showNamedProjects=()=>$('legacyMenu').hidden=$('legacySep').hidden=![...namedProjects.options].some(option=>option.value);
 new MutationObserver(showNamedProjects).observe(namedProjects,{childList:true});
 showNamedProjects();
-$('openMusic').addEventListener('click',()=>$('trackSelect').focus());
-$('openEffects').addEventListener('click',()=>$('sfxVolume').focus());
+// 3-R: '소리'는 창이 하나뿐이라 펼침 메뉴 없이 바로 연다. 다른 메뉴가 펼쳐져 있으면 닫는다.
+$('openMusic').addEventListener('click',()=>{for(const m of document.querySelectorAll('.topMenu[open]'))m.open=false});
 const effectSelect=$('sfxTypeInput'),viewerEffects=$('viewerEffects');
 viewerEffects.onchange=()=>{
  effectSelect.value=viewerEffects.value;

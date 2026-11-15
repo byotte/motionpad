@@ -52,7 +52,7 @@
 @media (max-width:520px){
   .header{gap:4px}
   .toolbar{flex:0 1 auto;justify-content:flex-start;margin-left:auto}
-  .topMenu>summary{padding-inline:6px}
+  .topMenu>summary,.topMenuBtn{padding-inline:6px}
   .stagebar{padding-inline:2px}
   /* 좁은 폰: 도구는 아이콘만(이름은 title·안내줄), '새 영역'은 글자 유지 */
   .modegroup{flex-wrap:nowrap;align-items:center}
