@@ -132,7 +132,7 @@ function restoreExtra(d){
   for(const k of ['enabled','breath','sway'])if(d?.ambient?.[k]!=null)ambient[k]=d.ambient[k];ambient.light=0;
   $('ambientOn').checked=ambient.enabled;refreshBaseUI();
   for(const [k,id] of [['breath','ambientBreath'],['sway','ambientSway'],['light','ambientLight']])$(id).value=ambient[k];
-  updateAmbientLabels();applyPlayerVisibility();setTrack(d?.track||'lounge');
+  updateAmbientLabels();applyPlayerVisibility();setTrack(d?.track||'dream');
   qualityMode=['auto','high','balanced'].includes(d?.qualityMode)?d.qualityMode:'auto';paintQuality();
   qualityScale=qualityMode==='balanced'?.7:1;meshSegments=qualityMode==='balanced'?[20,30]:[32,48];if(gl)rebuildMesh();fit();
 }
