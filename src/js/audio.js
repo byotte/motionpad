@@ -23,7 +23,7 @@ function playBuiltinSfx(kind,power){
 
 function ensureAudio(){if(audioCtx)return;const A=window.AudioContext||window.webkitAudioContext;if(!A)throw Error('오디오 지원이 없는 브라우저입니다.');audioCtx=new A();audioMaster=audioCtx.createGain();audioMaster.gain.value=.75;audioMaster.connect(audioCtx.destination);decodeBuiltinSfx()}
 /* 음악 단계: 배경음악은 녹음 곡. '몽환적인'만 앱에 들어 있고, 나머지는 고를 때 물어보고 한 곡씩 내려받아 이 브라우저(IndexedDB)에 둔다. */
-const BGM_BASE='https://jjum22.github.io/motionpad/bgm/',BGM_BUILTIN='@@base64(bgm/dreamy.mp3)';
+const BGM_BASE='https://byott.github.io/motionpad/bgm/',BGM_BUILTIN='@@base64(bgm/dreamy.mp3)';
 const BGM_TRACKS=[{id:'dream',name:'몽환적인',builtin:true},{id:'tense',name:'긴장감'},{id:'cute',name:'깜찍한'},{id:'sticky',name:'끈적한'},{id:'gloomy',name:'슬프고 습한'},{id:'playful',name:'장난스러운'},{id:'korean',name:'한국적인'}];
 const bgmHave=new Set(['dream']),bgmBuffers=new Map();let curTrack='dream',bgmGain=null,bgmSources=[],bgmTimer=null,bgmBusy=false;
 const bgmInfo=id=>BGM_TRACKS.find(t=>t.id===id);
