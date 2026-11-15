@@ -8,6 +8,10 @@
 .dlgHead h2,.blinkHead h2{flex:1;margin:0;color:var(--ink);font-size:var(--fs-title);font-weight:var(--fw-title)}
 .dlgX{display:grid;place-items:center;width:var(--ctl-h);height:var(--ctl-h);padding:0;border:0;border-radius:var(--r-ctl);background:transparent;color:var(--item);font-size:var(--fs-glyph);line-height:1}
 .dlgX:hover{color:var(--ink)}
+/* 닫기 표시는 글자(×) 대신 선 두 개로 그려 상자 한가운데에 둔다 */
+.dlgX{position:relative;font-size:0}
+.dlgX::before,.dlgX::after{content:"";position:absolute;left:50%;top:50%;width:13px;height:1.6px;margin:-.8px 0 0 -6.5px;background:currentColor;transform:rotate(45deg)}
+.dlgX::after{transform:rotate(-45deg)}
 .dlgBody{min-height:0;padding:12px 14px;overflow:auto}
 .dlgBody>:first-child{margin-top:0}
 :is(.dlgBody,.blinkStage)[tabindex]:focus{outline:none}
@@ -38,6 +42,10 @@
 .blinkToolbar{display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px;min-height:calc(var(--ctl-h) + 14px);padding:7px 10px;background:var(--panel);border-bottom:1px solid var(--line);font-size:var(--fs-item);color:var(--item)}
 .blinkToolbar label{display:inline-flex;align-items:center;gap:5px}
 .blinkToolbar .barSep{height:18px;align-self:center;margin:0 2px}
+.blinkZoom{display:inline-flex;align-items:center;gap:2px}
+.blinkZoom .btn{border-color:transparent;background:transparent}
+.blinkZoom .btn:hover{background:var(--button)}
+#blinkZoomReset{min-width:46px;padding-inline:2px}
 .blinkBrush{display:inline-flex;flex-wrap:wrap;align-items:center;gap:5px 8px}
 .blinkBrush input[type=range]{width:110px}
 /* 고르는 버튼 규칙: 바탕을 채우지 않고, 켜지면 강조색 굵은 테두리 */
@@ -84,3 +92,13 @@
 .exportWay b{font-size:var(--fs-item);font-weight:var(--fw-title);color:var(--ink)}
 .exportWay .mini{margin-top:2px}
 .fxRow{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp2);margin-top:var(--sp2)}
+/* 프로그램 정보: 묶음 셋(정보 · Tip · 단축키) */
+.aboutBody .optGroup{margin:0 0 var(--sp2)}
+.aboutBody .micro{margin:2px 0 0;font-size:var(--fs-help)}
+.xMark{font-family:"Segoe UI Symbol","Apple Symbols","Noto Sans Math",sans-serif;font-size:var(--fs-title);color:var(--ink)}
+.aboutHead{display:flex;align-items:center;gap:var(--sp1);margin:0 0 var(--sp1);font-size:var(--fs-item);font-weight:var(--fw-title);color:var(--ink)}
+.aboutHead .ic{color:var(--mark)}
+.aboutTips{margin:0;padding-left:16px;font-size:var(--fs-item);line-height:1.6}
+.keyList{display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 14px;margin:0;font-size:var(--fs-item)}
+.keyList dt{color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.keyList dd{margin:0;color:var(--item)}

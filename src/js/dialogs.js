@@ -81,3 +81,6 @@ $('menuClose').onclick=async()=>{
  document.querySelector('.workspace').hidden=true;$('welcome').hidden=false;document.querySelector('.header').classList.add('starting');$('resumeProject').hidden=false;paintProjectName();
 };
 setMode('play');
+// 3-N: 폰형 화면에서는 안내줄을 눌러 접고 편다(접힌 상태는 기억). PC는 늘 펼쳐 둔다.
+{const line=document.querySelector('.guideLine');try{if(localStorage.getItem('motionpad-guide')==='folded')line.classList.add('folded')}catch(_){}
+ line.addEventListener('click',()=>{if(!matchMedia('(orientation:portrait),(max-width:779px)').matches)return;const f=line.classList.toggle('folded');try{localStorage.setItem('motionpad-guide',f?'folded':'open')}catch(_){}requestAnimationFrame(fit)})}

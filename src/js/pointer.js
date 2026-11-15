@@ -28,7 +28,7 @@ function placePivot(z,p,additional){
  setStatus(additional?'축을 추가했습니다.':'축을 지정했습니다. 다른 곳을 누르면 옮겨집니다.');
  return true;
 }
-function pointerPos(e){const r=overlay.getBoundingClientRect(),offset=e.pointerType==='touch'&&$('offsetInput').checked&&['brush','erase','lasso'].includes(mode)?Math.min(54,r.height*.14):0;return {x:clamp((e.clientX-r.left)/r.width,0,1),y:clamp((e.clientY-r.top-offset)/r.height,0,1)}}
+function pointerPos(e){const r=overlay.getBoundingClientRect(),offset=e.pointerType==='touch'&&$('offsetInput').checked&&['brush','erase','lasso'].includes(mode)?Math.min(54,r.height*.14):0;return {x:clamp((e.clientX-r.left)/r.width,0,1),y:clamp((e.clientY-r.top-offset)/r.height,0,1),cx:e.clientX,cy:e.clientY}}
 function paintLoupe(p){if(!$('loupeInput').checked||!ready||viewerOpen||!p){loupe.hidden=true;return}loupe.hidden=false;const n=loupe.width=160,m=loupe.height=160,dx=renderWidth*p.x,dy=renderHeight*p.y,size=Math.max(30,Math.min(renderWidth,renderHeight)*.095);loupeCtx.clearRect(0,0,n,m);loupeCtx.imageSmoothingEnabled=true;loupeCtx.drawImage(bitmap,dx-size/2,dy-size/2,size,size,0,0,n,m);loupeCtx.strokeStyle='#ffec64';loupeCtx.lineWidth=1.8;loupeCtx.beginPath();loupeCtx.arc(n/2,m/2,4,0,6.283);loupeCtx.moveTo(n/2-13,m/2);loupeCtx.lineTo(n/2+13,m/2);loupeCtx.moveTo(n/2,m/2-13);loupeCtx.lineTo(n/2,m/2+13);loupeCtx.stroke()}
 $('loupeInput').onchange=()=>{if(!$('loupeInput').checked)loupe.hidden=true};
 function pixelDistance(a,b){return Math.hypot((a.x-b.x)*renderWidth,(a.y-b.y)*renderHeight)}
@@ -101,15 +101,17 @@ document.addEventListener('keydown',e=>{
 document.addEventListener('keyup',e=>{if(e.code==='Space')spacePanHeld=false});
 window.addEventListener('blur',()=>{spacePanHeld=false});
 /* Unified Pointer Events: edit gestures do not overlap touch-performance gestures. */
-function beginPinch(){
+// 3-N: 두 손가락 확대·이동은 화면(픽셀) 좌표로 잰다. 그림 기준 좌표는 확대·이동하는 동안 함께 변해 화면이 튀었다.
+const clientDist=arr=>Math.max(5,Math.hypot(arr[0].cx-arr[1].cx,arr[0].cy-arr[1].cy));
+function beginPinch(navOnly){
   const arr=[...pointers.values()],z=getSelected();if(arr.length<2)return;
   const d=Math.max(5,pixelDistance(arr[0],arr[1]));
-  if(mode==='ellipse'&&z&&!z.locked){
+  if(!navOnly&&mode==='ellipse'&&z&&!z.locked){
    // 손가락 방향이 도형의 가로축과 가까우면 가로만, 세로축과 가까우면 세로만, 대각선이면 같은 비율로
    const a=pointerAngle(arr),rel=a-shapeFrame(z).rot,axis=Math.abs(Math.sin(rel))<.5?'x':Math.abs(Math.cos(rel))<.5?'y':'both';
    gesture={type:'pinch',id:z.id,origin:snap(z),dist:d,angle:a,centroid:pointerCentroid(arr),axis};
    setStatus(axis==='both'?'두 손가락으로 크기와 기울기를 바꿉니다.':`두 손가락으로 ${axis==='x'?'가로':'세로'} 길이와 기울기를 바꿉니다.`);return}
-  gesture={type:'pinch-nav',dist:d,zoom:zoomLevel,centroid:pointerCentroid(arr),panX,panY};
+  gesture={type:'pinch-nav',dist:clientDist(arr),zoom:zoomLevel,ccx:(arr[0].cx+arr[1].cx)/2,ccy:(arr[0].cy+arr[1].cy)/2,panX,panY};
   setStatus('두 손가락으로 캔버스를 확대하고 이동합니다. 선택 영역은 변경하지 않습니다.');
 }
 function stopPlay(z){if(!z)return;z.dragging=false;z.desiredX=z.desiredY=z.desiredScale=0}
@@ -117,7 +119,7 @@ overlay.addEventListener('pointerdown',e=>{
   if(!ready)return;e.preventDefault();try{overlay.setPointerCapture(e.pointerId)}catch(_){}
   const p=pointerPos(e);pointers.set(e.pointerId,p);paintLoupe(p);
   if(viewerOpen||mode==='play'||touchPreview){
-    if(pointers.size>1)return;
+    if(pointers.size>1){if(!viewerOpen){if(gesture?.type==='play')stopPlay(zones.find(v=>v.id===gesture.id));beginPinch(true)}return}
     const z=hit(p.x,p.y);gesture={type:'play',id:z?.id||null,start:p,last:p,time:performance.now(),lastTime:performance.now(),dragged:false};
     if(z){z.dragging=false;z.desiredX=z.desiredY=z.desiredScale=0;z.hitX=p.x;z.hitY=p.y;z.grabX=p.x;z.grabY=p.y}return;
   }
@@ -160,7 +162,7 @@ overlay.addEventListener('pointerdown',e=>{
 overlay.addEventListener('pointermove',e=>{
   if(!ready||!pointers.has(e.pointerId))return;e.preventDefault();const p=pointerPos(e);paintLoupe(p);
   pointers.set(e.pointerId,p);const g=gesture;if(!g)return;
-  if(g.type==='pinch-nav'){if(pointers.size<2)return;const arr=[...pointers.values()],c=pointerCentroid(arr),next=clamp(g.zoom*pixelDistance(arr[0],arr[1])/g.dist,1,4);zoomLevel=next;panX=g.panX+(c.x-g.centroid.x)*stage.clientWidth;panY=g.panY+(c.y-g.centroid.y)*stage.clientHeight;applyZoom();return}
+  if(g.type==='pinch-nav'){if(pointers.size<2)return;const arr=[...pointers.values()],next=clamp(g.zoom*clientDist(arr)/g.dist,1,4);zoomLevel=next;panX=g.panX+(arr[0].cx+arr[1].cx)/2-g.ccx;panY=g.panY+(arr[0].cy+arr[1].cy)/2-g.ccy;applyZoom();return}
   if(g.type==='pinch'){
     if(pointers.size<2)return;const arr=[...pointers.values()],z=zones.find(v=>v.id===g.id);
     if(z&&!z.locked){if(!g.remembered){remember();g.remembered=true}const c=pointerCentroid(arr),a=pointerAngle(arr);let da=a-g.angle;

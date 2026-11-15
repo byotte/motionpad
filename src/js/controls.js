@@ -31,12 +31,12 @@ function setTouchPreview(on){
  if(touchPreview===on)return;
  touchPreview=on;
  document.querySelector('.workspace')?.classList.toggle('touchPreview',on);
- if(on)setStatus('터치 테스트 중입니다. 그림을 눌러 반응을 확인하세요. 도구를 누르면 하던 작업으로 돌아갑니다.');
+ if(on)setStatus('터치 on: 그림을 눌러 반응을 확인하세요. 도구를 누르면 하던 작업으로 돌아갑니다.');
  paintTouchTest();
 }
 // 3-M: 터치 테스트 버튼(안내줄 오른쪽). 도구를 쓰던 중에도 눌러서 움직임을 확인하고, 다시 누르면 하던 도구로 돌아간다.
-function paintTouchTest(){const b=$('touchTestBtn'),on=touchPreview||mode==='play';b.setAttribute('aria-pressed',String(on));b.classList.toggle('active',on)}
-$('touchTestBtn').onclick=()=>{if(mode==='play'){setStatus('지금 터치 테스트 중입니다. 그림을 눌러 보세요. 편집하려면 위의 도구를 고르세요.');return}setTouchPreview(!touchPreview);if(!touchPreview)setStatus('하던 작업으로 돌아왔습니다.')};
+function paintTouchTest(){const b=$('touchTestBtn'),on=touchPreview||mode==='play';b.setAttribute('aria-pressed',String(on));b.classList.toggle('active',on);b.textContent=on?'터치 on':'터치 off'}
+$('touchTestBtn').onclick=()=>{if(mode==='play'){setStatus('지금 터치 on입니다. 그림을 눌러 보세요. 편집하려면 위의 도구를 고르세요.');return}setTouchPreview(!touchPreview);if(!touchPreview)setStatus('하던 작업으로 돌아왔습니다.')};
 function previewMotion(){
  if(!viewerOpen&&mode!=='play')setTouchPreview(true);
 }
