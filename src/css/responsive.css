@@ -23,8 +23,8 @@
   .guideLine.folded .status{visibility:hidden;height:0}
   .guideLine.folded .guideFold{margin-bottom:0;transform:rotate(-135deg)}
   .aboutKeys{display:none}
-  /* 눈 깜빡임 창: 윗줄은 한 줄(넘치면 옆으로 밀어 봄), 그림은 옵션을 내려 보는 동안에도 위에 붙어 있다 */
-  .blinkToolbar{flex-wrap:nowrap;gap:4px;padding:5px 6px;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+  /* 눈 깜빡임 창: 윗줄은 한 줄, 앞머리 붓 옵션은 아랫줄로(옆으로 밀지 않아도 보이게). 그림은 옵션을 내려 보는 동안에도 위에 붙어 있다 */
+  .blinkToolbar{flex-wrap:wrap;gap:4px;padding:5px 6px;white-space:nowrap}
   .blinkToolbar>*{flex:none}
   .blinkToolbar>label{font-size:0}
   .blinkToolbar>label select{font-size:var(--fs-item)}
@@ -33,8 +33,8 @@
   .blinkHead{flex-wrap:nowrap}
   .blinkHead h2{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .blinkHead .btn{padding-inline:6px}
-  .blinkBrush{flex-wrap:nowrap;gap:4px}
-  .blinkBrush input[type=range]{width:80px}
+  .blinkToolbar>.blinkBrush{display:flex;flex:1 0 100%;flex-wrap:nowrap;gap:4px;min-width:0}
+  .blinkBrush input[type=range]{flex:1 1 0;width:0;min-width:36px;max-width:160px}
   .blinkStage{position:sticky;top:0;z-index:2}
   .blinkMain{grid-template-columns:minmax(0,1fr)}
   .blinkSettings{border-left:0;border-top:1px solid var(--line)}
@@ -75,6 +75,17 @@
   .loupe{top:6px;right:6px;width:104px;height:104px}
   #lassobar{gap:4px;padding-inline:4px}
   .fileBtn span{display:none}
+}
+
+/* 펼친 폴드 가로 등 PC보다 좁은 가로 화면: 눈 깜빡임 윗줄을 조여 붓 옵션까지 한 줄에(구분선은 자리 때문에 뺀다) */
+@media (orientation:landscape) and (min-width:780px) and (max-width:959px){
+  .blinkToolbar{gap:4px;padding-inline:6px}
+  .blinkToolbar>label{font-size:0}
+  .blinkToolbar>label select{font-size:var(--fs-item)}
+  .blinkToolbar .btn{padding-inline:5px}
+  .blinkToolbar .barSep{display:none}
+  .blinkBrush{gap:4px}
+  .blinkBrush input[type=range]{width:90px}
 }
 
 /* ── 11. 터치 기기·좁은 화면: 손가락으로 누르기 쉬운 높이 ── */
