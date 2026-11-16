@@ -28,7 +28,13 @@ function playBuiltinSfx(kind,power){
  src.connect(gain);gain.connect(audioMaster);src.start();return true;
 }
 
-function ensureAudio(){if(audioCtx)return;const A=window.AudioContext||window.webkitAudioContext;if(!A)throw Error('오디오 지원이 없는 브라우저입니다.');audioCtx=new A();audioMaster=audioCtx.createGain();audioMaster.gain.value=.75;audioMaster.connect(audioCtx.destination);decodeBuiltinSfx()}
+function ensureAudio(){if(audioCtx)return;const A=window.AudioContext||window.webkitAudioContext;if(!A)throw Error('오디오 지원이 없는 브라우저입니다.');audioCtx=new A();audioMaster=audioCtx.createGain();audioMaster.gain.value=.75;audioMaster.connect(audioCtx.destination);musicBus=audioCtx.createGain();musicBus.connect(audioCtx.destination);decodeBuiltinSfx()}
+// 영상 녹화용 소리 갈래: 효과음(audioMaster)과 배경음악(musicBus)이 스피커로 가는 길에 녹화 쪽 길을 하나 더 잇는다.
+let musicBus=null;
+function audioRecordTap(){ensureAudio();const dest=audioCtx.createMediaStreamDestination();audioMaster.connect(dest);musicBus.connect(dest);return {track:dest.stream.getAudioTracks()[0],stop(){try{audioMaster.disconnect(dest);musicBus.disconnect(dest)}catch(_){}}}}
+// 연속 움직임 녹화용: 지금 고른 배경음악을 스피커가 아니라 녹화에만 처음부터 틀고, 끝 0.42초에 줄여 영상의 끝 이어붙이기와 맞춘다.
+async function musicForRecording(duration){ensureAudio();await audioCtx.resume();const buf=await trackBuffer(curTrack);if(!buf)return null;const dest=audioCtx.createMediaStreamDestination(),g=audioCtx.createGain(),s=audioCtx.createBufferSource();s.buffer=buf;s.loop=true;s.connect(g);g.connect(dest);const vol=Number($('musicVolume').value)/100;
+ return {track:dest.stream.getAudioTracks()[0],start(){const t=audioCtx.currentTime;g.gain.setValueAtTime(vol,t);g.gain.setValueAtTime(vol,t+Math.max(0,duration-.42));g.gain.linearRampToValueAtTime(0,t+duration);s.start(t)},stop(){try{s.stop()}catch(_){}g.disconnect()}}}
 /* 음악 단계: 배경음악은 녹음 곡. '몽환적인'만 앱에 들어 있고, 나머지는 고를 때 물어보고 한 곡씩 내려받아 이 브라우저(IndexedDB)에 둔다. */
 const BGM_BASE='https://byotte.github.io/motionpad/bgm/',BGM_BUILTIN='@@base64(bgm/dreamy.mp3)';
 const BGM_TRACKS=[{id:'dream',name:'몽환적인',builtin:true},{id:'tense',name:'긴장감'},{id:'cute',name:'깜찍한'},{id:'sticky',name:'끈적한'},{id:'gloomy',name:'슬프고 습한'},{id:'playful',name:'장난스러운'},{id:'korean',name:'한국적인'}];
@@ -44,15 +50,18 @@ async function ensureBgm(id){if(bgmHave.has(id))return true;if(bgmBusy)return fa
  bgmBusy=true;setStatus(`‘${t.name}’ 곡을 내려받는 중…`);
  try{const r=await fetch(BGM_BASE+id+'.mp3');if(!r.ok)throw Error(r.status);const blob=await r.blob();if(db)await dbPutKey('bgm:'+id,blob);else bgmBuffers.set(id,await (ensureAudio(),audioCtx.decodeAudioData(await blob.arrayBuffer())));bgmHave.add(id);paintTrackOptions();setStatus(`‘${t.name}’ 곡을 받았습니다.`);return true}
  catch(e){console.warn(e);showNotice('내려받지 못했습니다','인터넷 연결을 확인한 뒤 다시 골라 주세요.');return false}finally{bgmBusy=false}}
+// 불러온 음악 파일도 같은 길(musicBus)로 튼다. 파일이 바뀌면 다시 읽는다.
+let fileMusic=null;
+async function trackBuffer(id){if(id!=='file')return bgmBuffer(id);if(!audioBlob)return null;if(fileMusic?.blob!==audioBlob)fileMusic={blob:audioBlob,buf:await audioCtx.decodeAudioData(await audioBlob.arrayBuffer())};return fileMusic.buf}
 async function bgmBuffer(id){if(bgmBuffers.has(id))return bgmBuffers.get(id);if(!await ensureBgm(id))return null;const bytes=await bgmBytes(id);if(!bytes)return null;const buf=await audioCtx.decodeAudioData(bytes);bgmBuffers.set(id,buf);return buf}
 // 이음새 없는 반복: 곡 끝과 다음 회차 처음을 1.5초 겹쳐 잇는다.
-function playBgmLoop(buf){const X=Math.min(1.5,buf.duration/4);bgmGain=audioCtx.createGain();bgmGain.gain.value=Number($('musicVolume').value)/100;bgmGain.connect(audioCtx.destination);const g=bgmGain;
+function playBgmLoop(buf){const X=Math.min(1.5,buf.duration/4);bgmGain=audioCtx.createGain();bgmGain.gain.value=Number($('musicVolume').value)/100;bgmGain.connect(musicBus);const g=bgmGain;
  const seg=(t,first)=>{if(bgmGain!==g)return;const s=audioCtx.createBufferSource(),f=audioCtx.createGain(),end=t+buf.duration;s.buffer=buf;s.connect(f);f.connect(g);f.gain.setValueAtTime(first?1:0,t);if(!first)f.gain.linearRampToValueAtTime(1,t+X);f.gain.setValueAtTime(1,end-X);f.gain.linearRampToValueAtTime(0,end);s.start(t);s.stop(end);bgmSources.push(s);s.onended=()=>{bgmSources=bgmSources.filter(x=>x!==s)};bgmTimer=setTimeout(()=>seg(end-X,false),Math.max(0,(end-X-audioCtx.currentTime-1)*1000))};
  seg(audioCtx.currentTime+.05,true)}
-function setMusicVolume(v){if(activeAudio)activeAudio.volume=v/100;if(bgmGain)bgmGain.gain.value=v/100}
-function stopMusic(){musicPlaying=false;clearTimeout(bgmTimer);bgmTimer=null;for(const s of bgmSources)try{s.stop()}catch(_){}bgmSources=[];if(bgmGain){bgmGain.disconnect();bgmGain=null}if(activeAudio){activeAudio.pause();activeAudio.currentTime=0;activeAudio=null}$('musicBtn').textContent='▶ 음악';paintMusicPreview()}
-async function startMusic(){stopMusic();ensureAudio();await audioCtx.resume();const type=curTrack;if(type==='file'){if(!audioBlob){setStatus('먼저 음악 파일을 불러와 주세요.');return}if(audioURL)URL.revokeObjectURL(audioURL);audioURL=URL.createObjectURL(audioBlob);activeAudio=new Audio(audioURL);activeAudio.loop=true;activeAudio.volume=Number($('musicVolume').value)/100;try{await activeAudio.play()}catch(e){setStatus('재생하려면 화면에서 다시 ▶ 버튼을 눌러 주세요.');activeAudio=null;return}}
- else{const buf=await bgmBuffer(type);if(!buf||curTrack!==type||musicPlaying)return;playBgmLoop(buf)}musicPlaying=true;$('musicBtn').textContent='❚❚ 음악';paintMusicPreview()}
+function setMusicVolume(v){if(bgmGain)bgmGain.gain.value=v/100}
+function stopMusic(){musicPlaying=false;clearTimeout(bgmTimer);bgmTimer=null;for(const s of bgmSources)try{s.stop()}catch(_){}bgmSources=[];if(bgmGain){bgmGain.disconnect();bgmGain=null}$('musicBtn').textContent='▶ 음악';paintMusicPreview()}
+async function startMusic(){stopMusic();ensureAudio();await audioCtx.resume();const type=curTrack;if(type==='file'&&!audioBlob){setStatus('먼저 음악 파일을 불러와 주세요.');return}
+ const buf=await trackBuffer(type);if(!buf||curTrack!==type||musicPlaying)return;playBgmLoop(buf);musicPlaying=true;$('musicBtn').textContent='❚❚ 음악';paintMusicPreview()}
 $('musicBtn').onclick=()=>{if(musicPlaying)stopMusic();else startMusic().catch(e=>setStatus('음악 재생 실패: '+e.message))};
 // 소리 창에서 들어 보기: 음악은 재생·일시정지 겸용, 효과음은 한 번 울린다. 창을 닫으면 음악도 멈춘다.
 function paintMusicPreview(){const b=$('musicPreview');b.querySelector('use').setAttribute('href',musicPlaying?'#i-pause':'#i-play');b.setAttribute('aria-pressed',String(musicPlaying));b.title=b.ariaLabel=musicPlaying?'배경음악 멈추기':'배경음악 들어 보기'}
