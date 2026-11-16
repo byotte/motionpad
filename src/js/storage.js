@@ -2,7 +2,8 @@ async function restoreProjectObject(o){stopMusic();await useBlob(o.image,true);z
 
 function openDB(){return new Promise((ok,fail)=>{if(!('indexedDB'in window))return fail(Error('IndexedDB 지원 안 됨'));const req=indexedDB.open('motionpad-v1',1);req.onupgradeneeded=()=>req.result.createObjectStore('projects');req.onsuccess=()=>ok(req.result);req.onerror=()=>fail(req.error)})}
 function dbPutKey(key,v){return new Promise((ok,fail)=>{const t=db.transaction('projects','readwrite');t.objectStore('projects').put(v,key);t.oncomplete=ok;t.onerror=()=>fail(t.error)})}
-function dbPut(v){return dbPutKey('active',v)}
+// savedSig: 마지막 파일 저장 때의 모습. 이어하기 뒤에도 '파일로 저장 안 한 변경' 여부를 그대로 잇는다.
+function dbPut(v){return dbPutKey('active',{...v,savedSig:v.savedSig??savedSignature})}
 function dbKeys(){return new Promise((ok,fail)=>{const t=db.transaction('projects','readonly');const r=t.objectStore('projects').getAllKeys();r.onsuccess=()=>ok(r.result);r.onerror=()=>fail(r.error)})}
 function dbDelete(k){return new Promise((ok,fail)=>{const t=db.transaction('projects','readwrite');t.objectStore('projects').delete(k);t.oncomplete=ok;t.onerror=()=>fail(t.error)})}
 function getNamed(k){return new Promise((ok,fail)=>{const t=db.transaction('projects','readonly'),r=t.objectStore('projects').get(k);r.onsuccess=()=>ok(r.result);r.onerror=()=>fail(r.error)})}

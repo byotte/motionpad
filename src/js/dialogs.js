@@ -24,7 +24,7 @@ $('startImage').onclick=async()=>{if(await keepPrevious('새 그림 열기'))$('
 $('startProject').onclick=async()=>{if(await keepPrevious('프로젝트 열기'))$('restoreBtn').click()};
 $('resumeProject').onclick=async()=>{
  if(!storedLayoutProject)return;
- try{await restoreProjectObject(storedLayoutProject);setMode('play');}
+ try{await restoreProjectObject(storedLayoutProject);savedSignature=storedLayoutProject.savedSig??'';setMode('play');}
  catch(err){showNotice('이어하기 실패','이전 작업을 열지 못했습니다.'+why(err));}
 };
 for(const id of ['imageBtn','restoreBtn'])$(id).addEventListener('click',()=>$('filesDialog').close());
@@ -75,7 +75,7 @@ setInterval(paintProjectName,700);
 $('menuClose').onclick=async()=>{
  if(!ready)return;
  if(hasUnsavedWork()&&!await askConfirm({title:'프로젝트 닫기',message:'지금 작업에 파일로 저장하지 않은 변경이 있습니다. 닫아도 시작 화면의 ‘이전 작업 이어하기’로 한 번은 되돌아올 수 있지만, 다른 그림을 열면 사라집니다. 닫을까요?',ok:'저장하지 않고 닫기'}))return;
- const keep={image:imgBlob,zones:zones.map(clean),audio:audioBlob,audioName,sfx:sfxBlob,sfxName,extra:extraState(),savedAt:Date.now()};
+ const keep={image:imgBlob,zones:zones.map(clean),audio:audioBlob,audioName,sfx:sfxBlob,sfxName,extra:extraState(),savedAt:Date.now(),savedSig:savedSignature};
  clearTimeout(saveTimer);if(db)try{await dbPut(keep)}catch(e){console.warn(e)}
  stopMusic();setMode('play');clearSelectionDrafts();ready=false;storedLayoutProject=keep;projectFileHandle=null;undoStack=[];redoStack=[];refreshHistory();
  document.querySelector('.workspace').hidden=true;$('welcome').hidden=false;document.querySelector('.header').classList.add('starting');$('resumeProject').hidden=false;paintProjectName();

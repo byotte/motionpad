@@ -1,6 +1,8 @@
 /* ── 2. 기본 ────────────────────────────────────────────── */
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+/* 폰에서 화면을 아래로 당겨 새로고침되어 작업 화면을 벗어나는 일을 막는다(도움말 Tip에 안내) */
+html,body{overscroll-behavior:none}
 html,body{margin:0;background:var(--bg);color:var(--item);font:var(--fs-item)/1.4 system-ui,-apple-system,"Noto Sans KR",sans-serif}
 body{min-height:100dvh;background-image:radial-gradient(ellipse at 92% -10%,var(--glow),transparent 46%)}
 :root:is([data-theme="light"],[data-theme="mono"]) body{background-image:none}
