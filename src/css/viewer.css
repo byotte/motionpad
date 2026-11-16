@@ -33,3 +33,12 @@
 .recViewer span{font-variant-numeric:tabular-nums}
 .recViewer.recording i{border-radius:var(--r-ctl);animation:recBlink 1s steps(2) infinite}
 @keyframes recBlink{50%{opacity:.35}}
+/* 터치 파일(받은 사람이 여는 보기 전용 html): 편집·녹화·곡/효과음 고르기는 감추고, 만든 곳 링크를 단다 */
+.touchFile :is(.welcome,.header,.workspace){visibility:hidden}
+.touchFile :is(#exitViewer,#recViewer,#viewerTrack,#viewerEffects){display:none}
+.touchFile .playerRow{grid-template-columns:auto minmax(0,1fr)}
+.touchFile .playerRow label{justify-content:flex-start}
+.touchFile .playerRow input{max-width:none}
+.touchBrand{display:none}
+.touchFile .touchBrand{display:block;position:absolute;top:calc(12px + env(safe-area-inset-top));right:calc(14px + env(safe-area-inset-right));z-index:2;font-size:var(--fs-help);font-weight:var(--fw-item);color:var(--vfg,var(--viewerInk));text-decoration:none;text-shadow:var(--viewerHintShadow)}
+.touchFile .touchBrand:hover{text-decoration:underline}

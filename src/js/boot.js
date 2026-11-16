@@ -1,1 +1,1 @@
-updateRendererBadge();requestAnimationFrame(tick);boot();
+updateRendererBadge();requestAnimationFrame(tick);if(touchData)bootTouch();else boot();

@@ -10,11 +10,14 @@
 //   @@include 경로        이 줄 전체를 그 파일 내용으로 바꾼다(경로는 src/ 기준, 한 단계만).
 //                          들어가는 파일은 반드시 줄바꿈으로 끝나야 한다.
 //   @@base64(경로)        그 자리를 파일의 base64로 바꾼다(효과음 wav).
+//   @@touchshell / @@touchsize   터치 파일용 사본: 같은 소스를 @@base64 자리만 비워(효과음·음악 없이) 한 번 더 만들어
+//                          gzip+base64로 넣는다(js/touch-export.js). 사본 안의 이 두 자리는 비운다.
 // JS는 index.html 의 <script> 안 즉시 실행 함수 하나에 순서대로 이어 붙는다.
 // ES 모듈은 file:// 에서 막히므로 쓰지 않는다. 파일 사이 순서가 곧 실행 순서다.
 'use strict';
 const fs = require('fs');
 const path = require('path');
+const zlib = require('zlib');
 
 const ROOT = path.resolve(__dirname, '..');
 const SRC = path.join(ROOT, 'src');
@@ -26,7 +29,7 @@ function read(rel, enc) {
   return fs.readFileSync(file, enc);
 }
 
-function build() {
+function build(opts = {}) {
   const used = [];
   let out = read('index.html', 'utf8').replace(/^@@include[ \t]+(\S+)[ \t]*\n/gm, (_, rel) => {
     const text = read(rel, 'utf8');
@@ -37,8 +40,15 @@ function build() {
   });
   out = out.replace(/@@base64\(([^)]+)\)/g, (_, rel) => {
     used.push(rel);
-    return read(rel).toString('base64');
+    return opts.shell ? '' : read(rel).toString('base64');
   });
+  if (opts.shell) {
+    out = out.replace('@@touchshell', '').replace('@@touchsize', '0');
+  } else if (out.includes('@@touchshell')) {
+    const shell = build({ shell: true }).out;
+    const gz = zlib.gzipSync(Buffer.from(shell), { level: 9 });
+    out = out.replace('@@touchshell', gz.toString('base64')).replace('@@touchsize', String(Buffer.byteLength(shell)));
+  }
   const left = out.match(/@@\w+/);
   if (left) throw new Error(`처리되지 않은 지시어: ${left[0]}`);
   return { out, used };
