@@ -33,9 +33,9 @@
 .qualityOptions p{flex-basis:100%;margin:2px 0;color:var(--help)}
 .saveDialog .maskDisplay label{display:inline-flex;margin:0}
 
-#blinkDialog{width:min(96vw,980px);max-height:94dvh;padding:0;overflow:auto;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:var(--r-box)}
-#blinkDialog::backdrop{background:var(--backdrop)}
-#blinkDialog h2{margin:0}
+#blinkDialog,#exprDialog{width:min(96vw,980px);max-height:94dvh;padding:0;overflow:auto;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:var(--r-box)}
+#blinkDialog::backdrop,#exprDialog::backdrop{background:var(--backdrop)}
+#blinkDialog h2,#exprDialog h2{margin:0}
 #blinkDialog .settingActions{display:flex;gap:4px;width:auto;margin:0}
 .blinkHead{flex-wrap:wrap;padding-block:2px}
 /* 윗줄: 편집할 눈·제거 | 앞머리 보호 붓 | 되돌리기·다시 실행 | (붓을 켰을 때) 붓 굵기·피부색 참고 */
@@ -68,7 +68,7 @@
 #blinkApply{margin-top:auto;min-height:var(--head-h);background:var(--accent);border-color:var(--accent);color:var(--onAccent);font-weight:var(--fw-title)}
 #blinkApply:not(:disabled):hover{filter:brightness(.92)}
 .blinkFooter{position:sticky;bottom:0;padding:7px 10px;background:var(--panel);border-top:1px solid var(--line)}
-#blinkHint{margin:0;font-size:var(--fs-item);color:var(--item)}
+#blinkHint,#exprHint{margin:0;font-size:var(--fs-item);color:var(--item)}
 
 /* 3-D 영상 내보내기 창 */
 #videoDialog .videoRow{display:grid;grid-template-columns:86px minmax(0,1fr);align-items:center;gap:8px;margin:10px 0}
@@ -108,3 +108,8 @@
 .previewBtn{flex:none}
 .previewBtn[aria-pressed=true]{border-color:var(--accent);color:var(--ink)}
 #soundPanel .optGroup:first-child{margin-top:0}
+/* 표정 다듬기 창: 눈 깜빡임 창과 같은 틀. 오른쪽 조절 막대가 길어 그 칸만 따로 내린다 */
+#exprPreview{display:block;width:100%;height:100%}
+.exprSettings{max-height:min(72dvh,760px);overflow:auto}
+.exprSettings .groupLabel{margin:var(--sp2) 0 0;padding-top:var(--sp2);border-top:1px solid var(--groupLine);font-size:var(--fs-item);font-weight:var(--fw-item);color:var(--item)}
+#exprCompare[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);color:var(--ink)}

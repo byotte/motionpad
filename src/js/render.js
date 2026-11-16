@@ -41,6 +41,8 @@ function setupGL(){
     distTex=newTexture(gl.TEXTURE6);lastDistLayout='';
     gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,emptyBaseMask);
     gl.uniform1i(gl.getUniformLocation(program,'u_dist'),6);
+    faceTex=newTexture(gl.TEXTURE7);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array([128,128,0,255]));faceChanged(false);
+    gl.uniform1i(gl.getUniformLocation(program,'u_face'),7);uni.faceRect=gl.getUniformLocation(program,'u_faceRect[0]');uni.faceCount=gl.getUniformLocation(program,'u_faceCount');
     gl.uniform1i(gl.getUniformLocation(program,'u_tex'),0);gl.uniform1i(gl.getUniformLocation(program,'u_mask'),1);gl.uniform1i(gl.getUniformLocation(program,'u_baseMask'),2);gl.uniform1i(gl.getUniformLocation(program,'u_background'),3);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
     return true;
@@ -149,6 +151,7 @@ function render(){
    gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,baseMaskTex);
    gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,backgroundTex);
    gl.activeTexture(gl.TEXTURE6);gl.bindTexture(gl.TEXTURE_2D,distTex);
+   faceUpload();
    for(const [name,data] of [['zone',zp],['motion',mo],['fx',fx],['tap',tp],['pivot',pv],['flow',fl],['spine',sp],['spinemotion',sm],['chainMid',cm],['branchLine',bl],['branchMotion',bm],['pivotExtra',pe],['pull',pu]])if(uni[name])gl.uniform4fv(uni[name],data);
    const tl=tailPlate?tailCutoutZones().map(z=>zones.indexOf(z)):[];
    gl.uniform4f(uni.tailCutout,tl[0]??-1,tl[1]??-1,tl[2]??-1,tl[3]??-1);

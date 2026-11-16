@@ -33,6 +33,7 @@ if(mode==='lasso'&&lassoSegments.length){
  ctx.stroke();
  ctx.beginPath();ctx.arc(points[0][0]*w,points[0][1]*h,6,0,Math.PI*2);ctx.stroke();
  ctx.beginPath();ctx.arc(end[0]*w,end[1]*h,4,0,Math.PI*2);ctx.fill();ctx.restore();
+drawFaceParts(ctx,w,h,px);
 }
 if(gesture?.type==='ellipse'){const a=gesture.start,b=gesture.now;ctx.strokeStyle='#7ef1c1';ctx.fillStyle='#7ef1c12a';ctx.lineWidth=3;ctx.beginPath();if(gesture.shape==='rect')ctx.rect(Math.min(a.x,b.x)*w,Math.min(a.y,b.y)*h,Math.abs(a.x-b.x)*w,Math.abs(a.y-b.y)*h);else ctx.ellipse((a.x+b.x)*w/2,(a.y+b.y)*h/2,Math.max(3,Math.abs(a.x-b.x)*w/2),Math.max(3,Math.abs(a.y-b.y)*h/2),0,0,Math.PI*2);ctx.fill();ctx.stroke()}
 // 도형 도구: 선택한 영역의 틀과 손잡이(모서리 = 크기·비율, 위쪽 동그라미 = 기울기)

@@ -26,7 +26,9 @@ uniform sampler2D u_mask;
 uniform sampler2D u_baseMask;
 uniform sampler2D u_background;
 uniform vec4 u_tailCutout;
-uniform sampler2D u_tailOriginal,u_tailMask,u_dist;
+uniform sampler2D u_tailOriginal,u_tailMask,u_dist,u_face;
+uniform vec4 u_faceRect[3];
+uniform int u_faceCount;
 uniform float u_baseExclude;
 uniform vec4 u_zone[12],u_motion[12],u_fx[12],u_tap[12],u_pivot[12],u_flow[12],u_spine[12],u_spinemotion[12];
 uniform vec4 u_chainMid[12],u_branchLine[12],u_branchMotion[12],u_pivotExtra[12],u_pull[12];
@@ -43,6 +45,16 @@ float anchoredDistance(vec2 uv,vec4 piv,vec4 extra){
 float pointToSegment(vec2 uv,vec2 a,vec2 b,out float t){
  vec2 v=b-a;t=clamp(dot(uv-a,v)/max(dot(v,v),0.00001),0.0,1.0);
  return length(uv-(a+t*v));
+}
+// 얼굴 표정(유동화): 얼굴 지도(얼굴 k = k번째 칸)의 이동량. 128 = 0, 1020분의 1 = 지도 범위의 비율
+vec2 faceShift(vec2 uv){
+ vec2 s=vec2(0.0);
+ for(int k=0;k<3;k++){
+  if(k>=u_faceCount)break;
+  vec4 r=u_faceRect[k];vec2 l=(uv-r.xy)/r.zw;
+  if(l.x>0.0&&l.x<1.0&&l.y>0.0&&l.y<1.0){vec4 t=texture2D(u_face,vec2((float(k)+l.x)/3.0,l.y));s+=(t.rg*255.0-128.0)/1020.0*r.zw;}
+ }
+ return s;
 }
 vec4 tailLayer(vec4 color,vec2 source,int k,float light){
  vec4 foreground=texture2D(u_tailOriginal,source);
@@ -152,6 +164,7 @@ void main(){
  float edgePin=smoothstep(0.0,.045,min(min(v_uv.x,1.0-v_uv.x),min(v_uv.y,1.0-v_uv.y)));
  shift*=edgePin;cs0*=edgePin;cs1*=edgePin;cs2*=edgePin;cs3*=edgePin;
  vec2 uv=clamp(v_uv-clamp(shift,vec2(-.08),vec2(.08)),vec2(.001),vec2(.999));
+ if(u_faceCount>0)uv=clamp(uv-faceShift(uv),vec2(.001),vec2(.999));
  vec4 color;
  if(flowWeight>.0001){
    float phase=fract(u_time*.19),phase2=fract(phase+.5);

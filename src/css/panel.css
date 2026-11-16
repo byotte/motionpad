@@ -40,6 +40,11 @@
 .faceLabel{display:inline-flex;align-items:center;gap:var(--sp1);color:var(--item);font-size:var(--fs-item);font-weight:var(--fw-item)}
 .faceState{margin-inline-start:auto;font-size:var(--fs-help);font-weight:var(--fw-help);color:var(--help)}
 .faceState.done{color:var(--accentInk)}
+.faceSub{margin-top:var(--sp1);padding-top:0;border-top:0}
+.side .faceRow .btn.mode{flex:none;border:1px solid var(--line);background:var(--button)}
+.side .faceRow .btn.mode.active{border-color:var(--accent)}
+.exprList{display:flex;flex-wrap:wrap;gap:var(--sp1);margin-top:var(--sp1)}
+.exprList .chip{min-height:var(--ctl-h);padding:0 10px;background:transparent}
 .side .lead{margin:6px 0 2px}
 .side .groupLabel{margin:var(--sp3) 0 var(--sp1);padding-top:var(--sp2);border-top:1px solid var(--groupLine);font-size:var(--fs-help);font-weight:var(--fw-help);color:var(--help)}
 .side details>.toggle{margin:var(--sp2) 0}

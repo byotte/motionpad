@@ -144,7 +144,7 @@ document.querySelector('.stagebar .modegroup').addEventListener('click',event=>{
 },true);
 function setMode(m){
   setTouchPreview(false);
-  const PLACE=['pivot','extraPivot','spine','branch'];
+  const PLACE=['pivot','extraPivot','spine','branch','faceMouth','faceBrow'];
   if(PLACE.includes(m)&&!PLACE.includes(mode))placeReturn=mode;
   // 3-M: 나눠 그리던 올가미가 남아 있으면 도구를 바꿀 때 닫아서 반영한다(그린 사람은 쓰려고 그린 것)
   if(mode!==m&&mode==='lasso'&&lassoSegments.flat().length>=3)finishSegmentedLasso();
@@ -169,6 +169,7 @@ function setMode(m){
   $('showZones').checked=m!=='play';
   paintTouchTest();refreshHistory();
   if(m==='play')setStatus('그림을 터치하면 설정한 반응을 확인할 수 있습니다.');
+  if(m==='faceMouth'||m==='faceBrow')faceModeStatus(m);
   if(m==='pivot')setStatus('축 지정: 선택한 영역 안에서 고정할 곳을 누르세요. 다른 곳을 누르면 옮겨집니다.');
   if(m==='extraPivot')setStatus('축 추가: 선택한 영역 안에서 축을 더 놓을 곳을 누르세요.');
   if(m==='spine')setStatus('가이드 선: 선택한 영역 안에서 고정할 뿌리부터 흔들릴 끝까지 한 획을 그으세요.');

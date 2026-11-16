@@ -459,10 +459,11 @@ $('blinkPlay').onclick=()=>{
 $('blinkEye').onchange=()=>{stopBlinkPreview();loadBlinkEye();refreshBlinkSetup()};
 $('blinkApply').onclick=()=>{
  if(!blinkPatch)return;
+ remember();
  const index=Number($('blinkEye').value);
  blinkEyes[index]={points:blinkPoints.map(p=>({x:p.x/renderWidth,y:p.y/renderHeight})),
   protection:structuredClone(blinkProtection),cover:Number($('blinkCover').value),curve:Number($('blinkCurve').value)/100};
- blinkPatches[index]=blinkPatch;
+ blinkPatches[index]=blinkPatch;faceChanged();
  blinkEpoch=elapsed;
  scheduleSave();paintBlinkEyeOptions();refreshBlinkSetup();
  setBlinkProtection(false);drawBlinkPreview();
@@ -471,7 +472,7 @@ $('blinkApply').onclick=()=>{
 $('blinkRemove').onclick=async()=>{
  const index=Number($('blinkEye').value);
  if(!await askConfirm({title:'눈 제거',message:`얼굴 ${faceSel+1}의 눈 ${index%2+1} 깜빡임 설정(눈꼬리·눈꺼풀 위치, 앞머리 보호)을 지울까요?`,ok:'이 눈 제거'}))return;
- blinkEyes[index]=blinkPatches[index]=null;
+ remember();blinkEyes[index]=blinkPatches[index]=null;faceChanged();
  stopBlinkPreview();paintBlinkEyeOptions();loadBlinkEye();refreshBlinkSetup();scheduleSave();
 };
 $('blinkSpeed').onchange=()=>{blinkSpeed=Number($('blinkSpeed').value);scheduleSave()};

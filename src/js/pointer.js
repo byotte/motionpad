@@ -128,6 +128,8 @@ overlay.addEventListener('pointerdown',e=>{
   }
   if(pointers.size>1){beginPinch();return}
   if(mode==='wand'){magicSelect(p.x,p.y);return}
+  if(mode==='faceMouth'){faceMouthTap(p);return}
+  if(mode==='faceBrow'){gesture={type:'faceBrow',points:[[p.x,p.y]],last:p};return}
   if(mode==='pivot'||mode==='extraPivot'){placePivot(getSelected(),p,mode==='extraPivot');return}
   if(mode==='edit'){
     const z=hit(p.x,p.y);if(z){selected=z.id;gesture=z.locked?null:{type:'move',id:z.id,start:p,origin:snap(z)};updateUI()}// 되돌리기 기록은 실제로 움직일 때 남긴다
@@ -187,7 +189,7 @@ overlay.addEventListener('pointermove',e=>{
     if(e.shiftKey||z.kind==='raster'){const k=Math.max(sx,sy);sx=sy=k}
     shapeTransform(z,g.origin,sx,sy,0);return;
   }
-  if(['brush','erase','lasso','spine','branch','flowdir'].includes(g.type)){
+  if(['brush','erase','lasso','spine','branch','flowdir','faceBrow'].includes(g.type)){
     const q=g.points[g.points.length-1],prev=g.type==='lasso'?g.last:{x:q[0],y:q[1]},d=pixelDistance(p,prev);
     if(!g.enclose&&d>Math.max(75,Math.min(renderWidth,renderHeight)*.18)){g.jumped=true;return}
     if(g.type==='lasso'){extendLasso(g,p);return}
@@ -285,6 +287,7 @@ function finishPointer(e,cancelled=false){
     else if(addPolygon(g.points)!==false)setStatus('올가미 선택을 적용했습니다. 붓이나 지우개로 수정할 수 있습니다.');
     return;
   }
+  if(g.type==='faceBrow'){gesture=null;faceBrowStroke(g.points);return}
   if(g.type==='spine'){
     const z=getSelected();if(z&&!z.locked&&g.points.length>=2){remember();const pts=g.points,n=6;
       z.spine=Array.from({length:n},(_,i)=>{const q=spinePoint(pts,i/(n-1));return q});
