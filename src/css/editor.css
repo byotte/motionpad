@@ -53,6 +53,8 @@
 .brushbar .helpDot,summary .helpDot{margin-left:-4px}
 /* 도구 옵션 줄: 점이 앞 글자 바로 뒤에 글자처럼 붙는다 */
 .brushbar .helpDot{width:15px;margin-left:-3px}
+/* 도구 옵션 줄의 점은 옆 글자(한글 12px)보다 1.75px 떠 보여서 글자 중심에 맞춰 내린다 */
+.brushbar .helpDot::before{transform:translateY(1.75px)}
 button[data-help]::before{content:"i";display:grid;place-items:center;width:13px;height:13px;border:1px solid currentColor;border-radius:50%;font:var(--fw-item) var(--fs-help)/1 sans-serif;color:var(--item)}
 button[data-help]:hover::before{color:var(--ink)}
 
