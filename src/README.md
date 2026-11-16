@@ -50,3 +50,5 @@ node tools/build.js --check  # motionpad.html이 src/와 같은지 확인(커밋
 - `const`/`let`은 앞 파일에서 먼저 선언돼야 뒤 파일 최상단에서 쓸 수 있다. 함수 선언은 어디서나 쓸 수 있다. 파일 순서를 바꿀 때 주의.
 - 들어가는 파일은 마지막에 줄바꿈이 있어야 한다(없으면 합치기가 멈추고 알려 준다).
 - 효과음을 바꾸려면 wav 파일만 바꾸면 된다.
+
+터치 파일: `tools/build.js`가 같은 소스를 `@@base64` 자리만 비워 한 번 더 만들고(효과음·음악 없는 사본), gzip+base64로 `js/touch-export.js`의 `@@touchshell` 자리에 넣는다. 사본 안에서는 이 자리가 비어 있다. JS 안에 `</script>` 글자를 쓰면 HTML이 스크립트를 거기서 끊으므로 `<\/script>`로 쓴다.

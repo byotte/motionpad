@@ -1,3 +1,5 @@
+// 터치 파일(받은 사람이 여는 보기 전용 html)이면 안에 든 그림·설정. 일반 앱이면 null.
+const touchData=(()=>{const el=document.getElementById('mpTouch');if(!el)return null;try{return JSON.parse(el.textContent)}catch(e){console.warn('터치 파일 데이터',e);return null}})();
 const $=id=>document.getElementById(id);let view=$('view');const overlay=$('overlay'),ctx=overlay.getContext('2d'),surface=$('surface'),stage=$('stage'),loupe=$('loupe'),loupeCtx=loupe.getContext('2d');
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),newId=()=>Math.random().toString(36).slice(2,10);
 const LIMIT=12,TILE=384,COLS=4,ROWS=3;let zones=[],selected=null,mode='brush',imgBlob=null,bitmap=null,renderWidth=900,renderHeight=1100,ready=false,db=null,saveTimer=null,saveError=false;
@@ -47,6 +49,6 @@ function showNotice(title,message){
 let savedSignature='';
 function projectSignature(){try{return JSON.stringify([imgBlob?.size||0,zones.map(clean),extraState()])}catch(_){return String(Math.random())}}
 function markProjectSaved(){savedSignature=projectSignature()}
-function hasUnsavedWork(){return !!(ready&&imgBlob)&&projectSignature()!==savedSignature}
+function hasUnsavedWork(){return !touchData&&!!(ready&&imgBlob)&&projectSignature()!==savedSignature}
 // 파일로 저장하지 않은 작업이 있으면 새로고침·창 닫기 전에 브라우저가 묻는다(문구는 브라우저가 정한다. 아이폰 사파리는 묻지 않는다).
 window.addEventListener('beforeunload',e=>{if(hasUnsavedWork()){e.preventDefault();e.returnValue=''}});
