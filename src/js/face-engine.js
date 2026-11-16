@@ -3,7 +3,7 @@
 // 이동량은 표정 값에 비례(기준 지도 × 값의 합)라, 값이 바뀌어도 기준 지도는 다시 만들지 않는다.
 const FACE_G=192;
 let faceLive=null;// 지금 보일 표정 {k,id,amount}. 2단계: 표정 창이 열린 동안만(영역에서 쓰는 것은 4단계)
-let faceGeomCache=[],faceTexDirty=true,faceTexBytes=null,faceTex=null,faceTexCount=0,faceTexRects=null,faceSrc=null;
+let faceTexSig='',faceGeomCache=[],faceTexDirty=true,faceTexBytes=null,faceTex=null,faceTexCount=0,faceTexRects=null,faceSrc=null;
 function faceChanged(geometry=true){if(geometry)faceGeomCache=[];faceTexDirty=true}
 const fv={
  sub:(a,b)=>({x:a.x-b.x,y:a.y-b.y}),add:(a,b)=>({x:a.x+b.x,y:a.y+b.y}),mul:(a,k)=>({x:a.x*k,y:a.y*k}),
@@ -108,14 +108,58 @@ function faceField(k,expr,amount,time){
  }
  return out;
 }
+// ── 4단계: 터치 반응 세기(영역마다). 칠 때마다 쌓이고, 0.4초 머문 뒤 1~2초에 걸쳐 빠진다. 끄는 동안은 유지. ──
+function faceHit(z,power){
+ if(!z.tapFaceOn)return;
+ const now=elapsed;
+ z.faceLv=Math.min(1.3,faceReactLevel(z)+.45+.4*Math.min(1,power||0));z.faceAt=now;
+ z.faceHits=(z.faceHits||[]).filter(t=>now-t<3);z.faceHits.push(now);
+ if(z.comboOn&&z.faceHits.length>=5)z.faceComboAt=now;// 연타 기준: 3초 안에 5번
+}
+function faceReactLevel(z){
+ const dt=elapsed-(z.faceAt??-99),lv=(z.faceLv||0)*(dt<.4?1:Math.exp(-(dt-.4)/.45));
+ return z.dragging&&z.tapFaceOn?Math.max(.8,lv):lv<.01?0:lv;
+}
+// 연타 반응의 무게: 마지막 연타 뒤 1.2초까지 1, 그 뒤 0.8초에 걸쳐 0
+function faceComboWeight(z){if(!z.comboOn||z.faceComboAt==null)return 0;return clamp(1-(elapsed-z.faceComboAt-1.2)/.8,0,1)}
+// 지금 보일 표정(얼굴마다 섞은 값). 겹치는 규칙(설계 §6):
+// 기본 = 몸체 평소 표정 + 움직이는 영역의 표정. 터치 반응이 같은 표정이면 더하고(100%까지), 다른 표정이면 그만큼 기본 표정이 옅어진다.
 function faceActive(){
- if(!faceOn||!faceLive||!faces[faceLive.k])return [];
- const e=faces[faceLive.k].exprs[faceLive.id];return e?[{k:faceLive.k,expr:e,amount:faceLive.amount}]:[];
+ if(!faceOn||!faces.length)return [];
+ if(faceLive&&faces[faceLive.k]){const e=faces[faceLive.k].exprs[faceLive.id];return e?[{k:faceLive.k,expr:e,amount:faceLive.amount}]:[]}
+ const per=new Map();
+ const add=(ref,amt,kind)=>{const r=faceRefParse(ref);if(!r||!(amt>.002))return;if(!per.has(r.k))per.set(r.k,{base:new Map(),touch:new Map()});const m=per.get(r.k)[kind];m.set(r.id,(m.get(r.id)||0)+amt)};
+ if(ambient.enabled&&ambient.face)add(ambient.face,ambient.faceAmt/100,'base');
+ for(const z of zones){
+  if(z.auto&&z.autoFace){const beat=Math.abs(MotionPhysics.wave(elapsed*1.18*(z.autoSpeed||1),z.phase));add(z.autoFace,z.autoFaceAmt/100*(z.autoEnv??1)*(.82+.18*beat),'base')}
+  if(z.tapFaceOn&&z.tapFace){
+   const lv=faceReactLevel(z);if(!lv)continue;
+   const amt=z.tapFaceAmt/100*Math.min(1,lv),cw=faceComboWeight(z);
+   if(cw&&z.comboMode==='other'){add(z.comboFace,amt*cw,'touch');add(z.tapFace,amt*(1-cw),'touch')}
+   else add(z.tapFace,Math.min(1,amt*(1+.15*cw)+(lv>1?.1*(lv-1):0)),'touch');// 더 진하게: +15%(그 이상의 효과는 6단계)
+  }
+ }
+ const out=[];
+ for(const [k,{base,touch}] of per){
+  const mix=new Map(base);let lead=0;
+  for(const [id,a] of touch){if(base.has(id))mix.set(id,Math.min(1,base.get(id)+a));else{mix.set(id,Math.min(1,(mix.get(id)||0)+a));lead=Math.max(lead,Math.min(1,a))}}
+  for(const id of base.keys())if(!touch.has(id))mix.set(id,mix.get(id)*(1-lead));
+  const e={L:{},R:{},mm:0,tr:0};
+  for(const key of EXPR_SIDE_KEYS)e.L[key]=e.R[key]=0;
+  for(const [id,a] of mix){const x=faces[k].exprs[id];if(!x||a<=0)continue;for(const key of EXPR_SIDE_KEYS){e.L[key]+=a*x.L[key];e.R[key]+=a*x.R[key]}e.mm+=a*x.mm;e.tr+=a*x.tr}
+  for(const key of EXPR_SIDE_KEYS){e.L[key]=clamp(e.L[key],-100,100);e.R[key]=clamp(e.R[key],-100,100)}
+  e.mm=clamp(e.mm,-100,100);e.tr=clamp(e.tr,0,100);
+  out.push({k,expr:e,amount:1});
+ }
+ return out;
 }
 // render()가 부른다: 지도 텍스처를 (바뀌었을 때만) 올리고 셰이더 값을 넣는다.
 function faceUpload(){
  const list=faceActive().filter(a=>faceGeometry(a.k).rect);
  const animated=list.some(a=>a.expr.tr>0);
+ // 섞은 값이 그대로면(가만히 있는 표정) 지도를 다시 만들지 않는다
+ const sig=list.map(a=>a.k+JSON.stringify(a.expr,(k,v)=>typeof v==='number'?Math.round(v*a.amount*2)/2:v)).join('|');
+ if(sig!==faceTexSig){faceTexSig=sig;faceTexDirty=true}
  if(faceTexDirty||animated){
   faceTexDirty=false;
   const G=FACE_G,W=G*FACE_MAX;faceTexBytes??=new Uint8Array(W*G*4);faceTexBytes.fill(0);

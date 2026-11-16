@@ -43,6 +43,9 @@
 .faceSub{margin-top:var(--sp1);padding-top:0;border-top:0}
 .side .faceRow .btn.mode{flex:none;border:1px solid var(--line);background:var(--button)}
 .side .faceRow .btn.mode.active{border-color:var(--accent)}
+.faceSelRow{display:flex;gap:var(--sp1);min-width:0}
+.faceSelRow select{flex:1;min-width:0}
+.faceSelRow .btn{flex:none}
 .exprList{display:flex;flex-wrap:wrap;gap:var(--sp1);margin-top:var(--sp1)}
 .exprList .chip{min-height:var(--ctl-h);padding:0 10px;background:transparent}
 .side .lead{margin:6px 0 2px}

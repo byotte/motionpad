@@ -8,6 +8,7 @@ const copyPoints=list=>(list||[]).map(p=>[...p]);
 const num=(key,def,min,max,ui)=>({key,save:z=>z[key],read:z=>clamp(zNum(z[key],def),min,max),ui});
 const flag=(key,ui)=>({key,save:z=>z[key],read:z=>!!z[key],ui});
 const pct=v=>`${v}%`,deg=v=>`${Math.round(v)}°`;
+const faceRefOk=v=>typeof v==='string'&&/^[0-2]:(smile|shy|cry|angry|surprise)$/.test(v);
 const AUTO_AXES=['x','y','diag','diagBack','arcUp','arcDown','pulse'];
 const ZONE_FIELDS=[
  {key:'tailCutout',save:z=>!!z.tailCutout,read:z=>z.tailCutout===true},
@@ -63,6 +64,15 @@ const ZONE_FIELDS=[
  flag('locked',{input:'lockedInput',check:true,noPreview:true}),
  // 3-M: 연속 움직임의 방향. 터치 방향(axis)과 따로 둔다. 예전 파일에는 없으므로 axis에서 정한다(끄는 쪽 = 위아래).
  {key:'autoAxis',save:z=>z.autoAxis,read:z=>AUTO_AXES.includes(z.autoAxis)?z.autoAxis:AUTO_AXES.includes(z.axis)?z.axis:'y',ui:{input:'quickDirection',fromInput:x=>x}},
+ // 얼굴 표정 4단계: 연속 움직임 동안의 표정, 터치 표정 반응, 연타 반응. 값 'k:표정' = 얼굴 k(0부터)의 그 표정. 예전 파일에는 없다(= 끔).
+ {key:'autoFace',save:z=>z.autoFace||'',read:z=>faceRefOk(z.autoFace)?z.autoFace:'',ui:{input:'autoFaceInput',fromInput:x=>x}},
+ num('autoFaceAmt',60,0,100,{input:'autoFaceAmt',output:'autoFaceAmtValue',fmt:pct}),
+ flag('tapFaceOn',{input:'tapFaceOn',check:true}),
+ {key:'tapFace',save:z=>z.tapFace,read:z=>faceRefOk(z.tapFace)?z.tapFace:'0:surprise',ui:{input:'tapFaceInput',fromInput:x=>x}},
+ num('tapFaceAmt',70,0,100,{input:'tapFaceAmt',output:'tapFaceAmtValue',fmt:pct}),
+ flag('comboOn',{input:'comboOn',check:true}),
+ {key:'comboMode',save:z=>z.comboMode,read:z=>z.comboMode==='other'?'other':'more',ui:{input:'comboMode',fromInput:x=>x}},
+ {key:'comboFace',save:z=>z.comboFace,read:z=>faceRefOk(z.comboFace)?z.comboFace:'0:angry',ui:{input:'comboFaceInput',fromInput:x=>x}},
 ];
 // 저장하지 않는 실행 중 상태(물리·터치). 불러올 때마다 초기화된다.
 function zoneRuntime(i){return {s:0,v:0,phase:i*1.7+.2,hitDX:0,hitDY:1,hitPulse:0,hitX:.5,hitY:.5,grabX:.5,grabY:.5,hitAt:-20,hitPower:0,physX:0,physY:0,physVX:0,physVY:0,physScale:0,physSV:0,dragging:false,desiredX:0,desiredY:0,desiredScale:0,chainNodes:null,branchNodes:null,spineTip:[0,0],spineMid:[0,0],branchTip:[0,0],windX:0,windY:0,physicsOutput:null}}

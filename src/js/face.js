@@ -71,6 +71,7 @@ function paintFaces(){
  state('browState',f?.brows.length?`${f.brows.length}개 그림`:'아직 그리지 않음',!!f?.brows.length);
  for(const id of ['eyeEntry','faceMouthMode','faceBrowMode'])$(id).disabled=!f;
  for(const b of document.querySelectorAll('#exprList .chip'))b.disabled=!f;
+ paintFaceOptions();
 }
 function addFace(){
  if(faces.length>=FACE_MAX)return;
@@ -83,9 +84,9 @@ async function removeFace(){
  remember();
  // 뒤쪽 얼굴의 눈을 한 칸씩 당긴다(얼굴 번호와 눈 칸이 늘 짝을 이루게).
  for(let i=k*2;i<BLINK_MAX_EYES;i++){blinkEyes[i]=blinkEyes[i+2]??null;blinkPatches[i]=blinkPatches[i+2]??null}
- faces.splice(k,1);faceSel=Math.max(0,k-1);blinkEpoch=elapsed;
+ faces.splice(k,1);faceRefsAfterRemove(k);faceSel=Math.max(0,k-1);blinkEpoch=elapsed;
  if(['faceMouth','faceBrow'].includes(mode))setMode(placeReturn);
- faceChanged();paintFaces();scheduleSave();
+ faceChanged();paintFaces();updateUI();scheduleSave();
 }
 $('faceOnInput').onchange=()=>{
  remember();faceOn=$('faceOnInput').checked;faceOpen=true;
@@ -183,3 +184,43 @@ $('exprClose').onclick=()=>exprDialog.close();
 exprDialog.addEventListener('close',()=>{cancelAnimationFrame(exprFrame);faceLive=null;faceChanged(false)});
 for(const b of document.querySelectorAll('#exprList .chip'))b.onclick=()=>openExprDialog(b.dataset.expr);
 window.addEventListener('resize',()=>{if(exprDialog.open)drawExprPreview()});
+
+// ── 4단계: 영역·몸체에서 표정 가져다 쓰기. 고르는 칸은 '얼굴 k · 표정' 목록(얼굴이 하나면 표정 이름만). ──
+function faceRefParse(v){const m=/^([0-2]):(\w+)$/.exec(v||'');return m&&faces[+m[1]]&&EXPRS.some(([id])=>id===m[2])?{k:+m[1],id:m[2]}:null}
+function faceOptionList(withNone){
+ const out=withNone?[['','없음']]:[];
+ faces.forEach((_,k)=>{for(const [id,name] of EXPRS)out.push([`${k}:${id}`,faces.length>1?`얼굴 ${k+1} · ${name}`:name])});
+ return out;
+}
+function paintFaceOptions(){
+ const show=faceOn&&faces.length>0;
+ for(const el of document.querySelectorAll('.faceOnly'))el.hidden=!show;
+ for(const [id,none] of [['ambientFaceInput',true],['autoFaceInput',true],['tapFaceInput',false],['comboFaceInput',false]]){
+  const sel=$(id),keep=sel.value;
+  sel.replaceChildren(...faceOptionList(none).map(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;return o}));
+  sel.value=keep;
+ }
+ $('ambientFaceInput').value=faceRefParse(ambient.face)?ambient.face:'';
+ $('ambientFaceAmt').value=ambient.faceAmt;$('ambientFaceAmtValue').textContent=ambient.faceAmt+'%';
+ $('ambientFaceAmtRow').hidden=!$('ambientFaceInput').value;
+ const z=getSelected();if(z)paintFaceRows(z);
+}
+function paintFaceRows(z){
+ if(!$('autoFaceInput').options.length)return;
+ for(const [id,key] of [['autoFaceInput','autoFace'],['tapFaceInput','tapFace'],['comboFaceInput','comboFace']])$(id).value=faceRefParse(z[key])?z[key]:id==='autoFaceInput'?'':($(id).options[0]?.value||'');
+ $('autoFaceAmtRow').hidden=!faceRefParse(z.autoFace);
+ $('tapFaceRows').hidden=!z.tapFaceOn;$('comboRows').hidden=!z.comboOn;$('comboFaceRow').hidden=z.comboMode!=='other';
+ for(const b of document.querySelectorAll('.faceTune'))b.disabled=!faceRefParse($(b.dataset.for).value);
+}
+// 몸체의 평소 표정(전체 하나): 바꾸는 순간 되돌리기 지점
+$('ambientFaceInput').onchange=()=>{remember();ambient.face=$('ambientFaceInput').value;paintFaceOptions();scheduleSave();previewMotion()};
+$('ambientFaceAmt').addEventListener('pointerdown',()=>remember(),{passive:true});
+$('ambientFaceAmt').addEventListener('input',()=>{ambient.faceAmt=Number($('ambientFaceAmt').value);$('ambientFaceAmtValue').textContent=ambient.faceAmt+'%';scheduleSave()});
+// [다듬기]: 고른 얼굴·표정의 상세 세팅 창을 바로 연다
+for(const b of document.querySelectorAll('.faceTune'))b.onclick=()=>{const r=faceRefParse($(b.dataset.for).value);if(!r)return;faceSel=r.k;paintFaces();openExprDialog(r.id)};
+// 얼굴을 지우면 그 얼굴을 쓰던 칸은 비우고, 뒤 얼굴 번호는 하나씩 당긴다.
+function faceRefsAfterRemove(k){
+ const fix=(v,fallback)=>{const m=/^([0-2]):(\w+)$/.exec(v||'');if(!m)return v;const i=+m[1];return i===k?fallback(m[2]):i>k?`${i-1}:${m[2]}`:v};
+ ambient.face=fix(ambient.face,()=>'');
+ for(const z of zones){z.autoFace=fix(z.autoFace,()=>'');z.tapFace=fix(z.tapFace,id=>{z.tapFaceOn=false;return `0:${id}`});z.comboFace=fix(z.comboFace,id=>`0:${id}`)}
+}
