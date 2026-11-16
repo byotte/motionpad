@@ -8,7 +8,7 @@ const copyPoints=list=>(list||[]).map(p=>[...p]);
 const num=(key,def,min,max,ui)=>({key,save:z=>z[key],read:z=>clamp(zNum(z[key],def),min,max),ui});
 const flag=(key,ui)=>({key,save:z=>z[key],read:z=>!!z[key],ui});
 const pct=v=>`${v}%`,deg=v=>`${Math.round(v)}°`;
-const AUTO_AXES=['x','y','diag','diagBack','pulse'];
+const AUTO_AXES=['x','y','diag','diagBack','arcUp','arcDown','pulse'];
 const ZONE_FIELDS=[
  {key:'tailCutout',save:z=>!!z.tailCutout,read:z=>z.tailCutout===true},
  {key:'preset',save:z=>z.preset,read:z=>Object.hasOwn(MOTION_PRESETS,z.preset)?z.preset:"custom"},
