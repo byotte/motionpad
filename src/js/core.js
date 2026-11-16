@@ -48,3 +48,5 @@ let savedSignature='';
 function projectSignature(){try{return JSON.stringify([imgBlob?.size||0,zones.map(clean),extraState()])}catch(_){return String(Math.random())}}
 function markProjectSaved(){savedSignature=projectSignature()}
 function hasUnsavedWork(){return !!(ready&&imgBlob)&&projectSignature()!==savedSignature}
+// 파일로 저장하지 않은 작업이 있으면 새로고침·창 닫기 전에 브라우저가 묻는다(문구는 브라우저가 정한다. 아이폰 사파리는 묻지 않는다).
+window.addEventListener('beforeunload',e=>{if(hasUnsavedWork()){e.preventDefault();e.returnValue=''}});
