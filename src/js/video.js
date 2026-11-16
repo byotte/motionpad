@@ -8,9 +8,10 @@ function interruptVideoRecording(reason){
   cancelAnimationFrame(videoAnimationFrame);
   try{videoRecorder.stop()}catch(e){console.warn('영상 녹화 중지:',e)}
 }
-function videoMimeType(){
+function videoMimeType(withAudio=false){
  if(!window.MediaRecorder)return null;
- for(const t of ['video/mp4;codecs=avc1.42E01E','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm']){
+ const list=withAudio?['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm']:['video/mp4;codecs=avc1.42E01E','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];
+ for(const t of list){
    if(MediaRecorder.isTypeSupported(t))return t;
  }
  return null;
@@ -86,9 +87,17 @@ for(const r of document.querySelectorAll('input[name="videoFormat"]'))r.addEvent
 // 비율 유지 상태에서 세로를 고치면 가로를 같은 비율로 맞춘다(가로를 고치면 세로는 refreshVideoPlan이 맞춘다).
 $('videoH').addEventListener('input',()=>{if(!ready||!$('videoKeepRatio').checked)return;const p=videoPlan('orig'),h=Number($('videoH').value);if(h>0)$('videoW').value=Math.round(h*p.OW/p.OH)});
 for(const el of document.querySelectorAll('#videoDialog input,#videoDialog select'))el.addEventListener('input',refreshVideoPlan);
-document.querySelector('[data-dialog="videoDialog"]')?.addEventListener('click',()=>setTimeout(refreshVideoPlan));
+document.querySelector('[data-dialog="videoDialog"]')?.addEventListener('click',()=>setTimeout(()=>{refreshVideoPlan();paintVideoNote()}));
+for(const el of document.querySelectorAll('input[name="videoFormat"],#videoMusic'))el.addEventListener('change',paintVideoNote);
 // opts.live: 플레이 화면 녹화(● 버튼). 멈출 때까지(최대 60초) 녹화하고 끝 이어붙이기는 하지 않는다. opts.fx: 터치 이펙트 넣기.
-const LIVE_MAX=60,VIDEO_NOTE='소리 없이 ‘연속 움직임’만 담습니다.';
+const LIVE_MAX=60;
+// 연속 움직임 녹화 아래 안내: 형식·배경음악 포함 여부에 따라 바뀐다.
+function videoNote(){const gif=radioValue('videoFormat')==='gif',music=$('videoMusic').checked;$('videoMusic').disabled=gif;
+ if(gif)return '움짤에는 소리가 담기지 않습니다. ‘연속 움직임’만 담습니다.';
+ if(!music)return '소리 없이 ‘연속 움직임’만 담습니다.';
+ const name=curTrack==='file'?(audioName||'불러온 음악'):(bgmInfo(curTrack)?.name||'배경음악');
+ return `‘연속 움직임’에 배경음악 ‘${name}’을 함께 담습니다. 효과음은 담기지 않습니다.`}
+function paintVideoNote(){if(!exportPreparing&&!(videoRecorder&&videoRecorder.state!=='inactive'))$('videoProgress').textContent=videoNote()}
 // 녹화 준비: 고른 크기로 그리게 바꾸고, 필요하면 원본 그림을 올린다(3-G). 원본 준비는 몇 초 걸릴 수 있어 먼저 안내를 띄우고 시작한다.
 // 준비하는 동안 멈춤(● 다시 누름·화면 전환)이 들어오면 되돌리고 false.
 let exportPreparing=false,exportAbort=false;
@@ -113,16 +122,22 @@ async function recordVideo(opts={}){
  if(!ready){showNotice('영상 내보내기','먼저 그림을 열어 주세요.');return}
  if(exportPreparing||videoRecorder&&videoRecorder.state!=='inactive')return;
  const plan=videoPlan();if(opts.live)plan.duration=opts.limit||LIVE_MAX;if(plan.format==='gif')return recordGif(plan,opts);
- const mime=videoMimeType();if(!mime){showNotice('영상 내보내기','이 브라우저는 영상 녹화를 지원하지 않습니다. Chrome에서 다시 시도해 주세요.');return}
+ // 소리: 플레이 화면 녹화는 들리는 그대로(배경음악·효과음), 연속 움직임 녹화는 '배경음악 포함'일 때 배경음악만.
+ const wantMusic=!opts.live&&$('videoMusic').checked;
+ const mime=videoMimeType(opts.live||wantMusic);if(!mime){showNotice('영상 내보내기','이 브라우저는 영상 녹화를 지원하지 않습니다. Chrome에서 다시 시도해 주세요.');return}
  const {duration,fps,OW:W,OH:H}=plan;
  const output=document.createElement('canvas');output.width=W;output.height=H;
  const g=output.getContext('2d',{alpha:false});
  const first=document.createElement('canvas');first.width=W;first.height=H;const firstG=first.getContext('2d');
  if(!await beginExport(plan,opts))return;
  const stream=output.captureStream(fps),track=stream.getVideoTracks()[0];videoCaptureTrack=track;
+ let sound=null;
+ try{sound=opts.live?audioRecordTap():wantMusic?await musicForRecording(duration):null}catch(e){console.warn('녹화 소리',e)}
+ if(wantMusic&&!sound)setStatus('배경음악을 준비하지 못해 소리 없이 녹화합니다.');
+ if(sound)stream.addTrack(sound.track);
  const chunks=[];let recorder;
- try{recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:plan.bitrate});}
- catch(e){track.stop();endExportRender();$('exportVideoBtn').disabled=false;liveDone('');showNotice('영상 내보내기','영상 녹화를 시작하지 못했습니다.'+why(e));return}
+ try{recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:plan.bitrate,...(sound?{audioBitsPerSecond:160_000}:{})});}
+ catch(e){track.stop();sound?.stop();endExportRender();$('exportVideoBtn').disabled=false;liveDone('');showNotice('영상 내보내기','영상 녹화를 시작하지 못했습니다.'+why(e));return}
  blinkEpoch=elapsed;
  videoRecorder=recorder;videoCancelled=false;videoErrorMessage='';
  $('cancelVideoBtn').hidden=false;
@@ -131,16 +146,16 @@ async function recordVideo(opts={}){
  recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};
  recorder.onerror=e=>{console.error('MediaRecorder error',e);videoCancelled=true;videoErrorMessage='이 기기에서 이 크기로는 영상을 만들지 못했습니다. 세부 설정에서 크기를 1080으로 줄여 다시 시도해 주세요.'};
  recorder.onstop=()=>{
-  cancelAnimationFrame(videoAnimationFrame);videoAnimationFrame=0;track.stop();endExportRender();
+  cancelAnimationFrame(videoAnimationFrame);videoAnimationFrame=0;track.stop();sound?.stop();sound?.track.stop();endExportRender();
   $('exportVideoBtn').disabled=false;$('cancelVideoBtn').hidden=true;videoRecorder=null;
   if(videoCancelled){$('videoProgress').textContent=videoErrorMessage||'영상 저장을 취소했습니다.';liveDone('');return}
   const blob=new Blob(chunks,{type:mime.split(';')[0]});
   if(blob.size<1500){$('videoProgress').textContent='영상 파일 생성에 실패했습니다. 다른 브라우저에서 시도해 주세요.';liveDone('녹화 파일을 만들지 못했습니다.');return}
   const ext=mime.startsWith('video/mp4')?'mp4':'webm',name=String(projectName||'MotionPad').replace(/[\/:*?"<>|]/g,'_');
   const sec=opts.live?secs():duration;safeDownloadVideo(blob,`${name}_${W}x${H}_${sec}s.${ext}`);
-  $('videoProgress').textContent=VIDEO_NOTE;liveDone(`영상을 저장했습니다 · ${sec}초 · ${fmtBytes(blob.size)}`);
+  $('videoProgress').textContent=videoNote();liveDone(`영상을 저장했습니다 · ${sec}초 · ${fmtBytes(blob.size)}`);
  };
- recorder.start();
+ recorder.start();sound?.start?.();
  function nextFrame(now){
   if(videoCancelled||recorder.state!=='recording')return;
   const elapsedTime=(now-start)/1000;
@@ -178,7 +193,7 @@ async function recordGif(plan,opts={}){
   const endAt=opts.live?performance.now():start+duration*1000,sec=Math.max(1,Math.round((endAt-start)/1000));push(endAt);
   const blob=new Blob([enc.finish()],{type:'image/gif'}),name=String(projectName||'MotionPad').replace(/[\/:*?"<>|]/g,'_');
   safeDownloadVideo(blob,`${name}_${W}x${H}_${sec}s.gif`);
-  $('videoProgress').textContent=VIDEO_NOTE;{const c=.55+.45*plan.gifColors/256,frames=Math.max(1,sec*fps);gifCal=clamp(blob.size/(W*H*c*frames),.02,1.2);refreshVideoPlan()}liveDone(`움짤을 저장했습니다 · ${sec}초 · ${fmtBytes(blob.size)}`);
+  $('videoProgress').textContent=videoNote();{const c=.55+.45*plan.gifColors/256,frames=Math.max(1,sec*fps);gifCal=clamp(blob.size/(W*H*c*frames),.02,1.2);refreshVideoPlan()}liveDone(`움짤을 저장했습니다 · ${sec}초 · ${fmtBytes(blob.size)}`);
  }
  function nextFrame(now){
   if(videoCancelled||fake.state!=='recording')return;

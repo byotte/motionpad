@@ -6,7 +6,7 @@ maskAtlas.width=TILE*COLS;maskAtlas.height=TILE*ROWS;let masks=[];
 let touchPreview=false,exportRender=null;// exportRender: 영상 녹화 중 그릴 크기(3-D)
 let baseClipEnabled=false,baseBackgroundExclude=true,baseEdge=1,baseMaskCanvas=null,backgroundPlate=null,lastBaseSignature='',lastBaseEdge=-1,baseForegroundSource=null;
 let pointers=new Map(),gesture=null,brushSize=10,viewerOpen=false,previousMode='brush',last=performance.now(),elapsed=0;
-let undoStack=[],redoStack=[],lastHistoryJSON='',imagePixels=null,edgeScores=null,audioBlob=null,audioName='',sfxBlob=null,sfxName='',sfxBuffer=null,audioURL=null,activeAudio=null,audioCtx=null,audioMaster=null,musicTimer=null,musicPlaying=false,musicTick=0,effectMuted=false;
+let undoStack=[],redoStack=[],lastHistoryJSON='',imagePixels=null,edgeScores=null,audioBlob=null,audioName='',sfxBlob=null,sfxName='',sfxBuffer=null,audioCtx=null,audioMaster=null,musicTimer=null,musicPlaying=false,musicTick=0,effectMuted=false;
 const stopEvent=e=>e.preventDefault();
 const MOTION_PRESETS=Object.freeze({
  soft:{strength:15,spring:11,damping:74,ripple:5,feather:19},
