@@ -66,8 +66,10 @@ const MotionPhysics=Object.freeze({
     const strength=clamp(z.strength??0,0,80)/80;
     const idle=z.auto?this.wave(t*1.18*(z.autoSpeed||1),z.phase)*strength*env:0;
     const autoAxis=z.autoAxis||z.axis,[axisX,axisY]=TAP_DIRECTIONS[autoAxis]||[0,-1];
-    const idleX=autoAxis==='pulse'?0:idle*.022*axisX;
-    const idleY=autoAxis==='pulse'?0:idle*.022*axisY;
+    // 양쪽 위로·아래로: 왼쪽 위(아래)로 한 번, 오른쪽 위(아래)로 한 번 번갈아 편다. 가운데를 지날 때 제자리로 내려온다.
+    const arc=autoAxis==='arcUp'?-1:autoAxis==='arcDown'?1:0,sw=arc?this.wave(t*1.18*(z.autoSpeed||1),z.phase):0;
+    const idleX=autoAxis==='pulse'?0:arc?idle*.022*.85:idle*.022*axisX;
+    const idleY=autoAxis==='pulse'?0:arc?arc*sw*sw*strength*env*.022*.75:idle*.022*axisY;
     const idleScale=autoAxis==='pulse'?idle*.065:0;
     // Distinct wind force; a region may move without a hand-drawn spine.
     const w=wind;

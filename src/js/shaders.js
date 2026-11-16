@@ -74,7 +74,8 @@ void main(){
    vec4 mo=u_motion[i],fx=u_fx[i],tap=u_tap[i],piv=u_pivot[i],fl=u_flow[i],sp=u_spine[i],mid=u_chainMid[i];
    vec2 rel=v_uv-z.xy;
    float anchor=anchoredDistance(v_uv,piv,u_pivotExtra[i]);
-   float radius=max(.028,length(z.zw)*1.15);
+   // 축에서 멀어질수록 크게: 축이 영역 끝에 있으면 반대쪽 끝까지 고르게 커지도록 축~가장 먼 끝 거리를 쓴다(축이 가운데면 이전과 같음).
+   float radius=max(.028,max(length(z.zw)*1.15,length(abs(piv.xy-z.xy)+z.zw)));
    float pinWeight=smoothstep(.018,radius,anchor);
    float pivotWeight=mix(1.0,pinWeight,piv.z*clamp(piv.w*1.65,0.0,1.0));
    // 2-B 잡아당김: 끌기 변위 D를 누른 지점 둘레에 모은다. pull 0 = 영역 전체가 함께 이동(이전과 같음).

@@ -58,7 +58,7 @@ function distSegment(px,py,a,b){
 }
 const smoothstep=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t)};
 function cpuDeformation(z,x,y){
- const relX=x-z.x,relY=y-z.y,radius=Math.max(.028,Math.hypot(z.rx,z.ry)*1.15);
+ const relX=x-z.x,relY=y-z.y,radius=Math.max(.028,Math.hypot(z.rx,z.ry)*1.15,z.pivotEnabled?Math.hypot(Math.abs((z.pivotX??z.x)-z.x)+z.rx,Math.abs((z.pivotY??z.y)-z.y)+z.ry):0);
  let near=Math.hypot(x-(z.pivotX??z.x),y-(z.pivotY??z.y));
  for(const p of (z.extraPivots||[]))near=Math.min(near,Math.hypot(x-p[0],y-p[1]));
  const pin=smoothstep(.018,radius,near),pivotWeight=z.pivotEnabled?1+(pin-1)*clamp((z.pivotStrength??60)/100*1.65,0,1):1;
