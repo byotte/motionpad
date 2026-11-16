@@ -43,13 +43,14 @@ function faceGeometry(k){
    hasBrow=true;
    const ordered=fv.dot(brow[0],u)*sign>fv.dot(brow.at(-1),u)*sign?brow:[...brow].reverse();
    // 위로는 이마까지 넓게, 아래로는 눈두덩까지만(눈은 움직이지 않게)
-   const rUp=.55*S,rDown=.8*browGap;
-   curves.push({pts:faceLine(ordered),rUp,rDown,ctrls:[0,1,2].map(h=>ctrl(`${s}.${['bh','bm','bt'][h]}`,h,n,.12*S,Math.min(.1*S,.6*rDown)))});
+   // 눈썹 굵기만큼(core)은 통째로 움직여 눈썹이 구불거리지 않게 한다
+   const core=.3*browGap,rUp=.55*S,rDown=.85*browGap;
+   curves.push({pts:faceLine(ordered),rUp,rDown,core,ctrls:[0,1,2].map(h=>ctrl(`${s}.${['bh','bm','bt'][h]}`,h,n,.12*S,Math.min(.1*S,.6*(rDown-core))))});
   }
   // 윗눈꺼풀: 위로는 눈두덩, 아래로는 눈 높이 절반까지만 → 내리면 눈 위쪽이 덮인다
   {const rUp=Math.min(.6*browGap,.5*e.w),rDown=.55*e.h;
    curves.push({pts:faceQuad(inner,e.up,outer),rUp,rDown,ctrls:[0,1,2].map(h=>ctrl(`${s}.${['uf','um','ub'][h]}`,h,n,Math.min(.35*e.h,.6*rUp),.6*rDown))})}
-  {const rUp=.55*e.h,rDown=.45*e.w;
+  {const rUp=.55*e.h,rDown=.25*e.w;
    curves.push({pts:faceQuad(inner,e.lo,outer),rUp,rDown,ctrls:[0,1,2].map(h=>ctrl(`${s}.${['lf','lm','lb'][h]}`,h,n,.6*rUp,Math.min(.3*e.h,.6*rDown)))})}
  }
  if(m){
@@ -85,7 +86,7 @@ function faceBasis(g){
     if(dd<d2){d2=dd;t=a.t+(b.t-a.t)*h;qx=x;qy=y}}
    const side=(px-qx)*n.x+(py-qy)*n.y,r=side>=0?cv.rUp:cv.rDown,d=Math.sqrt(d2);
    if(d>=r)continue;
-   const z=d/r,w=(1-z*z)**2,idx=(j*G+i)*2;
+   const core=cv.core||0,z=Math.max(0,d-core)/(r-core),w=(1-z*z)**2,idx=(j*G+i)*2;
    for(const c of cv.ctrls){const hat=c.hat===0?1-2*t:c.hat===2?2*t-1:1-Math.abs(2*t-1);if(hat<=0)continue;
     const F=B[c.key];F[idx]+=w*hat*c.dir.x;F[idx+1]+=w*hat*c.dir.y}
   }}

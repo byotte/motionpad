@@ -8,11 +8,11 @@ const EXPRS=[['smile','웃음'],['shy','부끄러움'],['cry','울먹임'],['ang
 const EXPR_SIDE_KEYS=['bh','bm','bt','uf','um','ub','lf','lm','lb','mc','mn'];
 // 프리셋 출발값(설계 §4 표의 방향만 옮긴 것, 3단계에서 눈으로 맞춘다)
 const EXPR_PRESETS={
- smile:{s:{bh:25,bm:25,bt:20,uf:0,um:0,ub:-15,lf:30,lm:45,lb:30,mc:60,mn:0},mm:0,tr:0},
- shy:{s:{bh:20,bm:10,bt:0,uf:0,um:0,ub:-5,lf:20,lm:28,lb:20,mc:30,mn:20},mm:0,tr:0},
- cry:{s:{bh:45,bm:15,bt:-30,uf:0,um:-25,ub:-30,lf:0,lm:0,lb:0,mc:-45,mn:0},mm:20,tr:50},
- angry:{s:{bh:-60,bm:-25,bt:25,uf:-25,um:-15,ub:0,lf:15,lm:10,lb:0,mc:-40,mn:10},mm:0,tr:0},
- surprise:{s:{bh:30,bm:60,bt:30,uf:0,um:45,ub:0,lf:0,lm:-35,lb:0,mc:0,mn:50},mm:0,tr:0},
+ smile:{s:{bh:30,bm:30,bt:20,uf:0,um:5,ub:-25,lf:50,lm:75,lb:40,mc:70,mn:0},mm:-10,tr:0},
+ shy:{s:{bh:35,bm:15,bt:-5,uf:0,um:-5,ub:-10,lf:30,lm:45,lb:25,mc:35,mn:30},mm:0,tr:0},
+ cry:{s:{bh:60,bm:20,bt:-40,uf:0,um:-40,ub:-45,lf:10,lm:15,lb:0,mc:-60,mn:10},mm:25,tr:50},
+ angry:{s:{bh:-90,bm:-40,bt:30,uf:-45,um:-25,ub:0,lf:25,lm:15,lb:0,mc:-50,mn:20},mm:5,tr:0},
+ surprise:{s:{bh:45,bm:75,bt:40,uf:5,um:15,ub:5,lf:0,lm:-10,lb:0,mc:0,mn:60},mm:0,tr:0},
 };
 function presetExpr(id){const p=EXPR_PRESETS[id];return {sym:true,L:{...p.s},R:{...p.s},mm:p.mm,tr:p.tr}}
 function sanitizeExpr(e,id){
