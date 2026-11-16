@@ -27,8 +27,9 @@ uniform sampler2D u_baseMask;
 uniform sampler2D u_background;
 uniform vec4 u_tailCutout;
 uniform sampler2D u_tailOriginal,u_tailMask,u_dist,u_face;
-uniform vec4 u_faceRect[3];
+uniform vec4 u_faceRect[3],u_faceStyle[3],u_hitMark[4];
 uniform int u_faceCount;
+uniform vec2 u_imgSize;
 uniform float u_baseExclude;
 uniform vec4 u_zone[12],u_motion[12],u_fx[12],u_tap[12],u_pivot[12],u_flow[12],u_spine[12],u_spinemotion[12];
 uniform vec4 u_chainMid[12],u_branchLine[12],u_branchMotion[12],u_pivotExtra[12],u_pull[12];
@@ -55,6 +56,42 @@ vec2 faceShift(vec2 uv){
   if(l.x>0.0&&l.x<1.0&&l.y>0.0&&l.y<1.0){vec4 t=texture2D(u_face,vec2((float(k)+l.x)/3.0,l.y));s+=(t.rg*255.0-128.0)/1020.0*r.zw;}
  }
  return s;
+}
+// 5단계 홍조·빨개짐: 붉은 정도. 얼굴 지도의 B(뺨·귀)에 고운 입자와 넓은 얼룩을 곱하고, 빗금 스타일이면 A 자리에 선을 긋는다.
+float fHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float fNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);return mix(mix(fHash(i),fHash(i+vec2(1,0)),f.x),mix(fHash(i+vec2(0,1)),fHash(i+vec2(1,1)),f.x),f.y);}
+float faceRed(vec2 uv){
+ float red=0.0;vec2 px=uv*u_imgSize;
+ for(int k=0;k<3;k++){
+  if(k>=u_faceCount)break;
+  vec4 r=u_faceRect[k];vec2 l=(uv-r.xy)/r.zw;
+  if(l.x>0.0&&l.x<1.0&&l.y>0.0&&l.y<1.0){
+   vec4 t=texture2D(u_face,vec2((float(k)+l.x)/3.0,l.y));vec4 st=u_faceStyle[k];
+   if(t.b+t.a<.002)continue;
+   float v=t.b*(.8+.2*fNoise(px*.75))*(.72+.28*fNoise(px/st.w+float(k)*7.0));
+   if(st.x>.5&&t.a>.01){
+    vec2 nd=vec2(cos(st.y),sin(st.y)),ld=vec2(-nd.y,nd.x);
+    float a=dot(px,nd)/st.z,id=floor(a),f=fract(a),along=dot(px,ld),j=fHash(vec2(id,float(k)+3.0));
+    bool manga=st.x>1.5;
+    float hw=manga?.13:.07,soft=1.0/st.z;
+    float line=1.0-smoothstep(hw,hw+soft,abs(f-.5));
+    float keep=smoothstep(.2+.35*j,.35+.35*j,t.a);// 가운데에 몰리고 바깥으로 짧아진다(선마다 들쭉날쭉)
+    if(!manga)keep*=step(.32,fNoise(vec2(id*3.1,along/(st.z*2.6))));// 섬세한 빗금: 짧게 끊긴 선
+    v+=line*keep*(manga?.85:.38)*smoothstep(.0,.15,t.a);
+   }
+   red+=v;
+  }
+ }
+ return red;
+}
+float hitRed(vec2 uv){
+ float red=0.0;vec2 px=uv*u_imgSize;
+ for(int i=0;i<4;i++){
+  vec4 h=u_hitMark[i];if(h.w<=0.0)continue;
+  vec2 d=px-h.xy*u_imgSize;float dist=length(d)/h.z*(.88+.24*fNoise(d/(h.z*.35)+float(i)*9.0));
+  red+=h.w*pow(max(0.0,1.0-dist*dist),1.4);
+ }
+ return red*(.8+.2*fNoise(px*.75));
 }
 vec4 tailLayer(vec4 color,vec2 source,int k,float light){
  vec4 foreground=texture2D(u_tailOriginal,source);
@@ -173,6 +210,9 @@ void main(){
    vec2 b=clamp(uv-flow*phase2,vec2(.001),vec2(.999));
    color=mix(texture2D(u_tex,a),texture2D(u_tex,b),abs(phase*2.0-1.0));
  }else color=texture2D(u_tex,uv);
+ // 피부색에 붉은 기운을 곱하듯 물들인다: 밝은 피부만 붉어지고 선화·음영은 그대로
+ float red=hitRed(uv);if(u_faceCount>0)red+=faceRed(uv);
+ if(red>.001){float lum=dot(color.rgb,vec3(.3,.59,.11));color.rgb*=mix(vec3(1.0),vec3(1.0,.62,.64),min(red,1.25)*.62*smoothstep(.18,.55,lum));}
  float light=1.0+u_ambient.w*(.026*sin(u_time*.98)+.009*sin(u_time*.49+1.0));
  if(u_baseExclude>.5){
    float alpha=texture2D(u_baseMask,uv).a;

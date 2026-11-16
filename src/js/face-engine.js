@@ -3,7 +3,7 @@
 // 이동량은 표정 값에 비례(기준 지도 × 값의 합)라, 값이 바뀌어도 기준 지도는 다시 만들지 않는다.
 const FACE_G=192;
 let faceLive=null;// 지금 보일 표정 {k,id,amount}. 2단계: 표정 창이 열린 동안만(영역에서 쓰는 것은 4단계)
-let faceTexSig='',faceGeomCache=[],faceTexDirty=true,faceTexBytes=null,faceTex=null,faceTexCount=0,faceTexRects=null,faceSrc=null;
+let faceTexStyles=null,faceTexSig='',faceGeomCache=[],faceTexDirty=true,faceTexBytes=null,faceTex=null,faceTexCount=0,faceTexRects=null,faceSrc=null;
 function faceChanged(geometry=true){if(geometry)faceGeomCache=[];faceTexDirty=true}
 const fv={
  sub:(a,b)=>({x:a.x-b.x,y:a.y-b.y}),add:(a,b)=>({x:a.x+b.x,y:a.y+b.y}),mul:(a,k)=>({x:a.x*k,y:a.y*k}),
@@ -60,11 +60,30 @@ function faceGeometry(k){
    ctrl('L.mn',0,u,Math.min(.3*half,.55*r),Math.min(.3*half,.55*r)),ctrl('R.mn',2,fv.mul(u,-1),Math.min(.3*half,.55*r),Math.min(.3*half,.55*r)),
    ctrl('mm',1,n,Math.min(.05*S,.55*r),Math.min(.05*S,.55*r))]});
  }
- // 지도 범위: 모든 곡선 + 휘는 범위
+ // 5단계 뺨 자리 추정(설계 §7, 입력 없이 눈·입으로): 눈 너비 비율 = 고개 돌림, 눈 선 기울기 = 고개 기울기, 눈 크기/눈~입 거리 = 그림체(SD일수록 크고 둥글고 낮게).
+ // 양쪽 뺨은 코 자리(입 가운데에서 눈 선과 직각인 선)를 넘지 않고, 눈 바깥 끝을 넘지 않는다.
+ const sd=eyes.length?clamp((eyes.reduce((a,e)=>a+e.h,0)/eyes.length/S-.2)/.4,0,1):0;
+ const wMax=Math.max(1,...eyes.map(e=>e.w)),noseS=fv.dot(m?m.c:C,u),cheeks=[];
+ for(const e of eyes){
+  const outward=e.side==='L'?-1:1,corner=m?(e.side==='L'?m.l:m.r):null;
+  const down=corner?Math.max(e.h*.4,fv.dot(fv.sub(corner,e.lo),fv.mul(n,-1))):e.w*.9;
+  const turn=e.w/wMax;
+  let rx=e.w*(.45+.15*sd)*(.55+.45*turn),c=fv.add(fv.add(e.lo,fv.mul(n,-down*(.3+.25*sd))),fv.mul(u,outward*e.w*(.25-.2*sd)*turn));
+  const ends=[fv.dot(e.a,u),fv.dot(e.b,u)],outer=outward<0?Math.min(...ends):Math.max(...ends);
+  const lo=Math.min(noseS+outward*e.w*.12,outer),hi=Math.max(noseS+outward*e.w*.12,outer);
+  rx=Math.max(3,Math.min(rx,(hi-lo)/2));
+  const cs=clamp(fv.dot(c,u),lo+rx,hi-rx);c=fv.add(c,fv.mul(u,cs-fv.dot(c,u)));
+  cheeks.push({c,rx,ry:rx*(.55+.15*sd),side:e.side});
+ }
+ const ears=(f.ears||[]).map(line=>line.map(facePx)),earW=Math.max(3,.05*S);
+ const autoStyle=sd>.6?'manga':sd<.25?'fine':'grad',style=f.blushStyle&&f.blushStyle!=='auto'?f.blushStyle:autoStyle;
+ // 지도 범위: 모든 곡선 + 휘는 범위 + 뺨 + 귀
  let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
  for(const cv of curves){const R=Math.max(cv.rUp,cv.rDown)+2;for(const p of cv.pts){x0=Math.min(x0,p.x-R);y0=Math.min(y0,p.y-R);x1=Math.max(x1,p.x+R);y1=Math.max(y1,p.y+R)}}
- const rect=curves.length?{x:Math.max(0,x0),y:Math.max(0,y0),w:Math.max(4,Math.min(renderWidth,x1)-Math.max(0,x0)),h:Math.max(4,Math.min(renderHeight,y1)-Math.max(0,y0))}:null;
- const g={key,eyes,mouth:m,u,n,C,S,curves,amps,rect,hasBrow,basis:null};
+ for(const ch of cheeks){const R=ch.rx*1.3+2;x0=Math.min(x0,ch.c.x-R);y0=Math.min(y0,ch.c.y-R);x1=Math.max(x1,ch.c.x+R);y1=Math.max(y1,ch.c.y+R)}
+ for(const line of ears)for(const p of line){const R=earW*2;x0=Math.min(x0,p.x-R);y0=Math.min(y0,p.y-R);x1=Math.max(x1,p.x+R);y1=Math.max(y1,p.y+R)}
+ const rect=x1>x0?{x:Math.max(0,x0),y:Math.max(0,y0),w:Math.max(4,Math.min(renderWidth,x1)-Math.max(0,x0)),h:Math.max(4,Math.min(renderHeight,y1)-Math.max(0,y0))}:null;
+ const g={key,eyes,mouth:m,u,n,C,S,curves,amps,rect,hasBrow,basis:null,cheeks,ears,earW,sd,style,autoStyle,red:null};
  faceGeomCache[k]=g;return g;
 }
 // 조절 항목마다 기준 지도(값 100%일 때 화소 이동량)
@@ -92,6 +111,42 @@ function faceBasis(g){
   }}
  }
  g.basis=B;return B;
+}
+// ── 5단계 홍조: 지도의 B = 붉은 정도, A = 빗금이 들어갈 자리. 뺨은 외곽이 살짝 울퉁불퉁한 타원, 넓고 옅은 얼룩을 겹친다. ──
+function fHash(x,y){const s=Math.sin(x*127.1+y*311.7)*43758.5453;return s-Math.floor(s)}
+function fNoise(x,y){const i=Math.floor(x),j=Math.floor(y);let a=x-i,b=y-j;a=a*a*(3-2*a);b=b*b*(3-2*b);
+ return (fHash(i,j)*(1-a)+fHash(i+1,j)*a)*(1-b)+(fHash(i,j+1)*(1-a)+fHash(i+1,j+1)*a)*b}
+function faceRedBasis(g){
+ if(g.red||!g.rect)return g.red;
+ const G=FACE_G,{rect}=g,cheek=new Float32Array(G*G),hatch=new Float32Array(G*G),ear=new Float32Array(G*G),ang=Math.atan2(g.u.y,g.u.x);
+ for(let j=0;j<G;j++){const py=rect.y+(j+.5)/G*rect.h;for(let i=0;i<G;i++){const px=rect.x+(i+.5)/G*rect.w,idx=j*G+i;
+  for(const ch of g.cheeks){
+   const dx=px-ch.c.x,dy=py-ch.c.y,lx=dx*g.u.x+dy*g.u.y,ly=-(dx*g.n.x+dy*g.n.y),d=Math.hypot(lx/ch.rx,ly/ch.ry);
+   if(d>1.35)continue;
+   const a=Math.atan2(ly,lx),edge=1+.13*(fNoise(a*1.6+ch.c.x*.01,3.1)-.5)*2;// 외곽 울퉁불퉁
+   const z=d/edge;if(z>=1.25)continue;
+   const w=Math.pow(Math.max(0,1-(z/1.25)**2),1.6);
+   cheek[idx]=Math.max(cheek[idx],w);
+   hatch[idx]=Math.max(hatch[idx],Math.pow(Math.max(0,1-z*z),.8));
+  }
+  for(const line of g.ears){let best=Infinity;for(let s=0;s<line.length-1;s++){const a=line[s],b=line[s+1],vx=b.x-a.x,vy=b.y-a.y,l2=vx*vx+vy*vy||1e-6,h=clamp(((px-a.x)*vx+(py-a.y)*vy)/l2,0,1);best=Math.min(best,Math.hypot(px-a.x-vx*h,py-a.y-vy*h))}
+   if(best<g.earW*2)ear[idx]=Math.max(ear[idx],Math.pow(1-best/(g.earW*2),1.3))}
+ }}
+ g.red={cheek,hatch,ear};return g.red;
+}
+// 섞은 표정의 홍조 세기 → 지도 값(B 붉은 정도, A 빗금 자리). 홍조가 없으면 null.
+function faceRedValues(g,expr,amount){
+ const bl=(expr.bl||0)/100*amount,eb=(expr.earBl||0)/100*amount;if(bl<=.001&&eb<=.001)return null;
+ const B=faceRedBasis(g);if(!B)return null;
+ const n=B.cheek.length,b=new Float32Array(n),h=new Float32Array(n);
+ for(let i=0;i<n;i++){b[i]=.85*bl*B.cheek[i]+.8*eb*B.ear[i];h[i]=g.style==='grad'?0:bl*B.hatch[i]}
+ return {b,h};
+}
+// 셰이더 값: x 스타일(0 그라데이션·1 섬세한 빗금·2 만화 빗금), y 빗금의 가로지르는 방향(각도), z 빗금 간격(그림 화소), w 얼룩 크기(그림 화소)
+function faceStyleUniform(g){
+ const rx=g.cheeks.length?g.cheeks.reduce((a,c)=>a+c.rx,0)/g.cheeks.length:g.S*.3;
+ const st=g.style==='manga'?2:g.style==='fine'?1:0,lineAng=Math.atan2(g.u.y,g.u.x)-1.13;// 선은 '/' 방향(눈 선에서 약 65°)
+ return [st,lineAng+Math.PI/2,st===2?2*rx/4.5:Math.max(2.2,rx*.13),Math.max(6,rx*.9)];
 }
 // 표정 값 → 이동량 지도(화소). 떨림은 입 가운데·꼬리를 작고 빠르게, 일정하지 않게 흔든다.
 function faceField(k,expr,amount,time){
@@ -126,7 +181,7 @@ function faceComboWeight(z){if(!z.comboOn||z.faceComboAt==null)return 0;return c
 // 기본 = 몸체 평소 표정 + 움직이는 영역의 표정. 터치 반응이 같은 표정이면 더하고(100%까지), 다른 표정이면 그만큼 기본 표정이 옅어진다.
 function faceActive(){
  if(!faceOn||!faces.length)return [];
- if(faceLive&&faces[faceLive.k]){const e=faces[faceLive.k].exprs[faceLive.id];return e?[{k:faceLive.k,expr:e,amount:faceLive.amount}]:[]}
+ if(faceLive&&faces[faceLive.k]){const e=faces[faceLive.k].exprs[faceLive.id];return e?[{k:faceLive.k,expr:{...e,earBl:e.ear?e.bl:0},amount:faceLive.amount}]:[]}
  const per=new Map();
  const add=(ref,amt,kind)=>{const r=faceRefParse(ref);if(!r||!(amt>.002))return;if(!per.has(r.k))per.set(r.k,{base:new Map(),touch:new Map()});const m=per.get(r.k)[kind];m.set(r.id,(m.get(r.id)||0)+amt)};
  if(ambient.enabled&&ambient.face)add(ambient.face,ambient.faceAmt/100,'base');
@@ -144,11 +199,11 @@ function faceActive(){
   const mix=new Map(base);let lead=0;
   for(const [id,a] of touch){if(base.has(id))mix.set(id,Math.min(1,base.get(id)+a));else{mix.set(id,Math.min(1,(mix.get(id)||0)+a));lead=Math.max(lead,Math.min(1,a))}}
   for(const id of base.keys())if(!touch.has(id))mix.set(id,mix.get(id)*(1-lead));
-  const e={L:{},R:{},mm:0,tr:0};
+  const e={L:{},R:{},mm:0,tr:0,bl:0,earBl:0};
   for(const key of EXPR_SIDE_KEYS)e.L[key]=e.R[key]=0;
-  for(const [id,a] of mix){const x=faces[k].exprs[id];if(!x||a<=0)continue;for(const key of EXPR_SIDE_KEYS){e.L[key]+=a*x.L[key];e.R[key]+=a*x.R[key]}e.mm+=a*x.mm;e.tr+=a*x.tr}
+  for(const [id,a] of mix){const x=faces[k].exprs[id];if(!x||a<=0)continue;for(const key of EXPR_SIDE_KEYS){e.L[key]+=a*x.L[key];e.R[key]+=a*x.R[key]}e.mm+=a*x.mm;e.tr+=a*x.tr;e.bl+=a*(x.bl||0);if(x.ear)e.earBl+=a*(x.bl||0)}
   for(const key of EXPR_SIDE_KEYS){e.L[key]=clamp(e.L[key],-100,100);e.R[key]=clamp(e.R[key],-100,100)}
-  e.mm=clamp(e.mm,-100,100);e.tr=clamp(e.tr,0,100);
+  e.mm=clamp(e.mm,-100,100);e.tr=clamp(e.tr,0,100);e.bl=clamp(e.bl,0,100);e.earBl=clamp(e.earBl,0,100);
   out.push({k,expr:e,amount:1});
  }
  return out;
@@ -163,13 +218,15 @@ function faceUpload(){
  if(faceTexDirty||animated){
   faceTexDirty=false;
   const G=FACE_G,W=G*FACE_MAX;faceTexBytes??=new Uint8Array(W*G*4);faceTexBytes.fill(0);
-  for(let i=0;i<faceTexBytes.length;i+=4){faceTexBytes[i]=faceTexBytes[i+1]=128;faceTexBytes[i+3]=255}
-  faceTexRects=new Float32Array(FACE_MAX*4);
+  for(let i=0;i<faceTexBytes.length;i+=4){faceTexBytes[i]=faceTexBytes[i+1]=128}
+  faceTexRects=new Float32Array(FACE_MAX*4);faceTexStyles=new Float32Array(FACE_MAX*4);
   list.forEach((a,slot)=>{
    const g=faceGeometry(a.k),F=faceField(a.k,a.expr,a.amount,elapsed);if(!F)return;
    faceTexRects.set([g.rect.x/renderWidth,g.rect.y/renderHeight,g.rect.w/renderWidth,g.rect.h/renderHeight],slot*4);
+   const R=faceRedValues(g,a.expr,a.amount);faceTexStyles.set(faceStyleUniform(g),slot*4);
    for(let j=0;j<G;j++)for(let i=0;i<G;i++){const s=(j*G+i)*2,o=(j*W+slot*G+i)*4;
-    faceTexBytes[o]=clamp(Math.round(128+F[s]/g.rect.w*1020),0,255);faceTexBytes[o+1]=clamp(Math.round(128+F[s+1]/g.rect.h*1020),0,255)}
+    faceTexBytes[o]=clamp(Math.round(128+F[s]/g.rect.w*1020),0,255);faceTexBytes[o+1]=clamp(Math.round(128+F[s+1]/g.rect.h*1020),0,255);
+    if(R){faceTexBytes[o+2]=Math.round(clamp(R.b[j*G+i],0,1)*255);faceTexBytes[o+3]=Math.round(clamp(R.h[j*G+i],0,1)*255)}}
   });
   faceTexCount=list.length;
   gl.activeTexture(gl.TEXTURE7);gl.bindTexture(gl.TEXTURE_2D,faceTex);
@@ -177,7 +234,7 @@ function faceUpload(){
  }
  gl.activeTexture(gl.TEXTURE7);gl.bindTexture(gl.TEXTURE_2D,faceTex);
  gl.uniform1i(uni.faceCount,faceTexCount);
- if(faceTexRects)gl.uniform4fv(uni.faceRect,faceTexRects);
+ if(faceTexRects){gl.uniform4fv(uni.faceRect,faceTexRects);gl.uniform4fv(uni.faceStyle,faceTexStyles)}
  return animated;
 }
 // 표정 창 미리보기: 같은 지도로 그림을 CPU에서 휘어 얼굴만 크게 보여 준다.
@@ -191,6 +248,17 @@ function drawExprPreview(){
  // 보이는 범위: 지도 범위를 미리보기 비율에 맞춰 넓힌다
  const A=cw/ch,vw=Math.max(r.w,r.h*A)*1.05,vh=vw/A,vx=r.x+r.w/2-vw/2,vy=r.y+r.h/2-vh/2;
  const F=!exprCompare&&g.rect?faceField(k,currentExpr(),1,elapsed):null,G=FACE_G,W=renderWidth,H=renderHeight,src=faceSrc.data;
+ const ce=currentExpr(),Rv=!exprCompare&&g.rect&&ce?faceRedValues(g,{...ce,earBl:ce.ear?ce.bl:0},1):null,st=faceStyleUniform(g);
+ // 셰이더 faceRed와 같은 계산(미리보기용)
+ const nd=[Math.cos(st[1]),Math.sin(st[1])],ld=[-nd[1],nd[0]];
+ const redAt=(x,y)=>{const fx=(x-r.x)/r.w*G-.5,fy=(y-r.y)/r.h*G-.5;if(fx<0||fy<0||fx>=G-1||fy>=G-1)return 0;
+  const i=fx|0,j=fy|0,a=fx-i,b=fy-j,p=j*G+i,q=p+G,lerp=A=>(A[p]*(1-a)+A[p+1]*a)*(1-b)+(A[q]*(1-a)+A[q+1]*a)*b;
+  const tb=lerp(Rv.b),ta=lerp(Rv.h);if(tb+ta<.002)return 0;
+  let v=tb*(.8+.2*fNoise(x*.75,y*.75))*(.72+.28*fNoise(x/st[3]+k*7,y/st[3]+k*7));
+  if(st[0]>.5&&ta>.01){const s=(x*nd[0]+y*nd[1])/st[2],id=Math.floor(s),f=s-id,along=x*ld[0]+y*ld[1],jj=fHash(id,k+3),manga=st[0]>1.5,hw=manga?.13:.07,soft=1/st[2];
+   const line=1-smoothstep(hw,hw+soft,Math.abs(f-.5));let keep=smoothstep(.2+.35*jj,.35+.35*jj,ta);if(!manga)keep*=fNoise(id*3.1,along/(st[2]*2.6))>=.32?1:0;
+   v+=line*keep*(manga?.85:.38)*smoothstep(0,.15,ta)}
+  return v};
  const img=ctx.createImageData(cw,ch),out=img.data;
  const fieldAt=(x,y,o)=>{const fx=(x-r.x)/r.w*G-.5,fy=(y-r.y)/r.h*G-.5;if(fx<0||fy<0||fx>=G-1||fy>=G-1){o[0]=o[1]=0;return}
   const i=fx|0,j=fy|0,a=fx-i,b=fy-j,p=(j*G+i)*2,q=p+G*2;
@@ -203,6 +271,51 @@ function drawExprPreview(){
   if(sx<0||sy<0||sx>W-1||sy>H-1){out[o+3]=0;continue}
   const ix=Math.min(W-2,sx|0),iy=Math.min(H-2,sy|0),a=sx-ix,b=sy-iy,p=(iy*W+ix)*4,q=p+W*4;
   for(let c=0;c<4;c++)out[o+c]=(src[p+c]*(1-a)+src[p+4+c]*a)*(1-b)+(src[q+c]*(1-a)+src[q+4+c]*a)*b;
+  if(Rv){const red=redAt(sx,sy);if(red>.001){const lum=(.3*out[o]+.59*out[o+1]+.11*out[o+2])/255,m=Math.min(red,1.25)*.62*smoothstep(.18,.55,lum);out[o+1]*=1-.38*m;out[o+2]*=1-.36*m}}
  }
  ctx.putImageData(img,0,0);
+}
+
+// ── 5단계 맞은 자리(4-2, 영역마다): 빨개짐 = 누른 자리에 붉은 기운이 번졌다 약 1초에 빠짐(연타하면 진해짐, 셰이더),
+// 갈라짐 = 누른 자리에서 갈라지는 선이 잠시 남았다 사라짐(여러 번 치면 늘어남, 상한 10개). 둘 다 그림과 함께 움직인다.
+let hitSpots=[],hitCracks=[];
+const crackLayer=$('crackLayer'),crackCtx=crackLayer.getContext('2d');
+function hitSpotStrength(s){const age=elapsed-s.at;return s.s*(age<.15?1:Math.exp(-(age-.15)/.45))}
+function hitMarkUniform(){
+ const out=new Float32Array(16);hitSpots=hitSpots.filter(s=>hitSpotStrength(s)>.01);
+ hitSpots.slice(-4).forEach((s,i)=>out.set([s.x,s.y,s.r,hitSpotStrength(s)],i*4));
+ return out;
+}
+function markHit(z,p,power){
+ if(!z?.hitMark||!p)return;
+ const W=renderWidth,H=renderHeight,size=Math.min(z.rx*W,z.ry*H);
+ if(z.hitMark==='red'){
+  const r=clamp(size*.45,10,Math.min(W,H)*.12),near=hitSpots.find(s=>Math.hypot((s.x-p.x)*W,(s.y-p.y)*H)<s.r*.7);
+  if(near){near.s=Math.min(1.6,hitSpotStrength(near)+.35+.4*Math.min(1,power));near.at=elapsed;near.x=(near.x+p.x)/2;near.y=(near.y+p.y)/2}
+  else{hitSpots.push({x:p.x,y:p.y,r,s:.45+.45*Math.min(1,power),at:elapsed});if(hitSpots.length>4)hitSpots.shift()}
+ }
+ if(z.hitMark==='crack'){
+  // 선 색: 그 자리 그림보다 어둡게
+  const c=document.createElement('canvas');c.width=c.height=1;const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(bitmap,Math.floor(p.x*bitmap.width),Math.floor(p.y*bitmap.height),1,1,0,0,1,1);
+  const [R,G,B]=g.getImageData(0,0,1,1).data,color=`rgb(${Math.round(R*.32)},${Math.round(G*.28)},${Math.round(B*.28)})`;
+  const len=clamp(size*(.36+.26*Math.min(1,power)),10,Math.min(W,H)*.12),segs=[],branches=3+Math.floor(Math.random()*3),a0=Math.random()*Math.PI*2;
+  const grow=(x,y,ang,l,w,depth)=>{for(let s=0;s<4;s++){const step=l/4*(.7+.6*Math.random());ang+=(Math.random()-.5)*.9;const nx=x+Math.cos(ang)*step,ny=y+Math.sin(ang)*step;segs.push([x/W,y/H,nx/W,ny/H,w*(1-s*.2)]);
+   if(depth<1&&s===1&&Math.random()<.6)grow(nx,ny,ang+(Math.random()<.5?-1:1)*(.6+Math.random()*.5),l*.45,w*.6,depth+1);x=nx;y=ny}};
+  for(let b=0;b<branches;b++)grow(p.x*W,p.y*H,a0+b/branches*Math.PI*2+(Math.random()-.5)*.8,len*(.7+.5*Math.random()),Math.max(2,size*.022),0);
+  hitCracks.push({id:z.id,x:p.x,y:p.y,segs,color,at:elapsed});if(hitCracks.length>10)hitCracks.shift();
+ }
+}
+function drawCracks(){
+ const dpr=Math.min(window.devicePixelRatio||1,2),W=Math.max(1,Math.round(surface.clientWidth*dpr)),H=Math.max(1,Math.round(surface.clientHeight*dpr));
+ if(!hitCracks.length){if(crackLayer.width>1){crackLayer.width=crackLayer.height=1}return}
+ if(crackLayer.width!==W||crackLayer.height!==H){crackLayer.width=W;crackLayer.height=H}
+ crackCtx.clearRect(0,0,W,H);
+ hitCracks=hitCracks.filter(c=>elapsed-c.at<2.2);
+ const k=W/renderWidth;
+ for(const c of hitCracks){
+  const age=elapsed-c.at,alpha=age<1.2?1:1-(age-1.2),z=zones.find(v=>v.id===c.id),[dx,dy]=z?cpuDeformation(z,c.x,c.y):[0,0];
+  crackCtx.save();crackCtx.globalAlpha=clamp(alpha,0,1);crackCtx.strokeStyle=c.color;crackCtx.lineCap='round';
+  for(const [x0,y0,x1,y1,w] of c.segs){crackCtx.lineWidth=Math.max(1.2,w*k);crackCtx.beginPath();crackCtx.moveTo((x0+dx)*W,(y0+dy)*H);crackCtx.lineTo((x1+dx)*W,(y1+dy)*H);crackCtx.stroke()}
+  crackCtx.restore();
+ }
 }

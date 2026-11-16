@@ -57,6 +57,7 @@ function gifEstimate(W,H,fps,duration,colors){const px=W*H,c=.55+.45*colors/256,
 function drawExportFrame(g,plan,W,H,withFx){
  const ov=ambient.enabled?Math.max(.016*ambient.breath,.013*ambient.sway)/100+.002:0,sw=view.width,sh=view.height;
  g.fillStyle='#000';g.fillRect(0,0,W,H);g.drawImage(view,sw*ov,sh*ov,sw*(1-2*ov),sh*(1-2*ov),plan.dx,plan.dy,plan.dw,plan.dh);
+ if(hitCracks.length){const fw=crackLayer.width,fh=crackLayer.height;g.drawImage(crackLayer,fw*ov,fh*ov,fw*(1-2*ov),fh*(1-2*ov),plan.dx,plan.dy,plan.dw,plan.dh)}// 갈라짐은 그림의 반응이라 '터치 표시'와 상관없이 담는다
  if(withFx&&sparkles.length){const fw=fxLayer.width,fh=fxLayer.height;g.drawImage(fxLayer,fw*ov,fh*ov,fw*(1-2*ov),fh*(1-2*ov),plan.dx,plan.dy,plan.dw,plan.dh)}
 }
 const waitFrames=n=>new Promise(r=>{const step=()=>--n<=0?r():requestAnimationFrame(step);requestAnimationFrame(step)});

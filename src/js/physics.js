@@ -113,7 +113,7 @@ function impact(z,intensity=1,p=null,dir=null){
   z.physVY=clamp((z.physVY||0)+y*velocity,-.28,.28);
  }
  z.hitX=p?.x??z.x;z.hitY=p?.y??z.y;z.hitAt=elapsed;z.hitPower=f*gain;
- faceHit(z,f*gain);
+ faceHit(z,f*gain);markHit(z,p||{x:z.x,y:z.y},f*gain);
  if(f>0)playSfx(f);
 }
 function impulse(z,amount=1,p=null,dir=null){impact(z,amount,p,dir)}
