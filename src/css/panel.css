@@ -18,22 +18,20 @@
 .side details details>summary{min-height:var(--ctl-h);margin:0 calc(-1*var(--sp2));padding:0 var(--sp2);font-size:var(--fs-item);font-weight:var(--fw-item);color:var(--item)}
 .side details details[open]>summary{margin-bottom:var(--sp1);border-bottom:1px solid var(--groupLine);color:var(--ink)}
 .side :is(summary,button):not(:disabled):is(:hover,:focus-visible){background:var(--hover)}
-/* 2. 얼굴 · 눈 깜빡임: 다른 섹션과 구분되는 테두리 상자. 꺼져 있으면 흐린 한 줄, 켜면 머리줄이 다른 섹션처럼 */
-.side>.faceBox{margin:var(--sp2) var(--sp2);border:1px solid var(--line);border-radius:var(--r-box);overflow:hidden}
-.faceHead{display:flex;align-items:center;gap:var(--sp2);min-height:var(--head-h);padding-right:var(--sp2)}
-.faceBox.on .faceHead{background:var(--head)}
+/* 2. 얼굴 · 눈 깜빡임: 1·3·4번과 같은 단계의 섹션(머리줄 크기·바탕 같음). 꺼져 있으면 제목만 흐리게 */
+.side>.faceBox{margin:0;border-bottom:1px solid var(--line)}
+.faceHead{display:flex;align-items:center;gap:var(--sp2);min-height:var(--head-h);padding-right:10px;background:var(--head)}
 .faceBox.on:has(.faceBody:not([hidden])) .faceHead{border-bottom:1px solid var(--line)}
-.side .faceTitle{display:flex;flex:1;align-items:center;gap:7px;min-width:0;min-height:var(--head-h);padding:0 0 0 var(--sp2);border:0;border-radius:0;background:transparent;color:var(--help);font:inherit;font-size:var(--fs-title);font-weight:var(--fw-title);line-height:1.45;text-align:left;cursor:pointer}
+.side .faceTitle{display:flex;flex:1;align-items:center;gap:7px;min-width:0;min-height:var(--head-h);padding:0 0 0 10px;border:0;border-radius:0;background:transparent;color:var(--help);font:inherit;font-size:var(--fs-title);font-weight:var(--fw-title);line-height:1.45;text-align:left;cursor:pointer}
 .side .faceTitle:disabled{cursor:default}
 .faceBox.on .faceTitle{color:var(--ink)}
 .faceTitle::before{content:"";flex:none;width:5px;height:5px;margin:0 2px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:rotate(-45deg);opacity:.7;transition:transform .12s}
 .faceTitle[aria-expanded="true"]::before{transform:rotate(45deg)}
-.faceTitle:disabled::before{visibility:hidden}
 .faceTitle .zoneTag{margin-left:var(--sp1)}
 .side .faceOn{flex:none;align-items:center;margin:0;color:var(--item);font-size:var(--fs-item)}
 .side .faceOn input{margin-top:0}
 .faceBox:not(.on) .faceOn{color:var(--help)}
-.faceBody{padding:var(--sp2) var(--sp2) var(--sp2)}
+.faceBody{padding:var(--sp2) 10px}
 .faceList{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp1)}
 .faceItem{min-height:var(--ctl-h);padding:0 10px;background:transparent}
 .faceItem.active{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:transparent;color:var(--ink)}

@@ -32,11 +32,11 @@ function paintFaces(){
  $('eyeEntryState').classList.toggle('done',n>0);
  $('eyeEntry').disabled=!faceCount;
 }
-// 얼굴이 생기면 바로 눈 찍기 안내(눈 깜빡임 창)로 이어진다.
+// 얼굴이 생기면 안내줄로 눈 찍기를 알린다(창은 '눈 찍기 · 설정'을 눌러야 열린다, 사용자 피드백).
 function addFace(){
  if(faceCount>=FACE_MAX)return;
  faceSel=faceCount++;faceOpen=true;paintFaces();scheduleSave();
- if(ready)$('eyeEntry').click();
+ setStatus(`얼굴 ${faceSel+1}이 생겼습니다. ‘눈 찍기 · 설정’을 눌러 두 눈의 위치를 찍어 주세요.`);
 }
 async function removeFace(){
  const k=faceSel,n=faceEyes(k);

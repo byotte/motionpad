@@ -34,7 +34,7 @@ const UI_SCENES = [
   ['dlg-video', () => document.querySelector('[data-dialog="videoDialog"]').click()],
   ['dlg-mask', () => document.getElementById('maskMenu').click()],
   ['dlg-saveas', () => document.getElementById('saveAsBtn').click()],
-  ['dlg-blink', () => document.getElementById('faceOnInput').click()],
+  ['dlg-blink', () => { document.getElementById('faceOnInput').click(); document.getElementById('eyeEntry').click(); }],
   ['panel-parts', () => { const z = document.getElementById('ellipseMode'); for (const id of ['partsPanel', 'basePanel', 'advanced', 'effects', 'anchorPanel', 'zonesPanel', 'edgePanel', 'presetPanel', 'autoPanel', 'gainPanel']) { const d = document.getElementById(id); if (d) d.open = true; } }],
 ];
 // 레이아웃 치수 기록 대상 [x, y, 너비, 높이]
