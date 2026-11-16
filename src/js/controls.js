@@ -1,6 +1,6 @@
 // Ambient and audio UI are deliberately independent of the selected region.
 const ambient={enabled:true,breath:35,sway:30,light:0};// 3-M: 조명 숨쉬기는 체감되지 않아 뺐다(늘 0)
-let playerVisible=true, sfxType='soft', zoomLevel=1,panX=0,panY=0;
+let playerVisible=true, sfxType=SFX_DEFAULT, zoomLevel=1,panX=0,panY=0;
 let qualityMode='auto',qualityScale=1,meshSegments=[32,48],frames=0,fpsLast=performance.now(),fps=60,slowSeconds=0,fastSeconds=0,visibleRAF=true;
 function applyZoom(){if(viewerOpen){surface.style.transform='';return}if(zoomLevel<=1){panX=panY=0}const limitX=Math.max(0,stage.clientWidth*.55*zoomLevel),limitY=Math.max(0,stage.clientHeight*.55*zoomLevel);panX=clamp(panX,-limitX,limitX);panY=clamp(panY,-limitY,limitY);surface.style.transform=`translate(${panX}px,${panY}px) scale(${zoomLevel})`;const b=$('zoomResetBtn');if(b)b.textContent=Math.round(zoomLevel*100)+'%'}
 function setZoom(next){zoomLevel=clamp(next,1,4);if(zoomLevel===1){panX=panY=0}applyZoom()}
@@ -98,19 +98,8 @@ function playSfx(power=1){
   if(effectMuted||sfxType==='off')return;
   const vol=Number($('sfxVolume').value)/100;if(!vol)return;
   try{ensureAudio();if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});
-    const t=audioCtx.currentTime,noise=audioCtx.createBuffer(1,Math.ceil(audioCtx.sampleRate*.15),audioCtx.sampleRate),buf=noise.getChannelData(0);
-    let lastN=0;for(let i=0;i<buf.length;i++){const a=(Math.random()*2-1);lastN=lastN*.42+a*.58;buf[i]=lastN}
-    const n=audioCtx.createBufferSource(),gain=audioCtx.createGain(),filter=audioCtx.createBiquadFilter();n.buffer=noise;
-    let length=.085,pitch=900,peak=.12;
     if(sfxType==='file'){playFileSfx(power);return}
-    if(['wetClip','hardClip','softClip','mudClip'].includes(sfxType)){if(playBuiltinSfx(sfxType,power))return;}
-    if(sfxType==='slap'){length=.115;pitch=1400;peak=.24}
-    if(sfxType==='jelly'){length=.14;pitch=480;peak=.11}
-    if(sfxType==='water'){length=.13;pitch=650;peak=.09}
-    filter.type='lowpass';filter.frequency.setValueAtTime(pitch,t);filter.frequency.exponentialRampToValueAtTime(Math.max(100,pitch*.43),t+length);
-    gain.gain.setValueAtTime(.0001,t);gain.gain.linearRampToValueAtTime(Math.min(.2,peak*vol*clamp(power,.3,1.7)),t+.005);
-    gain.gain.exponentialRampToValueAtTime(.0001,t+length);
-    n.connect(filter);filter.connect(gain);gain.connect(audioMaster);n.start(t);n.stop(t+length+.005);
+    playBuiltinSfx(sfxType,power);
   }catch(e){console.warn('효과음 오류',e)}
 }
 function extraState(){return {blink:{eyes:blinkEyesForSave(),speed:blinkSpeed,interval:blinkInterval},base:{clip:baseClipEnabled,exclude:baseBackgroundExclude,edge:baseEdge},projectName:projectName||'내 프로젝트',maskColor:$('maskColorInput').value,maskOpacity:Number($('maskOpacityInput').value),track:$('trackSelect').value,musicVolume:Number($('musicVolume').value),sfxVolume:Number($('sfxVolume').value),sfxType,playerVisible,ambient:{...ambient},qualityMode}}
@@ -127,7 +116,7 @@ function restoreExtra(d){
   $('sfxVolume').value=d?.sfxVolume??25;
   $('viewerSfxVolume').value=$('sfxVolume').value;
   $('sfxVolumeValue').textContent=$('sfxVolume').value+'%';
-  sfxType=['soft','slap','jelly','water','wetClip','hardClip','softClip','mudClip','off'].includes(d?.sfxType)||(d?.sfxType==='file'&&sfxBlob)?d.sfxType:'soft';$('sfxTypeInput').value=$('viewerEffects').value=sfxType;
+  sfxType=d?.sfxType==='off'||Object.hasOwn(builtinSfx64,d?.sfxType??'')||(d?.sfxType==='file'&&sfxBlob)?d.sfxType:SFX_DEFAULT;$('sfxTypeInput').value=$('viewerEffects').value=sfxType;
   playerVisible=d?.playerVisible!==false;$('playerVisibleInput').checked=playerVisible;
   for(const k of ['enabled','breath','sway'])if(d?.ambient?.[k]!=null)ambient[k]=d.ambient[k];ambient.light=0;
   $('ambientOn').checked=ambient.enabled;refreshBaseUI();

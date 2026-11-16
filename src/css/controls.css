@@ -14,6 +14,9 @@ select{
              linear-gradient(135deg,var(--item) 50%,transparent 50%) calc(100% - 7px) 50%/4px 4px no-repeat,var(--field);
 }
 select:hover{border-color:var(--accent)}
+/* 묶음 이름(효과음 목록의 마찰음·효과음)은 흐리게, 항목은 원래 글자색 */
+optgroup{color:var(--help);font-weight:var(--fw-help);font-style:normal}
+optgroup option{color:var(--ink);font-weight:var(--fw-item)}
 input[type=range]{appearance:none;height:20px;background:transparent;border:0;padding:0}
 :is(.field,.brushbar,.viewerAudio,.blinkControl) input[type=range]{accent-color:var(--accent)}
 input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:var(--r-round);background:var(--track)}

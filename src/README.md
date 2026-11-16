@@ -15,7 +15,7 @@ node tools/build.js --check  # motionpad.html이 src/와 같은지 확인(커밋
 | `css/` | 화면 스타일 10구획: tokens(색 토큰·테마) · base · controls · topbar · welcome · editor · panel · dialogs · viewer · responsive(화면 크기별) |
 | `html/` | icons(선 아이콘 모음) · app(상단바·캔버스·옵션 패널) · dialogs(대화창·파일 입력·눈 깜빡임 창·도움말) |
 | `js/` | 아래 표 |
-| `sfx/` | 내장 효과음 wav 4개. `js/audio.js`의 `@@base64(sfx/…)` 자리에 base64로 들어간다. |
+| `sfx/` | 내장 효과음 wav 17개(사용자 녹음, 16bit 44.1kHz). 목록·이름·묶음은 `js/audio.js`의 `SFX_LIST`, 파일은 `@@base64(sfx/…)` 자리에 base64로 들어간다. |
 
 ## js/ (실행 순서대로)
 | 파일 | 내용 |
