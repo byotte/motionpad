@@ -55,9 +55,10 @@ $('maskMenu').onclick=()=>{
 };
 maskDialog.addEventListener('close',()=>document.querySelector('.side').append(maskSettings));
 for(const menu of document.querySelectorAll('.topMenu')){
- menu.addEventListener('toggle',()=>{if(!menu.open)return;for(const other of document.querySelectorAll('.topMenu[open]'))if(other!==menu)other.open=false;
-  // 펼친 메뉴가 화면 밖으로 나가 가로 스크롤이 생기지 않게 자리를 맞춘다
-  const box=menu.querySelector('.topMenuItems');box.style.left='0px';const r=box.getBoundingClientRect(),over=r.right-(document.documentElement.clientWidth-4);if(over>0)box.style.left=Math.max(-r.left+4,-over)+'px';paintProjectName()});
+ // 펼친 메뉴가 화면 밖으로 나가 가로 스크롤이 생기지 않게 자리를 맞춘다.
+ // 'toggle' 이벤트는 한 번 그려진 뒤에 와서 처음 열 때 메뉴가 튀었다 → open이 붙는 즉시(그리기 전) 맞춘다.
+ new MutationObserver(()=>{if(!menu.open)return;for(const other of document.querySelectorAll('.topMenu[open]'))if(other!==menu)other.open=false;
+  paintProjectName();const box=menu.querySelector('.topMenuItems');box.style.left='0px';const r=box.getBoundingClientRect(),over=r.right-(document.documentElement.clientWidth-4);if(over>0)box.style.left=Math.max(-r.left+4,-over)+'px'}).observe(menu,{attributes:true,attributeFilter:['open']});
  // 3-M: 메뉴 하나가 펼쳐져 있을 때 옆 메뉴로 마우스를 옮기면 그 메뉴가 펼쳐진다(PC)
  menu.querySelector('summary').addEventListener('pointerenter',e=>{if(e.pointerType!=='mouse'||menu.open)return;const other=document.querySelector('.topMenu[open]');if(other){other.open=false;menu.open=true}});
  menu.addEventListener('click',event=>{if(event.target.closest('button'))menu.open=false;});
