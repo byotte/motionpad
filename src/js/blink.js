@@ -30,16 +30,16 @@ function restoreBlink(settings){
  blinkScene=blinkOriginal=blinkComposite=blinkTailComposite=blinkOverlay=null;
  paintEyeEntryState();
 }
-// 옵션의 '4. 눈 깜빡임' 줄 오른쪽에 적용한 눈 개수를 보인다.
-function paintEyeEntryState(){const n=blinkEyes.filter(Boolean).length;$('eyeEntryState').textContent=n?`눈 ${n}개 적용됨`:''}
+// 얼굴 설계 1단계: 눈 표시는 '2. 얼굴 · 눈 깜빡임'(face.js)이 그린다.
+function paintEyeEntryState(){paintFaces()}
 function blinkEyesForSave(){let n=blinkEyes.length;while(n>2&&!blinkEyes[n-1])n--;return blinkEyes.slice(0,n)}
-// '편집할 눈' 목록: 적용한 눈 + 빈 칸 하나(처음에는 눈 1·눈 2). 적용한 눈에는 ✓.
-function paintBlinkEyeOptions(){
- const sel=$('blinkEye'),keep=sel.value||'0';let last=-1;blinkEyes.forEach((eye,i)=>{if(eye)last=i});
+// '편집할 눈' 목록: 고른 얼굴의 두 눈(얼굴 k = 눈 칸 2k·2k+1). 적용한 눈에는 ✓.
+function paintBlinkEyeOptions(first){
+ const sel=$('blinkEye'),base=faceSel*2,keep=clamp(first??(sel.value===''?base:Number(sel.value)),base,base+1);
  paintEyeEntryState();
- const count=clamp(Math.max(last+2,Number(keep)+1),2,BLINK_MAX_EYES);
- sel.replaceChildren(...Array.from({length:count},(_,i)=>{const o=document.createElement('option');o.value=String(i);o.textContent=`눈 ${i+1}`+(blinkEyes[i]?' ✓':'');return o}));
- sel.value=Number(keep)<count?keep:'0';
+ $('blinkTitle').textContent=`얼굴 ${faceSel+1} · 눈 깜빡임`;
+ sel.replaceChildren(...[0,1].map(j=>{const i=base+j,o=document.createElement('option');o.value=String(i);o.textContent=`눈 ${j+1}`+(blinkEyes[i]?' ✓':'');return o}));
+ sel.value=String(keep);
 }
 function loadBlinkEye(){
  blinkUndoStack.length=blinkRedoStack.length=0;
@@ -62,7 +62,7 @@ function updateBlinkScene(){
  const t=((elapsed-blinkEpoch+blinkInterval-1)%blinkInterval)*1000*blinkSpeed/100;
  const open=clamp((t-105)/145,0,1);
  const amount=t<75?1-(1-t/75)**2:1-open*(2-open);
- const step=blinkPatches.some(Boolean)?Math.round(amount*16):0;
+ const step=faceOn&&blinkPatches.some(Boolean)?Math.round(amount*16):0;
  if(step===blinkLastStep&&tailPlate===blinkLastTail&&!maskDirty)return false;
  const changed=step>0||blinkLastStep>0;
  blinkLastStep=step;blinkLastTail=tailPlate;
@@ -331,7 +331,7 @@ function stopBlinkPreview(){
 }
 $('eyeEntry').onclick=()=>{
  if(!ready){setStatus('먼저 그림을 열어 주세요.');return}
- blinkRect=null;blinkCropping=false;$('blinkEye').value='0';paintBlinkEyeOptions();$('blinkSpeed').value=blinkSpeed;paintBlinkInterval();
+ blinkRect=null;blinkCropping=false;paintBlinkEyeOptions(faceSel*2);$('blinkSpeed').value=blinkSpeed;paintBlinkInterval();
  loadBlinkEye();
  blinkUndoStack.length=blinkRedoStack.length=0;
  blinkDialog.showModal();setBlinkView(null);refreshBlinkSetup();
@@ -470,7 +470,7 @@ $('blinkApply').onclick=()=>{
 };
 $('blinkRemove').onclick=async()=>{
  const index=Number($('blinkEye').value);
- if(!await askConfirm({title:'눈 제거',message:`눈 ${index+1}의 깜빡임 설정(눈꼬리·눈꺼풀 위치, 앞머리 보호)을 지울까요?`,ok:'이 눈 제거'}))return;
+ if(!await askConfirm({title:'눈 제거',message:`얼굴 ${faceSel+1}의 눈 ${index%2+1} 깜빡임 설정(눈꼬리·눈꺼풀 위치, 앞머리 보호)을 지울까요?`,ok:'이 눈 제거'}))return;
  blinkEyes[index]=blinkPatches[index]=null;
  stopBlinkPreview();paintBlinkEyeOptions();loadBlinkEye();refreshBlinkSetup();scheduleSave();
 };

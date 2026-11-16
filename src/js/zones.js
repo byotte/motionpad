@@ -11,7 +11,7 @@ function getSelected(){return zones.find(z=>z.id===selected)||null}
 function radiusXY(r){const m=Math.min(renderWidth,renderHeight);return [r*m/renderWidth,r*m/renderHeight]}
 function recalcBounds(z){if(z.kind!=='brush'||!z.strokes.length)return;let x0=1,y0=1,x1=0,y1=0;for(const st of z.strokes){const [rx,ry]=radiusXY(st.r);for(const p of st.points){x0=Math.min(x0,p[0]-rx);y0=Math.min(y0,p[1]-ry);x1=Math.max(x1,p[0]+rx);y1=Math.max(y1,p[1]+ry)}}z.x=(x0+x1)/2;z.y=(y0+y1)/2;z.rx=Math.max(.009,(x1-x0)/2);z.ry=Math.max(.009,(y1-y0)/2)}
 function markMask(){maskDirty=true}
-// 3-I: 몸체 지정은 '완장'(1. 영역의 버튼), 움직일 대상(이미지 전체/몸체)은 2. 몸체 움직이기에서 고른다. 대상 = 기존 '배경 제외' 값.
+// 3-I: 몸체 지정은 '완장'(1. 영역의 버튼), 움직일 대상(이미지 전체/몸체)은 3. 몸체 움직이기에서 고른다. 대상 = 기존 '배경 제외' 값.
 function refreshBaseUI(){
  const z=getBase(),sel=getSelected(),bodyOn=!!z&&baseBackgroundExclude,on=$('ambientOn').checked;
  $('markBaseBtn').textContent=sel?.isBase?'몸체 지정 해제':'이 영역을 몸체로 지정';

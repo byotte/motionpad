@@ -61,7 +61,7 @@ async function prep(page, state) {
   }
   const dialogs = { 'dlg-settings': () => document.querySelector('[data-dialog="layoutSettings"]').click(), 'dlg-sound': () => document.getElementById('openMusic').click(),
     'dlg-video': () => document.querySelector('[data-dialog="videoDialog"]').click(), 'dlg-mask': () => document.getElementById('maskMenu').click(),
-    'dlg-saveas': () => document.getElementById('saveAsBtn').click(), 'dlg-blink': () => document.getElementById('eyeEntry').click(),
+    'dlg-saveas': () => document.getElementById('saveAsBtn').click(), 'dlg-blink': () => document.getElementById('faceOnInput').click(),
     'menu-file': () => { document.querySelectorAll('details.topMenu')[0].open = true; }, 'menu-settings': () => { document.querySelectorAll('details.topMenu')[2].open = true; } };
   if (dialogs[state]) await page.evaluate(dialogs[state]);
 }

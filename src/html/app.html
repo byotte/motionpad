@@ -21,7 +21,7 @@
 <div class="empty" id="noZone">그림에서 영역을 선택하거나 그려 주세요.<button type="button" class="helpDot" data-help="‘도형’ 도구에서는 두 손가락으로 선택한 도형의 크기·비율·기울기를 바꿉니다. 그 외 도구에서는 두 손가락으로 화면을 확대하거나 옮깁니다." aria-label="도움말"></button></div>
 <div id="editFields" hidden>
 <div class="field"><div class="fieldhead"><label for="nameInput">영역 이름</label></div><div class="nameRow"><input type="text" id="nameInput" maxlength="26" autocomplete="off"><label class="lockToggle" title="잠금: 실수로 고치지 않게 이 영역을 잠급니다"><input type="checkbox" id="lockedInput" aria-label="잠금"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></label></div></div>
-<div class="baseButtons"><button class="btn" id="markBaseBtn" type="button" title="몸체는 그림에서 크게 움직일 바탕(예: 인물 전체)입니다. ‘2. 몸체 움직이기’가 몸체에 적용됩니다">이 영역을 몸체로 지정</button><span id="baseHint" class="micro"></span>
+<div class="baseButtons"><button class="btn" id="markBaseBtn" type="button" title="몸체는 그림에서 크게 움직일 바탕(예: 인물 전체)입니다. ‘3. 몸체 움직이기’가 몸체에 적용됩니다">이 영역을 몸체로 지정</button><span id="baseHint" class="micro"></span>
  <label class="toggle" id="baseClipRow" hidden title="원래 모양을 지우지 않으며, 끄면 되돌아옵니다"><input id="baseClipInput" type="checkbox">자동 크롭 · 다른 영역을 몸체 안으로 제한</label></div>
 </div>
 <div id="zoneDetail" hidden>
@@ -41,7 +41,15 @@
 </div>
 </details>
 
-<details id="ambientPanel" open><summary>2. 몸체 움직이기 <span class="count" id="bodyState">몸체 미지정 · 그림 전체</span></summary>
+<section class="faceBox" id="facePanel" aria-labelledby="faceTitle">
+<div class="faceHead"><button type="button" class="faceTitle" id="faceTitle" aria-expanded="false" aria-controls="faceBody" disabled>2. 얼굴 · 눈 깜빡임<span class="zoneTag">선택</span></button><label class="toggle faceOn"><input type="checkbox" id="faceOnInput">적용</label></div>
+<div class="faceBody" id="faceBody" hidden>
+<div class="faceList" id="faceList" role="listbox" aria-label="얼굴 목록"></div>
+<div class="faceRow"><span class="faceLabel">눈 깜빡임<button type="button" class="helpDot" data-help="이 얼굴의 두 눈에 눈꼬리 두 점과 윗·아랫눈꺼풀 가운데를 찍으면 눈을 깜빡입니다. 찍은 눈 자리는 앞으로 표정에도 그대로 쓰입니다." aria-label="도움말"></button></span><span class="faceState" id="eyeEntryState"></span><button type="button" class="btn" id="eyeEntry">눈 찍기 · 설정</button></div>
+</div>
+</section>
+
+<details id="ambientPanel" open><summary>3. 몸체 움직이기 <span class="count" id="bodyState">몸체 미지정 · 그림 전체</span></summary>
  <div class="optGroup">
  <div class="targetRow"><label class="toggle"><input id="ambientOn" type="checkbox" checked>움직임 켜기</label>
  <div class="selOp" id="bodyTarget" role="radiogroup" aria-label="움직일 대상"><label><input type="radio" name="bodyTarget" value="all" checked><span>이미지 전체</span></label><label><input type="radio" name="bodyTarget" value="body"><span>몸체</span></label></div></div>
@@ -55,13 +63,13 @@
  </div>
 </details>
 
-<details id="partsPanel"><summary>3. 부분 움직이기 <span class="count" id="partsName"></span></summary>
+<details id="partsPanel"><summary>4. 부분 움직이기 <span class="count" id="partsName"></span></summary>
 <div class="empty" id="noZoneMotion">먼저 영역을 만들거나 선택해 주세요.</div>
 <div id="motionFields" hidden>
 <details id="presetPanel"><summary>움직임 프리셋<button type="button" class="helpDot" data-help="용도별로 이미 설정된 연속 움직임·터치 움직임 프리셋을 활용해 보세요. 고른 뒤 자유롭게 수정할 수 있습니다." aria-label="도움말"></button></summary>
 <div class="field"><div class="fieldhead"><label for="presetInput">움직임 종류</label></div><select id="presetInput"><option value="custom">직접 설정</option><option value="soft">부드러운 반응</option><option value="breathing">호흡</option><option value="jelly">볼 탄성 · 젤리</option><option value="tail">꼬리 흔들림</option><option value="flow">흐름·물결</option><option value="wind">긴 머리 흔들림</option><option value="scarf">목도리·옷자락</option></select></div>
 </details>
-<details id="autoPanel"><summary>3-1. 연속 움직임</summary>
+<details id="autoPanel"><summary>4-1. 연속 움직임</summary>
 <label class="toggle"><input type="checkbox" id="autoInput">자동으로 움직이기</label>
 <div id="quickMotion">
 <div class="field" id="quickDirectionRow"><div class="fieldhead"><label for="quickDirection">방향</label></div><select id="quickDirection"><option value="y">위아래</option><option value="x">좌우</option><option value="diag">↘↖ 대각선</option><option value="diagBack">↙↗ 대각선</option><option value="arcUp">↖↗ 양쪽 위로</option><option value="arcDown">↙↘ 양쪽 아래로</option><option value="pulse">확대·축소</option></select></div>
@@ -86,7 +94,7 @@
 <div class="field"><div class="fieldhead"><label for="windDelayInput">끝부분 지연</label><output id="windDelayValue">50%</output></div><input id="windDelayInput" type="range" min="0" max="100" value="50"></div>
 </details>
 </details>
-<details id="advanced"><summary>3-2. 터치 움직임</summary>
+<details id="advanced"><summary>4-2. 터치 움직임</summary>
 <div class="field"><div class="fieldhead"><label for="axisInput">방향</label></div><select id="axisInput"><option value="follow">끄는 쪽으로</option><option value="y">고정: 위아래</option><option value="x">고정: 좌우</option><option value="diag">고정: ↘↖ 대각선</option><option value="diagBack">고정: ↙↗ 대각선</option><option value="pulse">고정: 확대·축소</option></select></div>
 <div class="field"><div class="fieldhead"><label for="strengthInput">반응 세기</label><output id="strengthValue">26</output></div><input id="strengthInput" type="range" min="0" max="80" step="1"></div>
 <div class="field"><div class="fieldhead"><label for="springInput">반발 속도</label><output id="springValue">14</output></div><input id="springInput" type="range" min="3" max="30" step="1"></div>
@@ -102,6 +110,6 @@
 </details>
 </div>
 </details>
-<button type="button" class="eyeEntry" id="eyeEntry">4. 눈 깜빡임<span id="eyeEntryState" class="eyeEntryState"></span></button><div class="maskDisplay"><label>선택 영역 색상 <input id="maskColorInput" type="color" value="#45d8a9"></label><label>투명도 <input id="maskOpacityInput" type="range" min="0" max="85" value="32"><output id="maskOpacityValue">32%</output></label></div></aside></main>
+<div class="maskDisplay"><label>선택 영역 색상 <input id="maskColorInput" type="color" value="#45d8a9"></label><label>투명도 <input id="maskOpacityInput" type="range" min="0" max="85" value="32"><output id="maskOpacityValue">32%</output></label></div></aside></main>
 
 </div>
