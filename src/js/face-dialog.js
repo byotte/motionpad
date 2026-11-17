@@ -40,13 +40,13 @@ function paintExprDialog(){
  if(e.ear&&!f.ears.length)miss.push('귀');
  $('exprHint').textContent=miss.length?`${miss.join('·')} 자리를 찍지 않아 그 부분은 조절할 수 없습니다. ‘2. 얼굴 · 눈 깜빡임’에서 찍어 주세요.`:'막대를 움직이면 바로 반영됩니다. 이펙트는 미리보기에서 끌어 옮길 수 있습니다.';
  $('exprZoomReset').textContent=Math.round(exprZoom*100)+'%';
- refreshHistory();$('exprUndo').disabled=!undoStack.length;$('exprRedo').disabled=!redoStack.length;
+ refreshHistory();
  faceLive={k:faceSel,id:exprId,amount:1};faceChanged(false);drawExprPreview();
 }
 function openExprDialog(id){
  if(!ready||!faces[faceSel])return;
  exprId=id;exprSide='L';exprRemembered=false;exprCompare=false;exprZoom=1;exprZoomManual=false;exprPan={x:0,y:0};
- exprDialog.showModal();paintExprDialog();
+ setExprHistoryFloor();exprDialog.showModal();paintExprDialog();
  cancelAnimationFrame(exprFrame);const loop=()=>{if(!exprDialog.open)return;const e=currentExpr();if(e&&(e.tr>0||e.sw||e.tear||e.sa||e.sh||e.ss))drawExprPreview();exprFrame=requestAnimationFrame(loop)};exprFrame=requestAnimationFrame(loop);
 }
 function exprEdit(change){
@@ -114,8 +114,10 @@ exprPreview.addEventListener('wheel',e=>{e.preventDefault();setExprZoom(exprZoom
 }
 // 되돌리기: 막대 하나를 잡았다 놓을 때마다(또는 고를 때마다) 한 번. 편집 화면의 되돌리기와 같은 기록을 쓴다.
 for(const el of [exprDialog.querySelector('.exprSettings'),exprDialog.querySelector('.exprToolbar')])el.addEventListener('pointerdown',()=>{exprRemembered=false},true);
-for(const [id,main] of [['exprUndo','undoBtn'],['exprRedo','redoBtn']])$(id).onclick=()=>{$(main).click();exprRemembered=false;faceChanged();paintExprDialog()};
+// E5: 창을 연 뒤의 기록만. 올가미 나눠 그리기·마술봉 미리보기는 건드리지 않는다(편집 화면 버튼을 누르지 않고 기록만 되돌린다).
+$('exprUndo').onclick=()=>{if(!exprCanUndo())return;historyUndo();exprRemembered=false;faceChanged();paintExprDialog()};
+$('exprRedo').onclick=()=>{if(!exprCanRedo())return;historyRedo();exprRemembered=false;faceChanged();paintExprDialog()};
 $('exprClose').onclick=()=>exprDialog.close();
-exprDialog.addEventListener('close',()=>{cancelAnimationFrame(exprFrame);faceLive=null;faceChanged(false)});
+exprDialog.addEventListener('close',()=>{exprUndoFloor=Infinity;exprRedoFloor=0;cancelAnimationFrame(exprFrame);faceLive=null;faceChanged(false)});
 for(const b of document.querySelectorAll('#exprList .chip'))b.onclick=()=>openExprDialog(b.dataset.expr);
 window.addEventListener('resize',()=>{if(exprDialog.open)drawExprPreview()});

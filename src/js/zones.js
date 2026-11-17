@@ -1,9 +1,43 @@
 function stateSnapshot(){return JSON.stringify({zones:zones.map(clean),selected,base:{clip:baseClipEnabled,exclude:baseBackgroundExclude,edge:baseEdge},ambient:{...ambient},mask:{color:$('maskColorInput').value,opacity:$('maskOpacityInput').value},face:faceHistory()})}
-function refreshHistory(){ $('undoBtn').disabled=!undoStack.length&&!(mode==='lasso'&&lassoSegments.length);$('redoBtn').disabled=!redoStack.length}
-function remember(){const snap=stateSnapshot();if(snap===lastHistoryJSON||undoStack[undoStack.length-1]===snap)return;if(!lastHistoryJSON)lastHistoryJSON=snap;undoStack.push(snap);while(undoStack.length>35||undoStack.reduce((n,v)=>n+v.length,0)>9_000_000)undoStack.shift();redoStack=[];refreshHistory();lastHistoryJSON=''}
-function historyApply(snap){const d=JSON.parse(snap);if(d.face)applyFaceHistory(d.face);zones=d.zones.slice(0,LIMIT).map(sanitize);normalizeBaseOrder();baseClipEnabled=!!d.base?.clip;baseBackgroundExclude=d.base?.exclude!==false;baseEdge=clamp(d.base?.edge??1,0,8);lastBaseSignature='';selected=d.selected;if(!getSelected())selected=zones[0]?.id||null;if(d.ambient){Object.assign(ambient,d.ambient);$('ambientOn').checked=ambient.enabled;for(const [k,id] of [['breath','ambientBreath'],['sway','ambientSway'],['light','ambientLight']])$(id).value=ambient[k];updateAmbientLabels();paintFaceOptions()}if(d.mask){$('maskColorInput').value=d.mask.color;$('maskOpacityInput').value=d.mask.opacity;$('maskOpacityValue').textContent=d.mask.opacity+'%'}markMask();updateUI();refreshBaseUI();scheduleSave();refreshHistory()}
-$('undoBtn').onclick=()=>{if(mode==='lasso'&&lassoSegments.length){$('lassoUndo').click();return}clearSelectionDrafts();if(!undoStack.length)return;redoStack.push(stateSnapshot());historyApply(undoStack.pop());setStatus('실행 취소했습니다.')};
-$('redoBtn').onclick=()=>{clearSelectionDrafts();if(!redoStack.length)return;undoStack.push(stateSnapshot());historyApply(redoStack.pop());setStatus('다시 실행했습니다.')};
+// E5: 표정 창은 창을 연 뒤에 쌓인 기록만 되돌린다. 바닥 = 창을 열 때 기록 깊이(앞에서 밀려난 칸 수를 더한 절대 위치).
+let historyShifts=0,exprUndoFloor=Infinity,exprRedoFloor=0;
+function exprCanUndo(){return undoStack.length+historyShifts>exprUndoFloor}
+function exprCanRedo(){return redoStack.length>exprRedoFloor}
+function setExprHistoryFloor(){exprUndoFloor=undoStack.length+historyShifts;exprRedoFloor=redoStack.length}
+function pushHistory(snap){
+ undoStack.push(snap);
+ while(undoStack.length>35||undoStack.reduce((n,v)=>n+v.length,0)>9_000_000){undoStack.shift();historyShifts++}
+ redoStack=[];
+}
+function historyUndo(){if(!undoStack.length)return false;redoStack.push(stateSnapshot());historyApply(undoStack.pop());return true}
+function historyRedo(){if(!redoStack.length)return false;undoStack.push(stateSnapshot());historyApply(redoStack.pop());return true}
+function refreshHistory(){
+ $('undoBtn').disabled=!undoStack.length&&!(mode==='lasso'&&lassoSegments.length);$('redoBtn').disabled=!redoStack.length;
+ exprRedoFloor=Math.min(exprRedoFloor,redoStack.length);
+ $('exprUndo').disabled=!exprCanUndo();$('exprRedo').disabled=!exprCanRedo();
+}
+function remember(){pendingHistory=null;const snap=stateSnapshot();if(snap===lastHistoryJSON||undoStack[undoStack.length-1]===snap)return;if(!lastHistoryJSON)lastHistoryJSON=snap;pushHistory(snap);refreshHistory();lastHistoryJSON=''}
+// E4: 막대·고르는 칸은 누르거나 초점이 갈 때 그때 모습을 들고만 있다가, 값이 실제로 바뀐 첫 순간에 기록에 넣는다.
+// (만지기만 하고 값을 안 바꾸면 되돌리기 칸이 생기지 않는다)
+let pendingHistory=null;
+function rememberOnChange(el){
+ pendingHistory={snap:stateSnapshot(),el};
+}
+function commitPendingHistory(){
+ if(!pendingHistory)return;
+ const {snap}=pendingHistory;
+ pendingHistory=null;
+ if(undoStack[undoStack.length-1]===snap)return;
+ pushHistory(snap);
+ lastHistoryJSON='';
+ refreshHistory();
+}
+document.addEventListener('input',commitPendingHistory,true);
+document.addEventListener('change',commitPendingHistory,true);
+document.addEventListener('focusout',e=>{if(pendingHistory?.el===e.target)pendingHistory=null},true);
+function historyApply(snap){pendingHistory=null;const d=JSON.parse(snap);if(d.face)applyFaceHistory(d.face);zones=d.zones.slice(0,LIMIT).map(sanitize);normalizeBaseOrder();baseClipEnabled=!!d.base?.clip;baseBackgroundExclude=d.base?.exclude!==false;baseEdge=clamp(d.base?.edge??1,0,8);lastBaseSignature='';selected=d.selected;if(!getSelected())selected=zones[0]?.id||null;if(d.ambient){Object.assign(ambient,d.ambient);$('ambientOn').checked=ambient.enabled;for(const [k,id] of [['breath','ambientBreath'],['sway','ambientSway'],['light','ambientLight']])$(id).value=ambient[k];updateAmbientLabels();paintFaceOptions()}if(d.mask){$('maskColorInput').value=d.mask.color;$('maskOpacityInput').value=d.mask.opacity;$('maskOpacityValue').textContent=d.mask.opacity+'%'}markMask();updateUI();refreshBaseUI();scheduleSave();refreshHistory();leaveFacePlaceMode()}
+$('undoBtn').onclick=()=>{if(mode==='lasso'&&lassoSegments.length){$('lassoUndo').click();return}clearSelectionDrafts();if(historyUndo())setStatus('실행 취소했습니다.')};
+$('redoBtn').onclick=()=>{clearSelectionDrafts();if(historyRedo())setStatus('다시 실행했습니다.')};
 function recalcPolygon(z){let x0=1,y0=1,x1=0,y1=0;for(const p of z.polygon){x0=Math.min(x0,p[0]);y0=Math.min(y0,p[1]);x1=Math.max(x1,p[0]);y1=Math.max(y1,p[1])}z.x=(x0+x1)/2;z.y=(y0+y1)/2;z.rx=Math.max(.009,(x1-x0)/2);z.ry=Math.max(.009,(y1-y0)/2)}
 function getBase(){return zones.find(z=>z.isBase)||null}
 function normalizeBaseOrder(){let seen=false;for(const z of zones){if(z.isBase){if(seen)z.isBase=false;else seen=true}}zones.sort((a,b)=>Number(!!b.isBase)-Number(!!a.isBase));}
@@ -74,7 +108,7 @@ $('branchMode').onclick=()=>setMode('branch');$('panMode').onclick=()=>setMode('
 $('brushMode').onclick=()=>setMode('brush');$('eraseMode').onclick=()=>setMode('erase');$('wandMode').onclick=()=>setMode('wand');$('lassoMode').onclick=()=>setMode('lasso');$('ellipseMode').onclick=()=>setMode('ellipse');$('editMode').onclick=()=>setMode('edit');$('showZones').onchange=()=>{};
 $('brushInput').oninput=e=>{brushSize=Number(e.target.value);$('brushValue').textContent=brushSize+'%'};$('toleranceInput').oninput=e=>$('toleranceValue').textContent=e.target.value;$('magnetInput').oninput=e=>$('magnetValue').textContent=e.target.value+'%';
 for(const {key,ui} of ZONE_UI){const id=ui.input,conv=ui.fromInput||(ui.check?x=>x:Number);$(id).addEventListener(ui.event||'input',e=>{const z=getSelected();if(!z)return;const value=conv(ui.check?e.target.checked:e.target.value);if(z[key]===value)return;z[key]=value;if(ui.mask)markMask();if(key==='name')updateUI();else updateValues();scheduleSave();if(!ui.noPreview)previewMotion()})}
-for(const {ui} of ZONE_UI){const e=$(ui.input);e.addEventListener('pointerdown',()=>{if(getSelected())remember()},{passive:true});e.addEventListener('focus',()=>{if(getSelected())remember()})}
+for(const {ui} of ZONE_UI){const e=$(ui.input);e.addEventListener('pointerdown',ev=>{if(getSelected())rememberOnChange(ev.currentTarget)},{passive:true});e.addEventListener('focus',ev=>{if(getSelected())rememberOnChange(ev.currentTarget)})}
 async function deleteZone(){const z=getSelected();if(!z)return;if(!await askConfirm({title:'영역 삭제',message:`‘${z.name}’ 영역과 그 움직임 설정을 지울까요? 실행 취소로 되돌릴 수 있습니다.`,ok:'영역 삭제'}))return;if(!zones.includes(z))return;remember();zones=zones.filter(a=>a.id!==z.id);if(z.isBase){baseClipEnabled=false;lastBaseSignature=''}selected=zones[0]?.id||null;updateUI();markMask();scheduleSave()}
 $('toolDeleteBtn').onclick=()=>{if(!getSelected()){setStatus('지울 영역을 먼저 선택해 주세요.');return}deleteZone()};$('toolDuplicateBtn').onclick=()=>{if(!getSelected()){setStatus('복제할 영역을 먼저 선택해 주세요.');return}duplicateZone()};function duplicateZone(){const z=getSelected();if(!z)return;if(zones.length>=LIMIT){setStatus('영역 개수 제한입니다.');return}remember();const copy=structuredClone(clean(z));copy.tailCutout=false;copy.isBase=false;copy.id=newId();copy.name=z.name+' 복사';copy.x=clamp(copy.x+.03,0,1);copy.y=clamp(copy.y+.03,0,1);if(copy.pivotX!=null)copy.pivotX=clamp(copy.pivotX+.03,0,1);if(copy.pivotY!=null)copy.pivotY=clamp(copy.pivotY+.03,0,1);if(Array.isArray(copy.spine))copy.spine.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)});if(Array.isArray(copy.branch))copy.branch.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)});if(Array.isArray(copy.extraPivots))copy.extraPivots.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)});if(copy.kind==='brush')copy.strokes.forEach(st=>st.points.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)}));if(copy.kind==='polygon')copy.polygon.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)});const zz=sanitize(copy,zones.length);if(zz.kind==='raster'){rasterize(zz);recalcRaster(zz)}zones.push(zz);selected=zz.id;markMask();updateUI();scheduleSave();setMode('edit')}
 // 선택 방식(1-A): 교체(값 new) = 선택한 영역의 모양을 바꿈(움직임 설정은 유지), 더하기, 빼기. 선택한 영역이 없으면 새 영역.

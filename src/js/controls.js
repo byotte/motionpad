@@ -1,5 +1,6 @@
 // Ambient and audio UI are deliberately independent of the selected region.
-const ambient={enabled:true,breath:35,sway:30,light:0,face:'',faceAmt:50};// 3-M: 조명 숨쉬기는 체감되지 않아 뺐다(늘 0)
+const AMBIENT_DEFAULT={enabled:true,breath:35,sway:30,light:0,face:'',faceAmt:50};
+const ambient={...AMBIENT_DEFAULT};// 3-M: 조명 숨쉬기는 체감되지 않아 뺐다(늘 0)
 let playerVisible=true, sfxType=SFX_DEFAULT, zoomLevel=1,panX=0,panY=0;
 let qualityMode='auto',qualityScale=1,meshSegments=[32,48],frames=0,fpsLast=performance.now(),fps=60,slowSeconds=0,fastSeconds=0,visibleRAF=true;
 function applyZoom(){if(viewerOpen){surface.style.transform='';return}if(zoomLevel<=1){panX=panY=0}const limitX=Math.max(0,stage.clientWidth*.55*zoomLevel),limitY=Math.max(0,stage.clientHeight*.55*zoomLevel);panX=clamp(panX,-limitX,limitX);panY=clamp(panY,-limitY,limitY);surface.style.transform=`translate(${panX}px,${panY}px) scale(${zoomLevel})`;const b=$('zoomResetBtn');if(b)b.textContent=Math.round(zoomLevel*100)+'%'}
@@ -23,7 +24,7 @@ function readAmbient(){
  Object.assign(ambient,values);scheduleSave();previewMotion();
 }
 for(const id of ['ambientOn','ambientBreath','ambientSway','ambientLight'])$(id).addEventListener('input',()=>{readAmbient();updateAmbientLabels();if(id==='ambientOn')refreshBaseUI()});
-for(const id of ['ambientBreath','ambientSway','ambientLight','baseEdgeInput','maskColorInput','maskOpacityInput']){$(id).addEventListener('pointerdown',()=>remember(),{passive:true});$(id).addEventListener('focus',()=>remember())}
+for(const id of ['ambientBreath','ambientSway','ambientLight','baseEdgeInput','maskColorInput','maskOpacityInput']){$(id).addEventListener('pointerdown',e=>rememberOnChange(e.currentTarget),{passive:true});$(id).addEventListener('focus',e=>rememberOnChange(e.currentTarget))}
 function updateAmbientLabels(){for(const [k,id] of [['breath','ambientBreathVal'],['sway','ambientSwayVal'],['light','ambientLightVal']])$(id).textContent=ambient[k]+'%'}
 // 0-2: 옵션 조작 시 모드를 바꾸지 않는다. '터치 미리보기'만 켜서 선택 미리보기·복원 지점을 보존한다.
 function setTouchPreview(on){
@@ -62,8 +63,8 @@ function updateQuickMotion(z){
 }
 for(const [id,name] of QUICK_LINKS){
  const input=$(id);
- input.addEventListener('pointerdown',()=>{if(getSelected())remember()},{passive:true});
- input.addEventListener('focus',()=>{if(getSelected())remember()});
+ input.addEventListener('pointerdown',e=>{if(getSelected())rememberOnChange(e.currentTarget)},{passive:true});
+ input.addEventListener('focus',e=>{if(getSelected())rememberOnChange(e.currentTarget)});
  input.oninput=()=>{if(!getSelected())return;$(name).value=input.value;$(name).dispatchEvent(new Event('input'))};
 }
 function applyMotionPreset(z,preset){
@@ -118,13 +119,18 @@ function restoreExtra(d){
   $('sfxVolumeValue').textContent=$('sfxVolume').value+'%';
   sfxType=d?.sfxType==='off'||Object.hasOwn(builtinSfx64,d?.sfxType??'')||(d?.sfxType==='file'&&sfxBlob)?d.sfxType:SFX_DEFAULT;$('sfxTypeInput').value=$('viewerEffects').value=sfxType;
   playerVisible=d?.playerVisible!==false;$('playerVisibleInput').checked=playerVisible;
-  for(const k of ['enabled','breath','sway'])if(d?.ambient?.[k]!=null)ambient[k]=d.ambient[k];ambient.light=0;
+  for(const k of ['enabled','breath','sway'])ambient[k]=d?.ambient?.[k]??AMBIENT_DEFAULT[k];ambient.light=0;
   ambient.face=faceRefOk(d?.ambient?.face)?d.ambient.face:'';ambient.faceAmt=clamp(Number(d?.ambient?.faceAmt??50)||0,0,100);paintFaceOptions();
   $('ambientOn').checked=ambient.enabled;refreshBaseUI();
   for(const [k,id] of [['breath','ambientBreath'],['sway','ambientSway'],['light','ambientLight']])$(id).value=ambient[k];
   updateAmbientLabels();applyPlayerVisibility();setTrack(d?.track||'dream');
   qualityMode=['auto','high','balanced'].includes(d?.qualityMode)?d.qualityMode:'auto';paintQuality();
   qualityScale=qualityMode==='balanced'?.7:1;meshSegments=qualityMode==='balanced'?[20,30]:[32,48];if(gl)rebuildMesh();fit();
+}
+// E6(사용자 결정): 새 그림을 열면 움직임·몸체·눈·얼굴 설정은 기본값으로, 소리·선택 색·화질·플레이 화면 표시는 그대로.
+function resetSettingsForNewImage(){
+ const keep=extraState();
+ restoreExtra({maskColor:keep.maskColor,maskOpacity:keep.maskOpacity,track:keep.track,musicVolume:keep.musicVolume,sfxVolume:keep.sfxVolume,sfxType:keep.sfxType,playerVisible:keep.playerVisible,qualityMode:keep.qualityMode});
 }
 // Make all 'change' events, including effect sliders, part of the undo history.
 $('showZones').addEventListener('change',()=>scheduleSave());

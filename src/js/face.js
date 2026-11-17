@@ -119,7 +119,14 @@ for(const [id,m] of [['faceMouthMode','faceMouth'],['faceBrowMode','faceBrow'],[
  if(m==='faceBrow'&&!faceEyes(faceSel)){setStatus('눈썹은 눈을 기준으로 정리합니다. 먼저 ‘눈 찍기 · 설정’으로 눈을 찍어 주세요.');return}
  setMode(mode===m&&!touchPreview?placeReturn:m);
 };
+// E3: 되돌리기·다시 실행 뒤에는 얼굴 부위 찍기를 끝내고 하던 도구로(찍던 점은 버린다). 얼굴이 사라졌을 수도 있다.
+function leaveFacePlaceMode(){
+ if(!['faceMouth','faceBrow','faceEar'].includes(mode))return;
+ faceDraft=[];
+ setMode(placeReturn);
+}
 function faceMouthTap(p){
+ if(!faces[faceSel]){leaveFacePlaceMode();return}
  faceDraft.push({x:p.x,y:p.y});
  if(faceDraft.length<3){setStatus(FACE_MOUTH_PROMPTS[faceDraft.length]);drawOverlay();return}
  let [l,r,c]=faceDraft;if(l.x>r.x)[l,r]=[r,l];
@@ -127,6 +134,7 @@ function faceMouthTap(p){
  setMode(placeReturn);setStatus('입 자리를 찍었습니다. 아래 ‘표정 세부 설정’에서 표정을 눌러 입 모양을 바꿔 보세요.');
 }
 function faceBrowStroke(points){
+ if(!faces[faceSel]){leaveFacePlaceMode();return}
  if(points.length<2){setStatus('눈썹을 따라 조금 더 길게 그어 주세요.');return}
  // 6~24점으로 고르게 줄여 저장(모양·위치만, 굵기는 모름)
  const n=clamp(Math.round(points.length/3),6,24),line=Array.from({length:n},(_,i)=>{const [x,y]=spinePoint(points,i/(n-1));return {x,y}});
@@ -139,6 +147,7 @@ function faceBrowStroke(points){
 // 귀: 귓바퀴 바깥 테두리를 따라 한 획(얼굴과 붙은 쪽은 긋지 않아도 된다). 한쪽을 그은 뒤 캔버스에 또 그으면 반대쪽 귀,
 // 캔버스를 그냥 누르거나 다른 버튼·옵션을 누르면 입력이 끝난다.
 function faceEarStroke(points){
+ if(!faces[faceSel]){leaveFacePlaceMode();return}
  if(points.length<3){if(faceDraft.length){faceDraft=[];setMode(placeReturn);setStatus('귀를 그렸습니다.')}else setStatus('귓바퀴 테두리를 따라 조금 더 길게 그어 주세요.');return}
  const n=clamp(Math.round(points.length/3),8,40),line=Array.from({length:n},(_,i)=>{const [x,y]=spinePoint(points,i/(n-1));return {x,y}});
  if(!faceDraft.length)remember();faceDraft.push(line);
@@ -192,7 +201,7 @@ function paintFaceRows(z){
 }
 // 몸체의 평소 표정(전체 하나): 바꾸는 순간 되돌리기 지점
 $('ambientFaceInput').onchange=()=>{remember();ambient.face=$('ambientFaceInput').value;paintFaceOptions();scheduleSave();previewMotion()};
-$('ambientFaceAmt').addEventListener('pointerdown',()=>remember(),{passive:true});
+$('ambientFaceAmt').addEventListener('pointerdown',e=>rememberOnChange(e.currentTarget),{passive:true});
 $('ambientFaceAmt').addEventListener('input',()=>{ambient.faceAmt=Number($('ambientFaceAmt').value);$('ambientFaceAmtValue').textContent=ambient.faceAmt+'%';scheduleSave()});
 // [세부 설정]: 고른 얼굴·표정의 상세 세팅 창을 바로 연다
 for(const b of document.querySelectorAll('.faceTune'))b.onclick=()=>{const r=faceRefParse($(b.dataset.for).value);if(!r)return;faceSel=r.k;paintFaces();openExprDialog(r.id)};
