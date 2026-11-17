@@ -32,9 +32,6 @@
 .faceTitle::before{content:"";flex:none;width:5px;height:5px;margin:0 2px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:rotate(-45deg);opacity:.7;transition:transform .12s}
 .faceTitle[aria-expanded="true"]::before{transform:rotate(45deg)}
 .faceTitle .zoneTag{margin-left:var(--sp1)}
-.side .faceOn{flex:none;align-items:center;margin:0;color:var(--item);font-size:var(--fs-item)}
-.side .faceOn input{margin-top:0}
-.faceBox:not(.on) .faceOn{color:var(--help)}
 .faceBody{padding:var(--sp2) 10px}
 .faceList{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp1)}
 .faceItem{min-height:var(--ctl-h);padding:0 10px;background:transparent}
@@ -69,7 +66,8 @@
 /* 항목 이름 뒤 도움말 점: 문구 바로 뒤에 붙고 값은 오른쪽 끝 */
 .fieldhead>.helpDot{margin-inline-end:auto}
 .field label{font-size:var(--fs-item);color:var(--item)}
-.field output{font-size:var(--fs-item);font-weight:var(--fw-item);color:var(--accent);font-variant-numeric:tabular-nums}
+.field output{font-size:var(--fs-item);font-weight:var(--fw-item);color:var(--item);font-variant-numeric:tabular-nums}
+.field output.changed{color:var(--accent)}
 .field input[type=range]{width:100%}
 .field select{width:100%}
 .field input[type=text]{width:100%}
@@ -111,3 +109,18 @@
 .optGroup .field:last-child{margin-bottom:0}
 .targetRow{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 8px}
 .dimOff{opacity:.45}
+/* 사용자 결정 5: 섹션 제목줄 오른쪽 켜기 스위치(얼굴·몸체·연속 움직임 공통) */
+.headSwitch{display:inline-flex;flex:none;align-items:center;gap:var(--sp1);margin-left:var(--sp2);color:var(--help);font-size:var(--fs-help);font-weight:var(--fw-help);cursor:pointer;white-space:nowrap}
+.side summary>.headSwitch{margin-left:auto}
+.side summary>.count+.headSwitch{margin-left:var(--sp2)}
+.headSwitch input{appearance:none;position:relative;flex:none;width:28px;height:16px;margin:0;border-radius:var(--r-round);background:var(--track);cursor:pointer;transition:background .12s}
+.headSwitch input::before{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:var(--r-round);background:var(--item);transition:transform .12s}
+.headSwitch input:checked{background:var(--accent)}
+.headSwitch input:checked::before{transform:translateX(12px);background:var(--onAccent)}
+.headSwitch:has(input:checked){color:var(--item)}
+.headSwitch input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+/* A-7: 얼굴이 꺼져 있으면 흐린 제목줄 대신 한 줄짜리 켜기 버튼 */
+.faceAdd{flex:1;min-height:var(--head-h);padding:0 10px;border:0;background:transparent;color:var(--accentInk);font:inherit;font-size:var(--fs-item);font-weight:var(--fw-title);text-align:left;cursor:pointer}
+.faceBox:not(.on) :is(.faceTitle,.faceOn){display:none}
+.faceBox.on .faceAdd{display:none}
+.side .noZoneGuide{margin:var(--sp3) 10px;color:var(--item)}

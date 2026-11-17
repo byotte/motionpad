@@ -41,6 +41,18 @@ const results = [];
 const report = (id, ok, info) => { results.push({ id, ok }); console.log((ok ? '통과' : '실패'), id, info || ''); };
 const tests = {
 
+  // A-8: 숫자는 기준값과 다를 때만 강조색(영역 = 프리셋 값, 몸체 = 기본값)
+  async a8(browser) {
+    const page = await newPage(browser);
+    await openProject(page, project(dataURL(FIXTURE), [Object.assign({}, ZONE, { preset: 'jelly', strength: 30, spring: 17, damping: 55, ripple: 13, feather: 17, spread: 10, breath: 0 })], { ambient: { enabled: true, breath: 35, sway: 30, face: '', faceAmt: 50 } }), 'a8');
+    const st = () => page.evaluate(() => { const c = id => document.getElementById(id).classList.contains('changed'), col = id => getComputedStyle(document.getElementById(id)).color;
+      return { strength: c('strengthValue'), breath: c('ambientBreathVal'), feather: c('featherValue'), changedN: document.querySelectorAll('aside output.changed').length, plain: col('springValue'), hot: col('strengthValue') }; });
+    const a = await st();
+    await page.evaluate(() => { const e = document.getElementById('strengthInput'); e.value = 44; e.dispatchEvent(new Event('input', { bubbles: true })); const b = document.getElementById('ambientBreath'); b.value = 60; b.dispatchEvent(new Event('input', { bubbles: true })); });
+    const b = await st();
+    report('a8', !a.strength && !a.breath && !a.feather && a.changedN === 0 && b.strength && b.breath && b.hot !== b.plain, `처음 강조 ${a.changedN}개 · 바꾼 뒤 세기 ${b.strength} 호흡 ${b.breath} · 색 ${b.plain} → ${b.hot}`);
+  },
+
   // A-6: 스위치 표시와 도구 표시가 어느 상태에서나 맞는지(만져 보기 ⇔ 켜진 도구 표시 없음), 켜진 도구를 다시 눌러도 그대로인지
   async a6(browser) {
     const page = await newPage(browser);

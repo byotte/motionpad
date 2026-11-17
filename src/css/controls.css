@@ -28,7 +28,8 @@ input:is([type=checkbox],[type=radio]){accent-color:var(--accent)}
 .check{display:flex;gap:var(--sp1);align-items:center;white-space:nowrap;color:var(--item)}
 .mini{margin-top:var(--sp2);font-size:var(--fs-help);line-height:1.55;color:var(--help)}
 /* 조절 막대의 숫자: 어디서나 강조색(막대 손잡이와 같은 색, 테마마다 다름) */
-output{color:var(--accent);font-weight:var(--fw-item);font-variant-numeric:tabular-nums}
+output{color:var(--item);font-weight:var(--fw-item);font-variant-numeric:tabular-nums}
+output.changed{color:var(--accent)}/* A-8: 기준값과 다를 때만 강조색 */
 .micro,.count,.status{color:var(--help)}
 .count{font-size:var(--fs-help)}
 .engineBadge{display:inline-flex;flex-shrink:0;align-items:center;justify-content:center;padding:5px 7px;border:1px solid var(--line);border-radius:var(--r-ctl);background:var(--panel);color:var(--item);font:var(--fs-help)/1.2 ui-monospace,SFMono-Regular,monospace;letter-spacing:.02em;white-space:nowrap}

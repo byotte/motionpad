@@ -126,7 +126,8 @@
 .exprBox h3.exprSub:first-child{margin-top:0}
 .exprSlider{display:grid;grid-template-columns:6.2em minmax(0,1fr) 2.6em;align-items:center;gap:var(--sp2);min-height:20px;font-size:var(--fs-item);color:var(--item)}
 .exprSlider input{width:100%;min-width:0;margin:0}
-.exprSlider output{text-align:right;color:var(--accentInk)}
+.exprSlider output{text-align:right;color:var(--item)}
+.exprSlider output.changed{color:var(--accentInk)}
 .exprRow{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp1) var(--sp2);margin-top:var(--sp1);font-size:var(--fs-item);color:var(--item)}
 .exprRow select{flex:1;min-width:0}
 .exprRow .toggle{margin:0;white-space:nowrap}

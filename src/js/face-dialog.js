@@ -19,7 +19,13 @@ function paintExprDialog(){
  $('exprSym').checked=e.sym;$('exprSideRow').hidden=e.sym;
  for(const r of document.querySelectorAll('input[name="exprSide"]'))r.checked=r.value===exprSide;
  const side=e.sym?e.L:e[exprSide];
- for(const k of EXPR_FIELDS){const v=EXPR_TOP.includes(k)?e[k]??50:side[k];$('expr_'+k).value=v;$('expr_'+k+'V').textContent=(v>0&&!['tr','bl','ba'].includes(k)?'+':'')+v}
+ const base=presetExpr(exprId),baseSide=base.L;// A-8: 기준값 = 이 표정의 프리셋 값
+ for(const k of EXPR_FIELDS){
+  const v=EXPR_TOP.includes(k)?e[k]??50:side[k],b=EXPR_TOP.includes(k)?base[k]??50:baseSide[k];
+  $('expr_'+k).value=v;
+  $('expr_'+k+'V').textContent=(v>0&&!['tr','bl','ba'].includes(k)?'+':'')+v;
+  $('expr_'+k+'V').classList.toggle('changed',!sameNumber(v,b));
+ }
  const f=faces[faceSel],g=faceGeometry(faceSel),miss=[];
  if(!g.eyes.length)miss.push('눈');if(!f.mouth)miss.push('입');if(!f.brows.length)miss.push('눈썹');
  for(const k of ['bh','bm','bt'])$('expr_'+k).disabled=!g.hasBrow;
@@ -34,7 +40,7 @@ function paintExprDialog(){
  const mode=fxIsOn(e,which)?fxStyleOf(e,which,g):'off';
  for(const r of document.querySelectorAll('input[name="exprFxMode"]')){r.checked=r.value===mode;r.disabled=!g.eyes.length}
  $('exprFxSet').hidden=mode==='off';$('exprSweatRow').hidden=which!=='sweat';$('exprSweat').value=String(Math.max(1,e.sw));
- const o=e.fxo[which];for(const k of ['sp','fr','op','sz']){$('expr_fx_'+k).value=o[k]??100;$('expr_fx_'+k+'V').textContent=(o[k]??100)+'%';$('expr_fx_'+k).closest('.exprSlider').hidden=which==='tear'&&k!=='op'}
+ const o=e.fxo[which];for(const k of ['sp','fr','op','sz']){$('expr_fx_'+k).value=o[k]??100;$('expr_fx_'+k+'V').textContent=(o[k]??100)+'%';$('expr_fx_'+k+'V').classList.toggle('changed',(o[k]??100)!==100);$('expr_fx_'+k).closest('.exprSlider').hidden=which==='tear'&&k!=='op'}
  $('exprTearAmtRow').hidden=which!=='tear';for(const r of document.querySelectorAll('input[name="exprTearAmt"]'))r.checked=Number(r.value)===(e.ta||0);
  $('exprFxHome').hidden=!(which==='sweat'?f.sweatAt.some(Boolean):f.fxAt[which]);
  if(e.ear&&!f.ears.length)miss.push('귀');

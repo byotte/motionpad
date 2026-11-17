@@ -25,7 +25,7 @@ function readAmbient(){
 }
 for(const id of ['ambientOn','ambientBreath','ambientSway','ambientLight'])$(id).addEventListener('input',()=>{readAmbient();updateAmbientLabels();if(id==='ambientOn')refreshBaseUI()});
 for(const id of ['ambientBreath','ambientSway','ambientLight','baseEdgeInput','maskColorInput','maskOpacityInput']){$(id).addEventListener('pointerdown',e=>rememberOnChange(e.currentTarget),{passive:true});$(id).addEventListener('focus',e=>rememberOnChange(e.currentTarget))}
-function updateAmbientLabels(){for(const [k,id] of [['breath','ambientBreathVal'],['sway','ambientSwayVal'],['light','ambientLightVal']])$(id).textContent=ambient[k]+'%'}
+function updateAmbientLabels(){for(const [k,id] of [['breath','ambientBreathVal'],['sway','ambientSwayVal'],['light','ambientLightVal']])$(id).textContent=ambient[k]+'%';refreshChangedMarks()}
 // 0-2: 옵션 조작 시 모드를 바꾸지 않는다. '터치 미리보기'만 켜서 선택 미리보기·복원 지점을 보존한다.
 function setTouchPreview(on){
  on=!!on&&!viewerOpen&&mode!=='play';
@@ -268,3 +268,17 @@ for(const dial of document.querySelectorAll('.dirDial')){
  dial.addEventListener('keydown',e=>{const d={ArrowLeft:-5,ArrowDown:-5,ArrowRight:5,ArrowUp:5}[e.key];if(d){e.preventDefault();if(getSelected())remember();set(Number(input.value)+d)}});
  dial.paint=paint;paint();
 }
+// 사용자 결정 5(검수 L2): 켜고 끄는 것은 섹션 제목줄 오른쪽 스위치(.headSwitch). 제목줄(summary)을 접고 펴는 동작과 섞이지 않게
+// 스위치를 누르면 접기·펴기는 막고 스위치만 바꾼다(지금 입력 길 그대로: input·change 이벤트, 되돌리기 지점).
+document.addEventListener('click',e=>{
+ const sw=e.target.closest('summary .headSwitch');
+ if(!sw)return;
+ e.preventDefault();
+ const input=sw.querySelector('input');
+ if(!input||input.disabled)return;
+ rememberOnChange(input);
+ input.checked=!input.checked;
+ input.dispatchEvent(new Event('input',{bubbles:true}));
+ input.dispatchEvent(new Event('change',{bubbles:true}));
+},true);
+$('faceAddBtn').onclick=()=>{const f=$('faceOnInput');if(!f.checked)f.click()};

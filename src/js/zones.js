@@ -69,7 +69,7 @@ $('markBaseBtn').onclick=()=>{
 $('baseClipInput').onchange=e=>{remember();baseClipEnabled=e.target.checked;markMask();scheduleSave();setStatus(baseClipEnabled?'자동 크롭을 적용했습니다. 원본 마스크는 유지됩니다.':'자동 크롭을 해제해 원본 영역을 복원했습니다.')};
 for(const r of document.querySelectorAll('input[name="bodyTarget"]'))r.onchange=()=>{if(!r.checked)return;remember();baseBackgroundExclude=r.value==='body';markMask();scheduleSave();refreshBaseUI();setStatus(baseBackgroundExclude?'몸체만 움직이고 배경은 고정됩니다.':'배경까지 그림 전체가 움직입니다.')};
 $('baseEdgeInput').oninput=e=>{baseEdge=Number(e.target.value);$('baseEdgeVal').textContent=String(baseEdge);markMask();scheduleSave()};
-function updateValues(){const z=getSelected();if(!z)return;$('zoneList').replaceChildren(...zones.map(zoneItem));for(const {key,ui} of ZONE_UI)if(ui.output)$(ui.output).textContent=(ui.fmt||String)(z[key]);updateQuickMotion(z);paintFaceRows(z);for(const d of document.querySelectorAll('.dirDial'))d.paint?.()}
+function updateValues(){const z=getSelected();if(!z)return;$('zoneList').replaceChildren(...zones.map(zoneItem));for(const {key,ui} of ZONE_UI)if(ui.output)$(ui.output).textContent=(ui.fmt||String)(z[key]);updateQuickMotion(z);paintFaceRows(z);for(const d of document.querySelectorAll('.dirDial'))d.paint?.();refreshChangedMarks()}
 // 2-F: 영역 목록. PC는 세로 목록(이름 + 켜진 효과 이름표 + 잠금), 폰은 가로 이름표(CSS). 몸체는 늘 맨 앞.
 function zoneTags(z){const t=[],pc=v=>`${Math.round(v)}%`;
  if(z.isBase)t.push(['몸체','움직일 몸체']);
@@ -91,7 +91,7 @@ function zoneItem(item){const b=document.createElement('button');b.type='button'
  b.onclick=()=>{clearSelectionDrafts();selected=item.id;updateUI()};b.oncontextmenu=e=>{e.preventDefault();clearTimeout(pressTimer);selected=item.id;updateUI();showZoneMenu(item)};let pressTimer=null;b.addEventListener('pointerdown',()=>{clearTimeout(pressTimer);pressTimer=setTimeout(()=>{selected=item.id;updateUI();showZoneMenu(item)},620)});for(const ev of ['pointerup','pointercancel','pointerleave'])b.addEventListener(ev,()=>clearTimeout(pressTimer));return b}
 function updateUI(){const z=getSelected(),base=getBase();$('zoneCount').textContent=`${zones.length}개`;$('zoneList').replaceChildren(...zones.map(zoneItem));$('zoneList').hidden=!zones.length;
  refreshBaseUI();$('partsName').textContent=z?z.name:'';
- $('noZone').hidden=!!z;$('editFields').hidden=$('zoneDetail').hidden=$('motionFields').hidden=!z;$('noZoneMotion').hidden=!!z;refreshBaseUI();if(!z)return;for(const {key,ui} of ZONE_UI){const node=$(ui.input),val=ui.toInput?ui.toInput(z[key]):z[key];if(ui.check)node.checked=val;else node.value=val}updateValues()}
+ paintNoZoneGuide();$('noZone').hidden=!!z;$('editFields').hidden=$('zoneDetail').hidden=$('motionFields').hidden=!z;$('noZoneMotion').hidden=!!z;refreshBaseUI();if(!z)return;for(const {key,ui} of ZONE_UI){const node=$(ui.input),val=ui.toInput?ui.toInput(z[key]):z[key];if(ui.check)node.checked=val;else node.value=val}updateValues()}
 // 0-2: prompt() 대신 앱 자체 메뉴
 let zoneMenuTarget=null;
 function showZoneMenu(z){if(!z||$('zoneMenuDialog').open)return;zoneMenuTarget=z.id;$('zoneMenuTitle').textContent=`‘${z.name}’ 영역`;$('zoneMenuLock').textContent=z.locked?'잠금 해제':'잠금';$('zoneMenuDialog').showModal()}
@@ -153,3 +153,44 @@ function applySelectionBits(bits){const name=nextZoneName();
   remember();const n=sanitize({id:newId(),kind:'raster',name,x:.5,y:.5,rx:.25,ry:.25,runs:bitsToRuns(bits)},zones.length);recalcRaster(n);zones.push(n);selected=n.id;
  }
  markMask();updateUI();scheduleSave();return true}
+// A-7: 영역이 하나도 없으면 패널에는 안내 한 줄과 '3. 몸체 움직이기'만(1·4와 꺼진 얼굴 칸은 영역이 생기면 나타난다). 보이기만 바꾼다.
+function paintNoZoneGuide(){
+ const none=!zones.length;
+ $('noZoneGuide').hidden=!none;
+ $('zonesPanel').hidden=none;
+ $('partsPanel').hidden=none;
+ $('facePanel').hidden=none&&!faceOn;
+}
+// A-8: 숫자는 평소 항목 글자색, 기준값과 다를 때만 강조색(내가 뭘 바꿨는지 보이게). 기준값은 여기 한 곳에서 정한다.
+// 영역 값 = 그 영역의 프리셋 값(직접 설정이면 속성표 기본값), 몸체 = 기본값, 그 밖의 막대 = HTML에 적힌 처음 값. 표정 창은 face-dialog.js(그 표정의 프리셋 값).
+let zoneDefaultsCache=null;
+function zoneBaseline(z,key){
+ zoneDefaultsCache??=sanitize({},0);
+ const t={...zoneDefaultsCache};
+ if(Object.hasOwn(MOTION_PRESETS,z.preset))applyMotionPreset(t,z.preset);
+ return t[key];
+}
+function valueBaseline(input){
+ const link=QUICK_LINKS.find(([id])=>id===input.id);
+ if(link)return valueBaseline($(link[1]));
+ const f=ZONE_UI.find(f=>f.ui.input===input.id);
+ if(f){
+  const z=getSelected();
+  if(!z)return null;
+  const b=zoneBaseline(z,f.key);
+  return f.ui.toInput?f.ui.toInput(b):b;
+ }
+ const amb={ambientBreath:'breath',ambientSway:'sway',ambientLight:'light',ambientFaceAmt:'faceAmt'}[input.id];
+ if(amb)return AMBIENT_DEFAULT[amb];
+ return input.defaultValue;
+}
+function sameNumber(a,b){return Math.abs(Number(a)-Number(b))<1e-6}
+function markOutput(out){
+ if(out.closest('.exprSlider'))return;
+ const input=out.closest('.field')?.querySelector('input[type=range]');
+ if(!input)return;
+ const base=valueBaseline(input);
+ out.classList.toggle('changed',base!=null&&!sameNumber(input.value,base));
+}
+function refreshChangedMarks(){for(const o of document.querySelectorAll('output'))markOutput(o)}
+document.addEventListener('input',e=>{const o=e.target.closest?.('.field')?.querySelector('output');if(o)markOutput(o)});

@@ -65,6 +65,7 @@ function paintFaces(){
  const box=$('facePanel');if(!box)return;
  faceSel=clamp(faceSel,0,Math.max(0,faces.length-1));
  $('faceOnInput').checked=faceOn;box.classList.toggle('on',faceOn);
+ paintNoZoneGuide();
  const open=faceOn&&faceOpen;
  $('faceTitle').disabled=!faceOn;$('faceTitle').setAttribute('aria-expanded',String(open));$('faceBody').hidden=!open;
  const chips=faces.map((_,k)=>{
