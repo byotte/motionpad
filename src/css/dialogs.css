@@ -109,7 +109,7 @@
 .previewBtn[aria-pressed=true]{border-color:var(--accent);color:var(--ink)}
 #soundPanel .optGroup:first-child{margin-top:0}
 /* 표정 세부 설정 창: 왼쪽 미리보기, 오른쪽 옵션(스크롤은 옵션 칸에만). 옵션은 눈·입·홍조·이펙트 묶음 상자로. */
-#exprDialog{overflow:hidden;display:flex;flex-direction:column}
+#exprDialog{overflow:hidden;flex-direction:column}
 #exprDialog[open]{display:flex}
 .exprMain{grid-template-columns:minmax(0,1fr) 360px;height:min(78dvh,720px);min-height:0}
 .exprStage{height:100%}
@@ -119,7 +119,8 @@
 .exprTop .toggle{margin:0}
 .exprBox{padding:var(--sp1) var(--sp2) var(--sp2);border:1px solid var(--groupLine);border-radius:var(--r-box)}
 .exprBox h3{display:flex;align-items:center;gap:var(--sp1);margin:0 0 var(--sp1);font-size:var(--fs-item);font-weight:var(--fw-title);color:var(--ink)}
-.exprSub{margin:var(--sp1) 0 0;font-size:var(--fs-help);color:var(--help)}
+.exprBox h3.exprSub{margin:var(--sp1) 0 0}
+.exprBox h3.exprSub:first-child{margin-top:0}
 .exprSlider{display:grid;grid-template-columns:6.2em minmax(0,1fr) 2.6em;align-items:center;gap:var(--sp2);min-height:20px;font-size:var(--fs-item);color:var(--item)}
 .exprSlider input{width:100%;min-width:0;margin:0}
 .exprSlider output{text-align:right;color:var(--accentInk)}
@@ -130,7 +131,10 @@
 .exprFxRow .selOp,.exprFxWhich{gap:2px}
 .exprFxRow .selOp label,.exprFxWhich label{padding:0 6px}
 .exprFxRow .selOp{flex-wrap:wrap}
-.exprSweat{display:inline-flex;align-items:center;gap:var(--sp1);margin-left:auto;font-size:var(--fs-item);color:var(--item)}
+.exprSweat{display:inline-flex;align-items:center;gap:var(--sp1);margin-left:auto;font-size:var(--fs-item);color:var(--item);white-space:nowrap}
+.exprFxRow{flex-wrap:nowrap}
+.exprFxRow .selOp{flex-wrap:nowrap}
+.exprFxNone{margin:var(--sp1) 0;font-size:var(--fs-help);color:var(--help)}
 #exprFxMore{margin-top:var(--sp1)}
 #exprFxMore>summary{font-size:var(--fs-item);color:var(--item);cursor:pointer;padding:var(--sp1) 0}
 .exprFxWhich{flex-wrap:wrap;margin-bottom:var(--sp1)}

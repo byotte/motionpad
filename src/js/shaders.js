@@ -82,7 +82,7 @@ float faceRed(vec2 uv){
     float line=1.0-smoothstep(hw,hw+soft,abs(f-.5));
     float keep=smoothstep(.2+.35*j,.35+.35*j,t.a);// 가운데에 몰리고 바깥으로 짧아진다(선마다 들쭉날쭉)
     if(!manga)keep*=step(.32,fNoise(vec2(id*3.1,along/(st.z*2.6))));// 섬세한 빗금: 짧게 끊긴 선
-    v+=line*keep*(manga?.85:.38)*smoothstep(.0,.15,t.a);
+    v+=line*keep*(manga?.85:.5)*smoothstep(.0,.15,t.a);
    }
    red+=v;
   }
@@ -225,7 +225,7 @@ void main(){
  // 피부색에 붉은 기운을 곱하듯 물들인다: 밝은 피부만 붉어지고 선화·음영은 그대로
  // 쓰지 않을 때는 계산하지 않는다(그림 전체 픽셀마다 도는 곳)
  float red=0.0;if(u_hitCount>0)red+=hitRed(uv);if(u_faceCount>0)red+=faceRed(uv);
- if(red>.001){float lum=dot(color.rgb,vec3(.3,.59,.11));color.rgb*=mix(vec3(1.0),vec3(1.0,.62,.64),min(red,1.6)*.6*smoothstep(.15,.55,lum));}
+ if(red>.001){float lum=dot(color.rgb,vec3(.3,.59,.11));color.rgb*=mix(vec3(1.0),vec3(1.0,.62,.64),min(red+red*red,2.2)*.6*smoothstep(.15,.55,lum));}
 #endif
  float light=1.0+u_ambient.w*(.026*sin(u_time*.98)+.009*sin(u_time*.49+1.0));
  if(u_baseExclude>.5){

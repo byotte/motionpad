@@ -24,7 +24,7 @@ function sanitizeExpr(e,id){
 }
 const FX_KEYS=['sweat','tear','sparkle','anger','heart'];// 이펙트(세부 옵션 sp 속도·fr 빈도·op 진하기, 0~200%)
 const BLUSH_STYLES=['auto','grad','fine','manga'];
-function blankFace(){return {mouth:null,brows:[],ears:[],blushStyle:'auto',sweatAt:[],fxAt:{},exprs:Object.fromEntries(EXPRS.map(([id])=>[id,presetExpr(id)]))}}
+function blankFace(){return {mouth:null,brows:[],ears:[],blushStyle:'auto',fxStyle:'auto',sweatAt:[],fxAt:{},exprs:Object.fromEntries(EXPRS.map(([id])=>[id,presetExpr(id)]))}}
 const faceUnit=p=>Number.isFinite(p?.x)&&Number.isFinite(p?.y)&&p.x>=0&&p.x<=1&&p.y>=0&&p.y<=1;
 function sanitizeFace(f){
  const out=blankFace();if(!f||typeof f!=='object')return out;
@@ -32,6 +32,7 @@ function sanitizeFace(f){
  if(Array.isArray(f.brows))out.brows=f.brows.slice(0,2).map(line=>Array.isArray(line)?line.slice(0,64).filter(faceUnit).map(({x,y})=>({x,y})):[]).filter(line=>line.length>=2);
  if(Array.isArray(f.ears))out.ears=f.ears.slice(0,2).map(line=>Array.isArray(line)?line.slice(0,64).filter(faceUnit).map(({x,y})=>({x,y})):[]).filter(line=>line.length>=2);
  if(BLUSH_STYLES.includes(f.blushStyle))out.blushStyle=f.blushStyle;
+ if(['auto','real','casual'].includes(f.fxStyle))out.fxStyle=f.fxStyle;
  if(f.fxAt&&typeof f.fxAt==='object')for(const k of FX_KEYS){const p=f.fxAt[k];if(Number.isFinite(p?.a)&&Number.isFinite(p?.b))out.fxAt[k]={a:clamp(p.a,-3,3),b:clamp(p.b,-3,3)}}
  if(Array.isArray(f.sweatAt))out.sweatAt=f.sweatAt.slice(0,4).map(p=>Number.isFinite(p?.a)&&Number.isFinite(p?.b)?{a:clamp(p.a,-3,3),b:clamp(p.b,-3,3)}:null);
  for(const [id] of EXPRS)out.exprs[id]=sanitizeExpr(f.exprs?.[id],id);

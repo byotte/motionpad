@@ -1,13 +1,14 @@
-// 맞은 자리(4-2)와 얼굴 이펙트(땀방울·눈물·반짝이·💢·하트). 그림을 휘지 않고 반응 층(#crackLayer)에 그린다 → 영상에도 늘 담긴다.
-// 실사 그림에도 어울리게: 물방울은 그 자리 그림을 렌즈처럼 비춰(굴절) 그리고, 반짝이는 빛 번짐, 기호는 테두리 없이 입체감만 준다.
+// 맞은 자리(4-2)와 얼굴 이펙트(땀방울·눈물·반짝이·💢·하트). 그림을 휘지 않고 위에 그린다 → 영상에도 늘 담긴다.
+// 층 둘: #crackLayer(갈라짐, 곱하기로 얹음) · #faceFxLayer(얼굴 이펙트, 그대로 얹음). 쓰지 않을 때는 숨긴다(빈 층도 프레임을 잡아먹는다).
+// 이펙트 모양 두 가지(얼굴마다 fxStyle): 실사풍(그림을 비추는 물방울·빛 번짐, 테두리 없음) · 캐주얼·SD(테두리 있는 단순한 모양).
 
-// ── 맞은 자리: 빨개짐 = 셰이더(u_hitMark, 영역 마스크 밖은 잘림), 갈라짐 = 이 층(영역 마스크로 잘림). ──
+// ── 맞은 자리: 빨개짐 = 셰이더(u_hitMark, 영역 마스크 밖은 잘림), 갈라짐 = #crackLayer(영역 마스크로 잘림). ──
 // 크기는 영역 크기에 비례(hitMarkSize %, 기본 70 = 영역 지름의 70%). 누르고 있거나 끄는 동안에도 빨개진다.
-let hitMarkCount=0,hitSpots=[],hitCracks=[],reactLayerUsed=false,hitLastT=0;
+let hitMarkCount=0,hitSpots=[],hitCracks=[],faceFxUsed=false,hitLastT=0;
 const crackLayer=$('crackLayer'),crackCtx=crackLayer.getContext('2d'),crackTmp=document.createElement('canvas');
+const faceFxLayer=$('faceFxLayer'),faceFxCtx=faceFxLayer.getContext('2d');
 function hitSpotStrength(s){const age=elapsed-s.at;return s.s*(age<.15?1:Math.exp(-(age-.15)/.45))}
-// 영역 지름(그림 화소): 가로·세로 반지름의 기하 평균 × 2
-const zoneDiam=z=>2*Math.sqrt(Math.max(1,z.rx*renderWidth)*Math.max(1,z.ry*renderHeight));
+const zoneDiam=z=>2*Math.sqrt(Math.max(1,z.rx*renderWidth)*Math.max(1,z.ry*renderHeight));// 영역 지름(그림 화소)
 function hitMarkUniform(){
  const dt=clamp(elapsed-hitLastT,0,.1);hitLastT=elapsed;
  // 누르고 있거나 끄는 동안: 누른 자리(그림 기준)에 계속 번진다
@@ -30,65 +31,81 @@ function markHit(z,p,power){
   if(near){near.s=Math.min(1.6,hitSpotStrength(near)+.35+.4*Math.min(1,power));near.at=elapsed}
   else{hitSpots.push({x:p.x,y:p.y,r:R,s:.45+.45*Math.min(1,power),at:elapsed,zi});if(hitSpots.length>4)hitSpots.shift()}
  }
- if(z.hitMark==='crack')hitCracks.push(makeCrack(z,p,power,R)),hitCracks.length>10&&hitCracks.shift();
+ if(z.hitMark==='crack'){hitCracks.push(makeCrack(z,p,power,R));if(hitCracks.length>10)hitCracks.shift()}
 }
-// 갈라짐 한 번: 굵은 금 몇 갈래 + 가지 + 잔금. 크기는 칠 때마다 들쭉날쭉(0.55~1.15배). 선 색은 그 자리 그림보다 어둡게.
+// ── 갈라짐: 칠 때마다 무늬 넷 중 하나(그물 금·긴 금·조각 금·잔금) + 크기 0.4~1.15배 + 가운데 잡티. 곱하기로 얹는다. ──
+const rnd=(a,b)=>a+Math.random()*(b-a);
+function crackWalk(x,y,ang,len,steps,turn){const pts=[[x,y]];for(let s=0;s<steps;s++){ang+=rnd(-turn,turn);x+=Math.cos(ang)*len/steps*rnd(.6,1.4);y+=Math.sin(ang)*len/steps*rnd(.6,1.4);pts.push([x,y])}return {pts,ang}}
 function makeCrack(z,p,power,R){
- const W=renderWidth,H=renderHeight;
+ const W=renderWidth,H=renderHeight,cx=p.x*W,cy=p.y*H;
  const c=document.createElement('canvas');c.width=c.height=1;const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(bitmap,Math.floor(p.x*bitmap.width),Math.floor(p.y*bitmap.height),1,1,0,0,1,1);
  const [r,gg,b]=g.getImageData(0,0,1,1).data;
- const scale=(.55+.6*Math.random())*(.75+.25*Math.min(1,power)),len=Math.max(8,R*scale),segs=[],main=3+Math.floor(Math.random()*3),a0=Math.random()*Math.PI*2;
- const grow=(x,y,ang,l,w,depth)=>{const n=3+Math.floor(Math.random()*3);for(let s=0;s<n;s++){
-   const step=l/n*(.6+.8*Math.random());ang+=(Math.random()-.5)*(.6+depth*.5);const nx=x+Math.cos(ang)*step,ny=y+Math.sin(ang)*step;
-   segs.push([x/W,y/H,nx/W,ny/H,w*(1-s/n*.75)*(.8+.4*Math.random()),depth]);
-   if(depth<2&&Math.random()<(depth?.35:.6))grow(nx,ny,ang+(Math.random()<.5?-1:1)*(.5+Math.random()*.7),l*(.35+.25*Math.random()),w*.55,depth+1);
-   x=nx;y=ny}};
- const w0=Math.max(1.4,len*.045);
- for(let i=0;i<main;i++)grow(p.x*W,p.y*H,a0+i/main*Math.PI*2+(Math.random()-.5)*.9,len*(.55+.6*Math.random()),w0*(.7+.6*Math.random()),0);
- // 잔금: 가운데 둘레의 짧고 가는 금
- for(let i=0;i<4+Math.floor(Math.random()*4);i++){const a=Math.random()*Math.PI*2,d=len*.12*Math.random();grow(p.x*W+Math.cos(a)*d,p.y*H+Math.sin(a)*d,a,len*.25*(.5+Math.random()),w0*.35,2)}
- return {id:z.id,x:p.x,y:p.y,segs,dark:`rgb(${Math.round(r*.28)},${Math.round(gg*.24)},${Math.round(b*.24)})`,lite:`rgba(${Math.min(255,r+70)},${Math.min(255,gg+70)},${Math.min(255,b+70)},.55)`,at:elapsed};
+ const L=Math.max(10,R*rnd(.4,1.15)*(.8+.2*Math.min(1,power))),w0=Math.max(1,L*.022),lines=[],wedges=[],specks=[];
+ const line=(pts,wA,wB,tone,peak=false)=>lines.push({pts,w:pts.map((_,i)=>{const t=i/Math.max(1,pts.length-1);return peak?wA*Math.sin(Math.PI*clamp(t,.08,.92))+wB:wA+(wB-wA)*t}),tone});
+ const branch=(x,y,ang,len,w,depth,turn)=>{const n=3+Math.floor(Math.random()*3),{pts}=crackWalk(x,y,ang,len,n,turn);line(pts,w,w*.15,rnd(.7,.95));
+  if(depth<2)for(let i=1;i<pts.length-1;i++)if(Math.random()<(depth?.3:.55))branch(pts[i][0],pts[i][1],ang+(Math.random()<.5?-1:1)*rnd(.5,1.2),len*rnd(.25,.5),w*.55,depth+1,turn)};
+ const kind=['web','fissure','shatter','hair'][Math.floor(Math.random()*4)],a0=Math.random()*Math.PI*2;
+ if(kind==='web'){const n=5+Math.floor(Math.random()*4);for(let i=0;i<n;i++)branch(cx,cy,a0+i/n*Math.PI*2+rnd(-.4,.4),L*rnd(.5,1),w0*rnd(.7,1.2),0,.7)}
+ if(kind==='fissure'){const n=2+Math.floor(Math.random()*2);for(let i=0;i<n;i++){const a=a0+i*rnd(.5,1.2),A=crackWalk(cx,cy,a,L*rnd(.6,1),7,.22),B=crackWalk(cx,cy,a+Math.PI,L*rnd(.4,.8),6,.22);
+  const pts=[...B.pts.reverse(),...A.pts.slice(1)];line(pts,w0*1.6,w0*.12,rnd(.8,.95),true);
+  for(let k=2;k<pts.length-2;k++)if(Math.random()<.45){const t=crackWalk(pts[k][0],pts[k][1],a+(Math.random()<.5?-1:1)*rnd(.6,1.3),L*rnd(.1,.22),3,.5);line(t.pts,w0*.45,w0*.08,rnd(.6,.85))}}}
+ if(kind==='shatter'){const n=3+Math.floor(Math.random()*2);for(let i=0;i<n;i++){const {pts}=crackWalk(cx,cy,a0+i/n*Math.PI*2+rnd(-.5,.5),L*rnd(.6,1.05),6,.45);line(pts,w0*1.1,w0*.15,.9);
+  // 금을 따라 길쭉하게 벌어진 조각(가운데가 두꺼운 렌즈 모양) + 빗금
+  for(let k=1;k<pts.length-1;k++)if(Math.random()<.45){const [x0,y0]=pts[k-1],[x1,y1]=pts[k+1],dx=x1-x0,dy=y1-y0,l=Math.hypot(dx,dy)||1,nx=-dy/l,ny=dx/l,wd=l*rnd(.12,.28);
+   wedges.push({poly:[[x0,y0],[(x0+x1)/2+nx*wd,(y0+y1)/2+ny*wd],[x1,y1],[(x0+x1)/2-nx*wd*.4,(y0+y1)/2-ny*wd*.4]],tone:rnd(.45,.6)});
+   for(let h=0;h<4;h++){const t=(h+1)/5,mx=x0+dx*t,my=y0+dy*t;line([[mx-nx*wd*.3,my-ny*wd*.3],[mx+nx*wd*.8+dx*.05,my+ny*wd*.8+dy*.05]],w0*.25,w0*.25,.85)}}
+  branch(pts[pts.length-1][0],pts[pts.length-1][1],a0,L*.3,w0*.5,1,.6)}}
+ if(kind==='hair'){const n=8+Math.floor(Math.random()*6);for(let i=0;i<n;i++){const d=L*.6*Math.sqrt(Math.random()),a=Math.random()*Math.PI*2,{pts}=crackWalk(cx+Math.cos(a)*d,cy+Math.sin(a)*d,Math.random()*Math.PI*2,L*rnd(.15,.45),5,.9);line(pts,w0*rnd(.3,.55),w0*.08,rnd(.6,.85))}}
+ // 잡티: 가운데에 몰리고 바깥으로 성겨지는 작은 점·얼룩(여러 번 치면 고루 퍼진다)
+ const ns=Math.round(rnd(14,34)*(.7+.5*Math.min(1,power)));
+ for(let i=0;i<ns;i++){const d=L*rnd(.05,1)*Math.pow(Math.random(),.7),a=Math.random()*Math.PI*2;specks.push({x:cx+Math.cos(a)*d,y:cy+Math.sin(a)*d,rx:Math.max(.5,L*rnd(.004,.02)),ry:Math.max(.5,L*rnd(.004,.014)),rot:Math.random()*Math.PI,tone:rnd(.45,.85)})}
+ // 곱하기 색: 그 자리 그림을 아주 어둡게 한 색(tone 1)과 흰색(0) 사이
+ const dark=[r*.22,gg*.18,b*.18];
+ return {id:z.id,x:p.x,y:p.y,lines,wedges,specks,dark,at:elapsed};
 }
-// 금 하나 = 밝은 테두리(한쪽으로 살짝 비켜) + 어두운 속 → 패인 느낌
-function drawCrackSegs(ctx,c,W,H,dx,dy,k){
+const crackTone=(c,t)=>`rgb(${Math.round(255-t*(255-c.dark[0]))},${Math.round(255-t*(255-c.dark[1]))},${Math.round(255-t*(255-c.dark[2]))})`;
+function drawCrack(ctx,c,k,ox,oy){
  ctx.lineCap='round';ctx.lineJoin='round';
- for(const pass of [0,1])for(const [x0,y0,x1,y1,w] of c.segs){
-  const lw=Math.max(pass?.7:1,w*k*(pass?1:1.35)),off=pass?0:Math.max(.6,w*k*.45);
-  ctx.strokeStyle=pass?c.dark:c.lite;ctx.lineWidth=lw;ctx.beginPath();ctx.moveTo((x0+dx)*W+off,(y0+dy)*H+off);ctx.lineTo((x1+dx)*W+off,(y1+dy)*H+off);ctx.stroke();
- }
+ const X=x=>(x+ox)*k,Y=y=>(y+oy)*k;
+ for(const w of c.wedges){ctx.fillStyle=crackTone(c,w.tone);ctx.beginPath();w.poly.forEach(([x,y],i)=>i?ctx.lineTo(X(x),Y(y)):ctx.moveTo(X(x),Y(y)));ctx.closePath();ctx.fill()}
+ for(const l of c.lines){ctx.strokeStyle=crackTone(c,l.tone);for(let i=0;i<l.pts.length-1;i++){ctx.lineWidth=Math.max(.6,(l.w[i]+l.w[i+1])/2*k);ctx.beginPath();ctx.moveTo(X(l.pts[i][0]),Y(l.pts[i][1]));ctx.lineTo(X(l.pts[i+1][0]),Y(l.pts[i+1][1]));ctx.stroke()}}
+ for(const s of c.specks){ctx.fillStyle=crackTone(c,s.tone);ctx.beginPath();ctx.ellipse(X(s.x),Y(s.y),s.rx*k,s.ry*k,s.rot,0,Math.PI*2);ctx.fill()}
 }
-// 영역 모양은 바뀔 때만 다시 만든다
-const crackMasks=new Map();
+const crackMasks=new Map();// 영역 모양은 바뀔 때만 다시 만든다
 function crackMask(z){const key=zoneShapeKey(z),hit=crackMasks.get(z.id);if(hit?.key===key)return hit.c;const c=rawMaskCanvas(z);crackMasks.set(z.id,{key,c});return c}
+function fitLayer(c){const dpr=Math.min(window.devicePixelRatio||1,2),W=Math.max(1,Math.round(surface.clientWidth*dpr)),H=Math.max(1,Math.round(surface.clientHeight*dpr));if(c.width!==W||c.height!==H){c.width=W;c.height=H}return [W,H]}
+// tick이 매 프레임 부른다: 갈라짐 층과 얼굴 이펙트 층
 function drawCracks(){
- const dpr=Math.min(window.devicePixelRatio||1,2),W=Math.max(1,Math.round(surface.clientWidth*dpr)),H=Math.max(1,Math.round(surface.clientHeight*dpr));
- if(!gl)faceActive();// 그래픽 가속이 없을 때도 이펙트는 이 층에 그린다
- const fx=hasFaceFx();reactLayerUsed=fx||hitCracks.length>0;
- // 쓰지 않을 때는 층을 숨긴다(빈 캔버스도 화면 전체에 겹쳐 그려져 프레임이 느려진다)
- crackLayer.hidden=!reactLayerUsed;
- if(!reactLayerUsed){if(crackLayer.width>1){crackLayer.width=crackLayer.height=1}return}
- if(crackLayer.width!==W||crackLayer.height!==H){crackLayer.width=W;crackLayer.height=H}
- crackCtx.clearRect(0,0,W,H);
  hitCracks=hitCracks.filter(c=>elapsed-c.at<2.2&&zones.some(z=>z.id===c.id));
- const k=W/renderWidth;
- // 영역마다 따로 그린 뒤 그 영역 모양(마스크)으로 잘라 붙인다(영역 밖으로 삐져나가지 않게)
- for(const z of zones){
-  const list=hitCracks.filter(c=>c.id===z.id);if(!list.length)continue;
-  if(crackTmp.width!==W||crackTmp.height!==H){crackTmp.width=W;crackTmp.height=H}
-  const t=crackTmp.getContext('2d');t.clearRect(0,0,W,H);t.globalCompositeOperation='source-over';
-  const [dx,dy]=cpuDeformation(z,z.x,z.y);
-  for(const c of list){const age=elapsed-c.at;t.globalAlpha=clamp(age<1.2?1:1-(age-1.2),0,1);const [cx,cy]=cpuDeformation(z,c.x,c.y);drawCrackSegs(t,c,W,H,cx,cy,k)}
-  t.globalAlpha=1;t.globalCompositeOperation='destination-in';t.drawImage(crackMask(z),dx*W,dy*H,W,H);
-  crackCtx.drawImage(crackTmp,0,0);
+ crackLayer.hidden=!hitCracks.length;
+ if(!hitCracks.length){if(crackLayer.width>1)crackLayer.width=crackLayer.height=1}
+ else{
+  const [W,H]=fitLayer(crackLayer),k=W/renderWidth;
+  // 곱하기 층이라 바탕은 흰색(= 그림 그대로)
+  crackCtx.globalCompositeOperation='source-over';crackCtx.fillStyle='#fff';crackCtx.fillRect(0,0,W,H);
+  for(const z of zones){
+   const list=hitCracks.filter(c=>c.id===z.id);if(!list.length)continue;
+   if(crackTmp.width!==W||crackTmp.height!==H){crackTmp.width=W;crackTmp.height=H}
+   const t=crackTmp.getContext('2d');t.globalCompositeOperation='source-over';t.globalAlpha=1;t.clearRect(0,0,W,H);
+   for(const c of list){const age=elapsed-c.at,[dx,dy]=cpuDeformation(z,c.x,c.y);t.globalAlpha=clamp(age<1.2?1:1-(age-1.2),0,1);drawCrack(t,c,k,dx*renderWidth,dy*renderHeight)}
+   // 영역 모양 밖은 잘라 내고, 흰 바탕 위에 겹친다(영역 밖으로 삐져나가지 않게)
+   const [mx,my]=cpuDeformation(z,z.x,z.y);t.globalAlpha=1;t.globalCompositeOperation='destination-in';t.drawImage(crackMask(z),mx*W,my*H,W,H);
+   crackCtx.drawImage(crackTmp,0,0);
+  }
  }
+ if(!gl)faceActive();// 그래픽 가속이 없을 때도 이펙트는 그린다
+ faceFxUsed=hasFaceFx();faceFxLayer.hidden=!faceFxUsed;
+ if(!faceFxUsed){if(faceFxLayer.width>1)faceFxLayer.width=faceFxLayer.height=1;return}
+ const [W,H]=fitLayer(faceFxLayer),k=W/renderWidth;faceFxCtx.clearRect(0,0,W,H);
  // 물방울이 비출 그림은 원본 그림(화면을 읽으면 그래픽 카드가 매 프레임 멈춰 기다려 크게 느려진다)
- if(fx)drawFaceFx(crackCtx,(x,y)=>[x*k,y*k],k,faceLastActive,elapsed,true,bitmap,1/k);
+ drawFaceFx(faceFxCtx,(x,y)=>[x*k,y*k],k,faceLastActive,elapsed,true,bitmap,1/k);
 }
 
 // ── 얼굴 이펙트 ──
-// 세부 옵션(표정마다, 0~200%, 100 = 기본): sp 속도, fr 빈도, op 진하기
 const fxOpt=(x,key)=>{const o=x.fxo?.[key]||{};return {sp:Math.max(.1,(o.sp??100)/100),fr:Math.max(.1,(o.fr??100)/100),op:clamp((o.op??100)/100,0,2)}};
-// 이펙트 자리(그림 화소). 기본 자리 + 사용자가 옮긴 만큼(fxAt, 얼굴 크기 S 단위, u = 눈 선 방향, n = 위)
+// 모양: 자동이면 그림체로(SD에 가까우면 캐주얼)
+function faceFxStyle(g,f){return f?.fxStyle==='real'||f?.fxStyle==='casual'?f.fxStyle:g.sd>.6?'casual':'real'}
+// 이펙트 자리 = 기본 자리 + 사용자가 옮긴 만큼(fxAt, 얼굴 크기 S 단위, u = 눈 선 방향, n = 위)
 function faceFxShift(g,f,key){const d=f.fxAt?.[key];return d?fv.add(fv.mul(g.u,d.a*g.S),fv.mul(g.n,d.b*g.S)):{x:0,y:0}}
 function faceSweatSpot(g,f,i){
  const p=f.sweatAt?.[i];if(p)return fv.add(g.C,fv.add(fv.mul(g.u,p.a*g.S),fv.mul(g.n,p.b*g.S)));
@@ -121,114 +138,168 @@ function faceFxPlan(a){
 }
 function hasFaceFx(){return faceLastActive.some(a=>{const p=faceFxPlan(a);return p&&(p.sweat||p.tear||p.anger||p.heart||p.sparkle)})}
 // ctx에 그린다. at(px,py) = 그림 화소 → 캔버스 좌표, k = 그림 화소 1개의 캔버스 크기, follow = 그림 움직임 따라가기,
-// src = 물방울이 비출 그림(지금 화면), sk = 캔버스 좌표 → src 좌표 배율
+// src = 물방울이 비출 그림, sk = 캔버스 좌표 → src 좌표 배율
 function drawFaceFx(ctx,at,k,list,t,follow=true,src=null,sk=1){
  const move=p=>{if(!follow)return p;const ux=p.x/renderWidth,uy=p.y/renderHeight,z=hit(ux,uy);if(!z)return p;const [dx,dy]=cpuDeformation(z,ux,uy);return {x:p.x+dx*renderWidth,y:p.y+dy*renderHeight}};
  for(const a of list){
   const g=faceGeometry(a.k),P=faceFxPlan(a),f=faces[a.k];if(!P||!g.eyes.length)continue;
-  const S=g.S,up=Math.atan2(g.n.y,g.n.x),A=faceFxAnchors(g,f);
+  const S=g.S,up=Math.atan2(g.n.y,g.n.x),A=faceFxAnchors(g,f),casual=faceFxStyle(g,f)==='casual';
   ctx.save();ctx.lineJoin=ctx.lineCap='round';
-  // 반짝이: 얼굴 둘레에 아무 데서나 나타났다 사라지는 빛(가로·세로로 길게 번진다)
-  if(P.sparkle){const o=P.opt.sparkle,n=Math.round(3+3*o.fr+2*P.sparkleMore),c0=move(A.sparkle);
+  // 반짝이: 얼굴 둘레 아무 데서나 나타나 한두 번 반짝이고 사라진다. 모양·밝기(3단계)는 하나하나 다르게.
+  if(P.sparkle){const o=P.opt.sparkle,n=Math.round(2+3*o.fr+2*P.sparkleMore),c0=move(A.sparkle);
    for(let i=0;i<n;i++){
-    const period=(1.1+1.3*fHash(i,7))/o.sp,ph=t/period+fHash(i,3),cyc=Math.floor(ph),q=ph-cyc,life=.45;if(q>life)continue;
-    const ang=-Math.PI*(.05+1.1*fHash(i,cyc))-.0,rad=S*(1.25+1.05*fHash(cyc,i+11));
+    const period=(1.8+1.6*fHash(i,7))/o.sp,ph=t/period+fHash(i,3),cyc=Math.floor(ph),life=Math.min(.95,.75/o.sp)/period,q=(ph-cyc)/life;if(q>1)continue;
+    const ang=-Math.PI*(.05+1.1*fHash(i,cyc)),rad=S*(1.25+1.05*fHash(cyc,i+11));
     const p=fv.add(c0,fv.add(fv.mul(g.u,Math.cos(ang)*rad),fv.mul(g.n,-Math.sin(ang)*rad))),c=at(p.x,p.y);
-    const env=Math.sin(q/life*Math.PI),flick=.75+.25*Math.sin(t*40+i*3.1);
-    faceGlint(ctx,c[0],c[1],S*k*(.05+.05*fHash(i,cyc+5)),P.sparkle*o.op*env*flick);
+    const twice=fHash(i+5,cyc)>.55,env=twice?Math.pow(Math.abs(Math.sin(q*Math.PI*2)),1.3)*(q<.5?1:.75):Math.sin(q*Math.PI);
+    const level=[.45,.72,1][(i+cyc)%3],fat=fHash(cyc,i+23)>.7,size=S*k*(.045+.035*fHash(i,cyc+5))*(.75+.25*level);
+    if(casual)faceStar(ctx,c[0],c[1],size*1.6,P.sparkle*o.op*env*level);
+    else faceGlint(ctx,c[0],c[1],size,P.sparkle*o.op*env*level,fat,fHash(i+9,cyc));
    }}
   // 땀방울: 맺힘 → 살짝 부풂 → 짧게 흘러내리며 늘어짐 → 움직이는 도중에 옅어짐(빈도가 낮으면 사이에 쉼)
   if(P.sweat){const o=P.opt.sweat;for(let i=0;i<P.sweat;i++){
    const period=2.4/o.sp+(2.4/o.fr-2.4)*.5,Pq=((t/period+i*.37)%1)*(period*o.sp/2.4);if(Pq>.86)continue;
    const grow=Math.min(1,Pq/.12),swell=Pq<.12?grow:Pq<.35?1+.12*(Pq-.12)/.23:1.12,slide=Pq<.35?0:(Pq-.35)/.5,alpha=P.sweatW*o.op*(Pq<.6?1:1-(Pq-.6)/.26);
-   const base=move(fv.add(faceSweatSpot(g,f,i),fv.mul(g.n,-slide*S*.22))),c=at(base.x,base.y);
-   faceWaterDrop(ctx,c[0],c[1],S*.065*swell*k,1+.45*slide,up,alpha,src,sk);
+   const start=move(faceSweatSpot(g,f,i)),base=move(fv.add(faceSweatSpot(g,f,i),fv.mul(g.n,-slide*S*.22))),c=at(base.x,base.y),r=S*.065*swell*k;
+   if(casual)faceCasualDrop(ctx,c[0],c[1],r,1+.45*slide,up,alpha);
+   else{if(slide>.05){const s0=at(start.x,start.y);faceWetTrail(ctx,s0,c,r*.35,alpha*.8)}faceWaterDrop(ctx,c[0],c[1],r,1+.45*slide,up,alpha,src,sk)}
   }}
-  // 눈물: 아랫꺼풀 곡선 위 바깥쪽 1/3에 기울기를 따라 맺힌다(물이 고인 렌즈). 진할 때는 볼을 타고 흘러내린다.
+  // 눈물: 아랫꺼풀 곡선 위 바깥쪽 1/3에 기울기를 따라 맺힌다. 진할 때는 볼을 타고 흘러내린다.
   if(P.tear){const o=P.opt.tear;for(const e of g.eyes){
    const q=faceQuad(e.inner,e.lo,e.outer,20),p0=fv.add(q[15],A.tear),nx=fv.add(q[16],A.tear),ang=Math.atan2(nx.y-p0.y,nx.x-p0.x),m=move(p0),c=at(m.x,m.y);
-   const shine=.88+.12*Math.sin(t*3*o.sp+e.c.x);
-   faceWaterLens(ctx,c[0],c[1],e.w*.16*k,e.w*.06*k,ang,P.tear*o.op*shine,src,sk);
+   const alpha=P.tear*o.op;
+   if(casual)faceCasualLens(ctx,c[0],c[1],e.w*.15*k,e.w*.065*k,ang,alpha);
+   else faceTearPool(ctx,c[0],c[1],e.w*.17*k,e.w*.06*k,ang,up,alpha,src,sk,t+e.c.x);
    if(P.flow>.05){
-    const period=1.8/o.sp,Pq=(t/period)%1*(o.fr),len=Math.min(1,Pq/.6)*e.h*1.6,fade=Pq<.6?1:Math.max(0,1-(Pq-.6)/.4),steps=12,pts=[];
+    const Pq=(t/1.8)%1,len=Math.min(1,Pq/.6)*e.h*1.6,fade=Pq<.6?1:Math.max(0,1-(Pq-.6)/.4),steps=12,pts=[];
     for(let s=0;s<=steps;s++){const pp=move(fv.add(p0,fv.add(fv.mul(g.n,-len*s/steps),fv.mul(g.u,Math.sin(s*.8)*e.w*.02))));pts.push(at(pp.x,pp.y))}
-    ctx.save();ctx.globalAlpha=P.flow*fade*o.op;
-    for(const [wid,col] of [[e.w*.07*k,'rgba(0,0,0,.07)'],[e.w*.022*k,'rgba(255,255,255,.55)']]){ctx.lineWidth=Math.max(1,wid);ctx.strokeStyle=col;ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));ctx.stroke()}
-    ctx.restore();
-    const end=pts.at(-1);if(len>e.h*.3)faceWaterDrop(ctx,end[0],end[1],e.w*.05*k,1.2,up,P.flow*fade*o.op,src,sk);
+    if(len>1)faceTearStream(ctx,pts,e.w*.05*k,P.flow*fade*o.op,casual,up,src,sk);
    }
   }}
-  // 💢: 머리 위 바깥쪽. 테두리 없이 붉은 그라데이션 + 안쪽 밝은 줄 + 은은한 빛. 진할 때 커진다.
-  if(P.anger){const o=P.opt.anger,pos=move(A.anger),c=at(pos.x,pos.y),beat=Math.sin(t*7*o.sp),pop=o.fr<1?Math.max(0,Math.sin(t*o.fr*2)):1;
-   faceAnger(ctx,c[0],c[1],S*.2*k*(1+.5*P.angerBig)*(1+.08*beat),P.anger*o.op*pop)}
-  // 하트: 기본 자리에서 떠오르며 옅어진다
+  // 💢: 머리 위 바깥쪽. 진할 때 커진다.
+  if(P.anger){const o=P.opt.anger,pos=move(A.anger),c=at(pos.x,pos.y),beat=Math.sin(t*7*o.sp),pop=o.fr<1?Math.max(0,Math.sin(t*o.fr*2)):1,sz=S*.2*k*(1+.5*P.angerBig)*(1+.08*beat);
+   if(casual)faceAngerCasual(ctx,c[0],c[1],sz,P.anger*o.op*pop);else faceAnger(ctx,c[0],c[1],sz,P.anger*o.op*pop)}
+  // 하트: 얼굴에서 둥실 떠올라 한 번 반짝이고, 비눗방울처럼 '뾱' 터지며 사라진다
   if(P.heart){const o=P.opt.heart,n=Math.max(1,Math.round(2*o.fr));for(let i=0;i<n;i++){
-   const Pq=(t/(2.2/o.sp)+i/n)%1,pos=move(fv.add(A.heart,fv.add(fv.mul(g.u,S*.12*Math.sin(i*2.3+Pq*3)),fv.mul(g.n,S*(.05+.55*Pq))))),c=at(pos.x,pos.y);
-   faceHeart(ctx,c[0],c[1],S*.11*k*(.7+.4*Math.min(1,Pq*3)),Math.sin(Pq*6+i)*.15,P.heart*o.op*(Pq<.7?1:1-(Pq-.7)/.3));
+   const Pq=(t/(2.6/o.sp)+i/n)%1;if(Pq>.92)continue;
+   const rise=Math.min(Pq,.78),pos=move(fv.add(A.heart,fv.add(fv.mul(g.u,S*(.1*Math.sin(i*2.3+rise*5)+.15*(i%2?-1:1)*fHash(i,Math.floor(t/(2.6/o.sp))))),fv.mul(g.n,S*(.05+.6*rise))))),c=at(pos.x,pos.y);
+   const base=S*.11*k*(.55+.45*Math.min(1,Pq*4));
+   if(Pq<.78){faceHeartShape(ctx,c[0],c[1],base,Math.sin(Pq*6+i)*.15,P.heart*o.op,casual);
+    const fl=Pq>.48&&Pq<.66?Math.sin((Pq-.48)/.18*Math.PI):0;if(fl>0)faceGlint(ctx,c[0]-base*.35,c[1]-base*.4,base*.22,P.heart*o.op*fl,false,.5)}// 한 번 반짝
+   else faceHeartPop(ctx,c[0],c[1],base,(Pq-.78)/.14,P.heart*o.op,casual,i);
   }}
   ctx.restore();
  }
 }
-// 물방울(땀): 위가 뾰족하고 아래가 둥근 모양. 안쪽은 그 자리 그림을 확대·뒤집어 비추고(렌즈), 가장자리는 어둡게, 위에 반사광.
+// ── 실사풍 모양 ──
 function dropPath(ctx,r,h){ctx.beginPath();ctx.moveTo(0,-h);ctx.bezierCurveTo(r*.55,-h*.45,r,-r*.1,r,r*.15);ctx.arc(0,r*.15,r,0,Math.PI);ctx.bezierCurveTo(-r,-r*.1,-r*.55,-h*.45,0,-h);ctx.closePath()}
+function faceSpecular(ctx,x,y,r,a=1){const gr=ctx.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,`rgba(255,255,255,${.95*a})`);gr.addColorStop(.45,`rgba(255,255,255,${.5*a})`);gr.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=gr;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()}
+// 렌즈: 둘레 그림을 1.4배로 키우고 뒤집어 비춘다(clip 안에서 부른다)
+function faceRefract(ctx,src,sk,x,y,s,rot){if(!src)return;ctx.save();ctx.rotate(-rot);ctx.scale(1,-1);try{ctx.drawImage(src,(x-s/1.4)*sk,(y-s/1.4)*sk,2*s/1.4*sk,2*s/1.4*sk,-s,-s,2*s,2*s)}catch(_){}ctx.restore()}
+// 땀방울(실사): 투명한 물방울. 안은 그림을 비추고, 한쪽에 얇은 어두운 테두리, 위에 강한 반사광·아래에 부드러운 반사.
 function faceWaterDrop(ctx,x,y,r,stretch,up,alpha,src,sk){
- if(alpha<=.01||r<=.5)return;const h=r*1.7*stretch;
- ctx.save();ctx.translate(x,y);ctx.rotate(up+Math.PI/2);ctx.globalAlpha=clamp(alpha,0,1);
- // 그림자(아래로 살짝)
- ctx.save();ctx.translate(r*.12,r*.28);dropPath(ctx,r,h);ctx.fillStyle='rgba(0,0,0,.16)';ctx.fill();ctx.restore();
- dropPath(ctx,r,h);ctx.save();ctx.clip();
- if(src){ctx.save();ctx.rotate(-(up+Math.PI/2));ctx.scale(1,-1);const s=r*1.6;// 렌즈: 둘레 그림을 1.4배로 키워 위아래를 뒤집어 비춘다
-  try{ctx.drawImage(src,(x-s/1.4)*sk,(y-s/1.4)*sk,2*s/1.4*sk,2*s/1.4*sk,-s,-s,2*s,2*s)}catch(_){}ctx.restore();
-  ctx.fillStyle='rgba(255,255,255,.1)';ctx.fillRect(-r*2,-h*2,r*4,h*4)}
- else{ctx.fillStyle='rgba(200,225,245,.35)';ctx.fillRect(-r*2,-h*2,r*4,h*4)}
- const rim=ctx.createRadialGradient(0,r*.1,r*.2,0,r*.1,r*1.15);rim.addColorStop(0,'rgba(0,0,0,0)');rim.addColorStop(.75,'rgba(0,0,0,.08)');rim.addColorStop(1,'rgba(0,0,0,.32)');
+ if(alpha<=.01||r<=.5)return;const h=r*1.7*stretch,rot=up+Math.PI/2;
+ ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.globalAlpha=clamp(alpha,0,1);
+ ctx.save();ctx.translate(r*.15,r*.3);dropPath(ctx,r,h);ctx.fillStyle='rgba(0,0,0,.14)';ctx.fill();ctx.restore();
+ dropPath(ctx,r,h);ctx.save();ctx.clip();faceRefract(ctx,src,sk,x,y,r*1.6,rot);
+ const rim=ctx.createRadialGradient(-r*.2,0,r*.2,0,r*.1,r*1.15);rim.addColorStop(0,'rgba(255,255,255,.06)');rim.addColorStop(.7,'rgba(0,0,0,.06)');rim.addColorStop(1,'rgba(0,0,0,.3)');
  ctx.fillStyle=rim;ctx.fillRect(-r*2,-h*2,r*4,h*4);ctx.restore();
- ctx.lineWidth=Math.max(.6,r*.07);ctx.strokeStyle='rgba(255,255,255,.28)';dropPath(ctx,r,h);ctx.stroke();
- faceSpecular(ctx,-r*.38,-r*.05,r*.32);faceSpecular(ctx,r*.42,r*.62,r*.14,.5);
+ ctx.lineWidth=Math.max(.6,r*.1);ctx.strokeStyle='rgba(40,30,30,.4)';ctx.beginPath();ctx.arc(0,r*.15,r*.95,-.2,Math.PI*.75);ctx.stroke();// 그늘진 쪽 테두리
+ faceSpecular(ctx,-r*.35,-r*.15,r*.38);faceSpecular(ctx,r*.3,r*.7,r*.22,.55);
  ctx.restore();
 }
-// 고인 눈물: 아랫꺼풀을 따라 길쭉한 렌즈
-function faceWaterLens(ctx,x,y,rx,ry,ang,alpha,src,sk){
+// 흘러내린 자국: 젖은 광택 줄
+function faceWetTrail(ctx,a,b,w,alpha){ctx.save();ctx.globalAlpha=clamp(alpha,0,1)*.6;ctx.lineCap='round';ctx.strokeStyle='rgba(0,0,0,.08)';ctx.lineWidth=Math.max(1,w*2);ctx.beginPath();ctx.moveTo(...a);ctx.lineTo(...b);ctx.stroke();ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=Math.max(.6,w*.6);ctx.beginPath();ctx.moveTo(...a);ctx.lineTo(...b);ctx.stroke();ctx.restore()}
+// 고인 눈물(실사): 아랫꺼풀을 따라 길쭉한 물. 어두운 테두리 조각 + 흰 반사 덩어리 몇 개 + 아래로 살짝 맺힌 방울(레퍼런스).
+function faceTearPool(ctx,x,y,rx,ry,ang,up,alpha,src,sk,seed){
  if(alpha<=.01||rx<=.5)return;
  ctx.save();ctx.translate(x,y);ctx.rotate(ang);ctx.globalAlpha=clamp(alpha,0,1);
- ctx.beginPath();ctx.ellipse(0,0,rx,ry,0,0,Math.PI*2);ctx.save();ctx.clip();
- if(src){ctx.save();ctx.rotate(-ang);ctx.scale(1,-1);try{ctx.drawImage(src,(x-rx*.8)*sk,(y-rx*.8)*sk,rx*1.6*sk,rx*1.6*sk,-rx*1.1,-rx*1.1,rx*2.2,rx*2.2)}catch(_){}ctx.restore()}
- const rim=ctx.createRadialGradient(0,0,ry*.3,0,0,rx);rim.addColorStop(0,'rgba(255,255,255,.08)');rim.addColorStop(1,'rgba(0,0,0,.28)');ctx.fillStyle=rim;ctx.fillRect(-rx,-rx,rx*2,rx*2);ctx.restore();
- ctx.lineWidth=Math.max(.6,ry*.12);ctx.strokeStyle='rgba(255,255,255,.35)';ctx.beginPath();ctx.ellipse(0,0,rx,ry,0,Math.PI*1.05,Math.PI*1.95);ctx.stroke();
- faceSpecular(ctx,-rx*.35,-ry*.25,ry*.55);
+ const shape=()=>{ctx.beginPath();ctx.moveTo(-rx,0);ctx.bezierCurveTo(-rx*.6,-ry*1.1,rx*.6,-ry*1.1,rx,0);ctx.bezierCurveTo(rx*.7,ry*.9,rx*.25,ry*1.1,rx*.1,ry*1.6);ctx.bezierCurveTo(-rx*.05,ry*2.2,-rx*.3,ry*1.2,-rx*.6,ry*.8);ctx.closePath()};
+ shape();ctx.save();ctx.clip();faceRefract(ctx,src,sk,x,y,rx*1.3,ang);
+ const rim=ctx.createRadialGradient(0,0,ry*.3,0,0,rx*1.1);rim.addColorStop(0,'rgba(255,255,255,.08)');rim.addColorStop(1,'rgba(0,0,0,.25)');ctx.fillStyle=rim;ctx.fillRect(-rx*2,-rx*2,rx*4,rx*4);ctx.restore();
+ ctx.lineWidth=Math.max(.7,ry*.18);ctx.strokeStyle='rgba(30,22,28,.6)';shape();ctx.setLineDash([rx*.5,rx*.25,rx*.8,rx*.3]);ctx.stroke();ctx.setLineDash([]);
+ const sh=.85+.15*Math.sin(seed*2.7);ctx.fillStyle=`rgba(255,255,255,${.95*sh})`;
+ for(const [bx,by,bw,bh] of [[-rx*.45,-ry*.35,rx*.28,ry*.32],[rx*.25,-ry*.4,rx*.14,ry*.22],[rx*.1,ry*1.3,rx*.06,ry*.3]]){ctx.beginPath();ctx.ellipse(bx,by,bw,bh,-.3,0,Math.PI*2);ctx.fill()}
  ctx.restore();
 }
-function faceSpecular(ctx,x,y,r,a=1){const gr=ctx.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,`rgba(255,255,255,${.95*a})`);gr.addColorStop(.45,`rgba(255,255,255,${.5*a})`);gr.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=gr;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()}
-// 반짝이 빛: 밝은 점 + 가로·세로로 길게, 대각선으로 짧게 번지는 빛줄기(더하기 합성)
-function faceGlint(ctx,x,y,r,alpha){
+function faceTearStream(ctx,pts,w,alpha,casual,up,src,sk){
+ if(alpha<=.01)return;ctx.save();ctx.globalAlpha=clamp(alpha,0,1);ctx.lineCap='round';ctx.lineJoin='round';
+ const path=()=>{ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p))};
+ if(casual){path();ctx.strokeStyle='rgba(60,125,195,.85)';ctx.lineWidth=Math.max(1.5,w*1.3);ctx.stroke();path();ctx.strokeStyle='rgba(175,220,255,.95)';ctx.lineWidth=Math.max(1,w*.8);ctx.stroke()}
+ else{path();ctx.strokeStyle='rgba(30,22,28,.45)';ctx.lineWidth=Math.max(1.2,w*1.2);ctx.stroke();path();ctx.strokeStyle='rgba(235,240,245,.55)';ctx.lineWidth=Math.max(.8,w*.85);ctx.stroke();path();ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=Math.max(.5,w*.25);ctx.stroke()}
+ ctx.restore();
+ const e=pts.at(-1);if(casual)faceCasualDrop(ctx,e[0],e[1],w*1.1,1.1,up,alpha);else faceWaterDrop(ctx,e[0],e[1],w*1.1,1.1,up,alpha,src,sk);
+}
+// 반짝이(실사): 밝은 점 + 가로로 길고 세로로 짧은 빛줄기 + 짧은 대각선. 뚱뚱한 것은 점이 크고 줄기가 짧고 굵다.
+function faceGlint(ctx,x,y,r,alpha,fat=false,v=.5){
  if(alpha<=.01||r<=.3)return;
  ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=clamp(alpha,0,1);ctx.translate(x,y);
- const core=ctx.createRadialGradient(0,0,0,0,0,r*2.2);core.addColorStop(0,'rgba(255,255,250,1)');core.addColorStop(.25,'rgba(255,246,215,.7)');core.addColorStop(1,'rgba(255,230,180,0)');
- ctx.fillStyle=core;ctx.beginPath();ctx.arc(0,0,r*2.2,0,Math.PI*2);ctx.fill();
- for(const [ang,len,wid,a] of [[0,r*9,r*.22,1],[Math.PI/2,r*7,r*.2,.95],[Math.PI/4,r*3,r*.12,.5],[-Math.PI/4,r*3,r*.12,.5]]){
+ const cr=r*(fat?3:2.1);const core=ctx.createRadialGradient(0,0,0,0,0,cr);core.addColorStop(0,'rgba(255,255,250,1)');core.addColorStop(.25,'rgba(255,246,215,.7)');core.addColorStop(1,'rgba(255,230,180,0)');
+ ctx.fillStyle=core;ctx.beginPath();ctx.arc(0,0,cr,0,Math.PI*2);ctx.fill();
+ const H=r*(fat?3.2:4+3*v),V=r*(fat?2:2.5+1.7*(1-v)),wd=r*(fat?.38:.2);// 세로는 예전(7r)의 60% 이하
+ for(const [ang,len,wid,a] of [[0,H,wd,1],[Math.PI/2,V,wd*.9,.9],[Math.PI/4,r*(fat?1.6:2.4),wd*.55,.45],[-Math.PI/4,r*(fat?1.6:2.4),wd*.55,.45]]){
   ctx.save();ctx.rotate(ang);const lg=ctx.createLinearGradient(-len,0,len,0);lg.addColorStop(0,'rgba(255,240,210,0)');lg.addColorStop(.5,`rgba(255,252,240,${a})`);lg.addColorStop(1,'rgba(255,240,210,0)');
   ctx.fillStyle=lg;ctx.beginPath();ctx.moveTo(-len,0);ctx.quadraticCurveTo(0,-wid,len,0);ctx.quadraticCurveTo(0,wid,-len,0);ctx.fill();ctx.restore()}
  ctx.restore();
 }
+// 💢(실사): 테두리 없이 차분한 붉은색(채도를 낮춘 진홍) 그라데이션 + 은은한 빛
 function faceAnger(ctx,x,y,sz,alpha){
  if(alpha<=.01)return;
  ctx.save();ctx.translate(x,y);ctx.globalAlpha=clamp(alpha,0,1);ctx.lineCap='round';
  for(let q=0;q<4;q++){ctx.save();ctx.rotate(q*Math.PI/2+.2);
   const path=()=>{ctx.beginPath();ctx.moveTo(sz*.22,-sz*.95);ctx.quadraticCurveTo(sz*.28,-sz*.28,sz*.95,-sz*.22)};
-  ctx.shadowColor='rgba(255,40,30,.55)';ctx.shadowBlur=sz*.35;
-  const gr=ctx.createLinearGradient(sz*.2,-sz*.95,sz*.95,-sz*.2);gr.addColorStop(0,'#ff6a52');gr.addColorStop(.5,'#e3241f');gr.addColorStop(1,'#a8100f');
+  ctx.shadowColor='rgba(170,35,30,.4)';ctx.shadowBlur=sz*.3;
+  const gr=ctx.createLinearGradient(sz*.2,-sz*.95,sz*.95,-sz*.2);gr.addColorStop(0,'#d6564a');gr.addColorStop(.5,'#b3302a');gr.addColorStop(1,'#7c1a18');
   path();ctx.strokeStyle=gr;ctx.lineWidth=Math.max(1.5,sz*.24);ctx.stroke();ctx.shadowBlur=0;
-  path();ctx.strokeStyle='rgba(255,215,200,.55)';ctx.lineWidth=Math.max(.6,sz*.06);ctx.stroke();
+  path();ctx.strokeStyle='rgba(255,200,185,.4)';ctx.lineWidth=Math.max(.6,sz*.05);ctx.stroke();
   ctx.restore()}
  ctx.restore();
 }
-function faceHeart(ctx,x,y,sz,rot,alpha){
- if(alpha<=.01)return;
+function heartPath(ctx,sz){ctx.beginPath();ctx.moveTo(0,sz*.9);ctx.bezierCurveTo(-sz*1.4,-sz*.1,-sz*.6,-sz*1.1,0,-sz*.35);ctx.bezierCurveTo(sz*.6,-sz*1.1,sz*1.4,-sz*.1,0,sz*.9);ctx.closePath()}
+function faceHeartShape(ctx,x,y,sz,rot,alpha,casual){
+ if(alpha<=.01||sz<=.3)return;
  ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.globalAlpha=clamp(alpha,0,1);
- const path=()=>{ctx.beginPath();ctx.moveTo(0,sz*.9);ctx.bezierCurveTo(-sz*1.4,-sz*.1,-sz*.6,-sz*1.1,0,-sz*.35);ctx.bezierCurveTo(sz*.6,-sz*1.1,sz*1.4,-sz*.1,0,sz*.9)};
- ctx.shadowColor='rgba(255,90,140,.5)';ctx.shadowBlur=sz*.6;
- const gr=ctx.createRadialGradient(-sz*.3,-sz*.45,sz*.1,0,0,sz*1.3);gr.addColorStop(0,'#ffb3c8');gr.addColorStop(.5,'#f2577f');gr.addColorStop(1,'#b81e4b');
- path();ctx.fillStyle=gr;ctx.fill();ctx.shadowBlur=0;
- faceSpecular(ctx,-sz*.42,-sz*.42,sz*.3,.8);
+ if(casual){heartPath(ctx,sz);ctx.fillStyle='#ff6b9a';ctx.fill();ctx.lineWidth=Math.max(1,sz*.16);ctx.strokeStyle='#5a1830';ctx.stroke();ctx.fillStyle='rgba(255,255,255,.85)';ctx.beginPath();ctx.ellipse(-sz*.42,-sz*.42,sz*.16,sz*.1,-.6,0,Math.PI*2);ctx.fill()}
+ else{ctx.shadowColor='rgba(255,90,140,.45)';ctx.shadowBlur=sz*.6;
+  const gr=ctx.createRadialGradient(-sz*.3,-sz*.45,sz*.1,0,0,sz*1.3);gr.addColorStop(0,'#ffb3c8');gr.addColorStop(.5,'#f2577f');gr.addColorStop(1,'#b81e4b');
+  heartPath(ctx,sz);ctx.fillStyle=gr;ctx.fill();ctx.shadowBlur=0;faceSpecular(ctx,-sz*.42,-sz*.42,sz*.3,.8)}
  ctx.restore();
+}
+// 터지는 하트: 살짝 부풀며 옅어지고, 작은 물방울 조각과 얇은 고리가 퍼진다(비눗방울이 '뾱')
+function faceHeartPop(ctx,x,y,sz,q,alpha,casual,seed){
+ q=clamp(q,0,1);ctx.save();ctx.translate(x,y);ctx.globalAlpha=clamp(alpha*(1-q),0,1);
+ if(q<.35){const s=sz*(1+q*1.2);heartPath(ctx,s);ctx.fillStyle=casual?'rgba(255,107,154,.6)':'rgba(242,87,127,.45)';ctx.fill()}
+ ctx.lineWidth=Math.max(.8,sz*.08);ctx.strokeStyle=casual?'rgba(255,107,154,.9)':'rgba(255,200,215,.9)';ctx.beginPath();ctx.arc(0,0,sz*(.6+1.2*q),0,Math.PI*2);ctx.stroke();
+ ctx.fillStyle=casual?'#ff6b9a':'rgba(255,215,228,.95)';
+ for(let i=0;i<7;i++){const a=i/7*Math.PI*2+seed,d=sz*(.5+1.6*q);ctx.beginPath();ctx.arc(Math.cos(a)*d,Math.sin(a)*d,Math.max(.6,sz*.1*(1-q)),0,Math.PI*2);ctx.fill()}
+ ctx.restore();
+}
+// ── 캐주얼·SD 모양: 테두리 있는 단순한 도형 ──
+function faceCasualDrop(ctx,x,y,r,stretch,up,alpha){
+ if(alpha<=.01||r<=.3)return;const h=r*1.7*stretch;
+ ctx.save();ctx.translate(x,y);ctx.rotate(up+Math.PI/2);ctx.globalAlpha=clamp(alpha,0,1);
+ dropPath(ctx,r,h);ctx.fillStyle='rgba(175,220,255,.75)';ctx.fill();ctx.lineWidth=Math.max(1,r*.16);ctx.strokeStyle='rgba(60,125,195,.9)';ctx.stroke();
+ ctx.beginPath();ctx.ellipse(-r*.35,-r*.05,r*.18,r*.3,-.3,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,.95)';ctx.fill();ctx.restore();
+}
+function faceCasualLens(ctx,x,y,rx,ry,ang,alpha){
+ if(alpha<=.01)return;ctx.save();ctx.translate(x,y);ctx.rotate(ang);ctx.globalAlpha=clamp(alpha,0,1);
+ ctx.beginPath();ctx.ellipse(0,0,rx,ry,0,0,Math.PI*2);ctx.fillStyle='rgba(170,215,255,.6)';ctx.fill();ctx.lineWidth=Math.max(1,ry*.25);ctx.strokeStyle='rgba(70,130,200,.8)';ctx.stroke();
+ ctx.beginPath();ctx.ellipse(-rx*.35,-ry*.3,rx*.22,ry*.28,0,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,.9)';ctx.fill();ctx.restore();
+}
+// 💢(캐주얼): 굵은 빨간 획 + 검은 테두리 + 아래로 비킨 그림자(레퍼런스)
+function faceAngerCasual(ctx,x,y,sz,alpha){
+ if(alpha<=.01)return;
+ ctx.save();ctx.translate(x,y);ctx.globalAlpha=clamp(alpha,0,1);ctx.lineCap='round';
+ const arm=()=>{ctx.beginPath();ctx.moveTo(sz*.2,-sz*.95);ctx.quadraticCurveTo(sz*.22,-sz*.22,sz*.95,-sz*.2)};
+ for(const pass of [0,1,2])for(let q=0;q<4;q++){ctx.save();ctx.rotate(q*Math.PI/2+.15);
+  if(pass===0){ctx.translate(sz*.06,sz*.08);arm();ctx.strokeStyle='#000';ctx.lineWidth=sz*.42;ctx.stroke()}
+  if(pass===1){arm();ctx.strokeStyle='#000';ctx.lineWidth=sz*.42;ctx.stroke()}
+  if(pass===2){arm();ctx.strokeStyle='#ff1f1f';ctx.lineWidth=sz*.26;ctx.stroke()}
+  ctx.restore()}
+ ctx.restore();
+}
+function faceStar(ctx,x,y,sz,alpha){
+ if(alpha<=.01)return;ctx.save();ctx.translate(x,y);ctx.globalAlpha=clamp(alpha,0,1);ctx.beginPath();
+ for(let q=0;q<8;q++){const rr=q%2?sz*.28:sz,aa=q/8*Math.PI*2-Math.PI/2;ctx.lineTo(Math.cos(aa)*rr,Math.sin(aa)*rr)}ctx.closePath();
+ ctx.fillStyle='#fffbe0';ctx.fill();ctx.lineWidth=Math.max(1,sz*.12);ctx.strokeStyle='rgba(150,110,20,.85)';ctx.stroke();ctx.restore();
 }

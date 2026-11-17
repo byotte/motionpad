@@ -111,7 +111,7 @@
 
 /* 세로로 쌓이는 화면(폰): 미리보기는 위에 붙고 창 전체가 한 번에 내려간다 */
 @media (orientation:portrait),(max-width:779px){
- #exprDialog{overflow-y:auto;overflow-x:hidden;display:block}
+ #exprDialog{overflow-y:auto;overflow-x:hidden}
  #exprDialog[open]{display:block}
  .exprMain{height:auto;grid-template-columns:minmax(0,1fr)}
  .exprStage{height:38dvh}

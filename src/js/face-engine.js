@@ -81,7 +81,7 @@ function faceGeometry(k){
  // 지도 범위: 모든 곡선 + 휘는 범위 + 뺨 + 귀
  let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
  for(const cv of curves){const R=Math.max(cv.rUp,cv.rDown)+2;for(const p of cv.pts){x0=Math.min(x0,p.x-R);y0=Math.min(y0,p.y-R);x1=Math.max(x1,p.x+R);y1=Math.max(y1,p.y+R)}}
- for(const ch of cheeks){const R=ch.rx*1.3*1.5+2;x0=Math.min(x0,ch.c.x-R);y0=Math.min(y0,ch.c.y-R);x1=Math.max(x1,ch.c.x+R);y1=Math.max(y1,ch.c.y+R)}
+ for(const ch of cheeks){const R=ch.rx*1.3*2+2;x0=Math.min(x0,ch.c.x-R);y0=Math.min(y0,ch.c.y-R);x1=Math.max(x1,ch.c.x+R);y1=Math.max(y1,ch.c.y+R)}
  for(const line of ears)for(const p of line){const R=earW*2;x0=Math.min(x0,p.x-R);y0=Math.min(y0,p.y-R);x1=Math.max(x1,p.x+R);y1=Math.max(y1,p.y+R)}
  const rect=x1>x0?{x:Math.max(0,x0),y:Math.max(0,y0),w:Math.max(4,Math.min(renderWidth,x1)-Math.max(0,x0)),h:Math.max(4,Math.min(renderHeight,y1)-Math.max(0,y0))}:null;
  const g={key,eyes,mouth:m,u,n,C,S,curves,amps,rect,hasBrow,basis:null,cheeks,ears,earW,sd,style,autoStyle,red:null};
@@ -120,7 +120,7 @@ function fHash(x,y){const s=Math.sin(x*127.1+y*311.7)*43758.5453;return s-Math.f
 function fNoise(x,y){const i=Math.floor(x),j=Math.floor(y);let a=x-i,b=y-j;a=a*a*(3-2*a);b=b*b*(3-2*b);
  return (fHash(i,j)*(1-a)+fHash(i+1,j)*a)*(1-b)+(fHash(i,j+1)*(1-a)+fHash(i+1,j+1)*a)*b}
 function faceRedBasis(g,area=50){
- const sc=.5+clamp(area,0,100)/100;// 면적 0~100 → 뺨 크기 0.5~1.5배(50 = 추정한 크기)
+ const sc=area<=50?.5+area/100:1+(area-50)/50;// 면적 0~100 → 뺨 크기 0.5~2배(50 = 추정한 크기)
  if(!g.rect)return null;if(g.red&&g.redArea===Math.round(area/5))return g.red;g.redArea=Math.round(area/5);
  const G=FACE_G,{rect}=g,cheek=new Float32Array(G*G),hatch=new Float32Array(G*G),ear=new Float32Array(G*G),ang=Math.atan2(g.u.y,g.u.x);
  for(let j=0;j<G;j++){const py=rect.y+(j+.5)/G*rect.h;for(let i=0;i<G;i++){const px=rect.x+(i+.5)/G*rect.w,idx=j*G+i;
@@ -270,7 +270,7 @@ function drawExprPreview(){
   let v=tb*(.8+.2*fNoise(x*.75,y*.75))*(.72+.28*fNoise(x/st[3]+k*7,y/st[3]+k*7));
   if(st[0]>.5&&ta>.01){const s=(x*nd[0]+y*nd[1])/st[2],id=Math.floor(s),f=s-id,along=x*ld[0]+y*ld[1],jj=fHash(id,k+3),manga=st[0]>1.5,hw=manga?.13:.07,soft=1/st[2];
    const line=1-smoothstep(hw,hw+soft,Math.abs(f-.5));let keep=smoothstep(.2+.35*jj,.35+.35*jj,ta);if(!manga)keep*=fNoise(id*3.1,along/(st[2]*2.6))>=.32?1:0;
-   v+=line*keep*(manga?.85:.38)*smoothstep(0,.15,ta)}
+   v+=line*keep*(manga?.85:.5)*smoothstep(0,.15,ta)}
   return v};
  const img=ctx.createImageData(cw,ch),out=img.data;
  const fieldAt=(x,y,o)=>{const fx=(x-r.x)/r.w*G-.5,fy=(y-r.y)/r.h*G-.5;if(fx<0||fy<0||fx>=G-1||fy>=G-1){o[0]=o[1]=0;return}
@@ -284,7 +284,7 @@ function drawExprPreview(){
   if(sx<0||sy<0||sx>W-1||sy>H-1){out[o+3]=0;continue}
   const ix=Math.min(W-2,sx|0),iy=Math.min(H-2,sy|0),a=sx-ix,b=sy-iy,p=(iy*W+ix)*4,q=p+W*4;
   for(let c=0;c<4;c++)out[o+c]=(src[p+c]*(1-a)+src[p+4+c]*a)*(1-b)+(src[q+c]*(1-a)+src[q+4+c]*a)*b;
-  if(Rv){const red=redAt(sx,sy);if(red>.001){const lum=(.3*out[o]+.59*out[o+1]+.11*out[o+2])/255,m=Math.min(red,1.6)*.6*smoothstep(.15,.55,lum);out[o+1]*=1-.38*m;out[o+2]*=1-.36*m}}
+  if(Rv){const red=redAt(sx,sy);if(red>.001){const lum=(.3*out[o]+.59*out[o+1]+.11*out[o+2])/255,m=Math.min(red+red*red,2.2)*.6*smoothstep(.15,.55,lum);out[o+1]*=1-.38*m;out[o+2]*=1-.36*m}}
  }
  ctx.putImageData(img,0,0);
  exprView={vx,vy,vw,vh,cw,ch};

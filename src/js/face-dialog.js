@@ -21,11 +21,19 @@ function paintExprDialog(){
  for(const k of ['bh','bm','bt'])$('expr_'+k).disabled=!g.hasBrow;
  for(const k of ['uf','um','ub','lf','lm','lb','ba','bl'])$('expr_'+k).disabled=!g.eyes.length;
  for(const k of ['mc','mn','mm','tr'])$('expr_'+k).disabled=!f.mouth;
- for(const r of document.querySelectorAll('input[name="exprSweat"]')){r.checked=Number(r.value)===e.sw;r.disabled=!g.eyes.length}
+ $('exprSweat').value=String(e.sw);$('exprSweat').disabled=!g.eyes.length;
+ $('exprFxStyle').value=f.fxStyle||'auto';$('exprFxStyle').options[0].textContent=`자동 · ${faceFxStyle(g,{fxStyle:'auto'})==='casual'?'캐주얼 · SD':'실사풍'}`;
  for(const [id,key] of EXPR_FX_TOGGLES){$(id).checked=!!e[key];$(id).disabled=!g.eyes.length}
  $('exprEar').checked=!!e.ear;$('exprBlushStyle').value=f.blushStyle;
  $('exprBlushStyle').options[0].textContent=`자동 · ${{grad:'그라데이션',fine:'잔 빗금',manga:'만화 빗금'}[g.autoStyle]}`;
- const o=e.fxo[exprFxWhich()];for(const k of ['sp','fr','op']){$('expr_fx_'+k).value=o[k];$('expr_fx_'+k+'V').textContent=o[k]+'%'}
+ // 세부 옵션: 위에서 켠 이펙트만 고를 수 있다. 바뀌는 게 없는 옵션은 감춘다(눈물은 진하기만). '자리 처음으로'는 옮긴 뒤에만.
+ const on={sweat:e.sw>0,tear:e.tear,sparkle:e.ss,anger:e.sa,heart:e.sh};
+ for(const r of document.querySelectorAll('input[name="exprFxWhich"]'))r.disabled=!on[r.value];
+ if(!on[exprFxWhich()]){const first=FX_KEYS.find(k=>on[k]);if(first)document.querySelector(`input[name="exprFxWhich"][value="${first}"]`).checked=true}
+ const which=exprFxWhich(),any=FX_KEYS.some(k=>on[k]);
+ $('exprFxNone').hidden=any;document.querySelector('.exprFxWhich').hidden=!any;
+ const o=e.fxo[which];for(const k of ['sp','fr','op']){$('expr_fx_'+k).value=o[k];$('expr_fx_'+k+'V').textContent=o[k]+'%';$('expr_fx_'+k).closest('.exprSlider').hidden=!any||(which==='tear'&&k!=='op')}
+ $('exprFxHome').hidden=!any||!(which==='sweat'?f.sweatAt.some(Boolean):f.fxAt[which]);
  if(e.ear&&!f.ears.length)miss.push('귀');
  $('exprHint').textContent=miss.length?`${miss.join('·')} 자리를 찍지 않아 그 부분은 조절할 수 없습니다. ‘2. 얼굴 · 눈 깜빡임’에서 찍어 주세요.`:'막대를 움직이면 바로 반영됩니다. 이펙트는 미리보기에서 끌어 옮길 수 있습니다.';
  $('exprZoomReset').textContent=Math.round(exprZoom*100)+'%';
@@ -45,7 +53,8 @@ function exprEdit(change){
 }
 for(const k of EXPR_FIELDS)$('expr_'+k).addEventListener('input',ev=>{const v=Number(ev.target.value);exprEdit(e=>{if(EXPR_TOP.includes(k))e[k]=v;else (e.sym?e.L:e[exprSide])[k]=v})});
 for(const [id,key] of EXPR_FX_TOGGLES)$(id).onchange=()=>exprEdit(e=>{e[key]=$(id).checked});
-for(const r of document.querySelectorAll('input[name="exprSweat"]'))r.onchange=()=>exprEdit(e=>{e.sw=Number(r.value)});
+$('exprSweat').onchange=()=>exprEdit(e=>{e.sw=Number($('exprSweat').value)});
+$('exprFxStyle').onchange=()=>exprEdit(()=>{faces[faceSel].fxStyle=$('exprFxStyle').value});
 for(const r of document.querySelectorAll('input[name="exprFxWhich"]'))r.onchange=()=>paintExprDialog();
 for(const k of ['sp','fr','op'])$('expr_fx_'+k).addEventListener('input',ev=>exprEdit(e=>{e.fxo[exprFxWhich()][k]=Number(ev.target.value)}));
 $('exprFxHome').onclick=()=>exprEdit(()=>{const f=faces[faceSel],w=exprFxWhich();if(w==='sweat')f.sweatAt=[];else delete f.fxAt[w]});
