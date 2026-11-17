@@ -113,3 +113,10 @@
 .exprSettings{max-height:min(72dvh,760px);overflow:auto}
 .exprSettings .groupLabel{margin:var(--sp2) 0 0;padding-top:var(--sp2);border-top:1px solid var(--groupLine);font-size:var(--fs-item);font-weight:var(--fw-item);color:var(--item)}
 #exprCompare[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);color:var(--ink)}
+.exprRow{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp1) var(--sp2);margin:var(--sp1) 0;font-size:var(--fs-item);color:var(--item)}
+.exprRow select{flex:1;min-width:0}
+.exprRow .toggle{margin:0;white-space:nowrap}
+.exprMarks{flex-wrap:wrap;margin:var(--sp1) 0}
+#exprCompare{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none}
+/* 폰에서 옆으로 밀리지 않게(창이 몇 px 넘쳐 손가락에 가로로 밀리면 내용이 왼쪽 끝에 붙어 보였다) */
+#exprDialog,.exprSettings{overflow-x:hidden}

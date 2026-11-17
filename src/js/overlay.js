@@ -33,7 +33,6 @@ if(mode==='lasso'&&lassoSegments.length){
  ctx.stroke();
  ctx.beginPath();ctx.arc(points[0][0]*w,points[0][1]*h,6,0,Math.PI*2);ctx.stroke();
  ctx.beginPath();ctx.arc(end[0]*w,end[1]*h,4,0,Math.PI*2);ctx.fill();ctx.restore();
-drawFaceParts(ctx,w,h,px);
 }
 if(gesture?.type==='ellipse'){const a=gesture.start,b=gesture.now;ctx.strokeStyle='#7ef1c1';ctx.fillStyle='#7ef1c12a';ctx.lineWidth=3;ctx.beginPath();if(gesture.shape==='rect')ctx.rect(Math.min(a.x,b.x)*w,Math.min(a.y,b.y)*h,Math.abs(a.x-b.x)*w,Math.abs(a.y-b.y)*h);else ctx.ellipse((a.x+b.x)*w/2,(a.y+b.y)*h/2,Math.max(3,Math.abs(a.x-b.x)*w/2),Math.max(3,Math.abs(a.y-b.y)*h/2),0,0,Math.PI*2);ctx.fill();ctx.stroke()}
 // 도형 도구: 선택한 영역의 틀과 손잡이(모서리 = 크기·비율, 위쪽 동그라미 = 기울기)
@@ -45,5 +44,6 @@ if(mode==='ellipse'&&gesture?.type!=='ellipse'){const z=editableSelected();if(z)
  for(const hd of hs.slice(0,4)){const [x,y]=q(hd.p);ctx.fillRect(x-5*k,y-5*k,10*k,10*k);ctx.strokeRect(x-5*k,y-5*k,10*k,10*k)}
  {const [x,y]=q(r.p);ctx.beginPath();ctx.arc(x,y,6*k,0,Math.PI*2);ctx.fill();ctx.stroke()}
  ctx.restore()}}
+drawFaceParts(ctx,w,h,px);// 얼굴 부위(입·눈썹·귀)를 찍는 동안 찍은 점·선
 if(['brush','erase','lasso'].includes(gesture?.type)){ctx.strokeStyle=gesture.type==='erase'?'#ff8888':'#83ffd3';ctx.fillStyle='#83ffd344';ctx.lineCap='round';ctx.lineJoin='round';const r=(gesture.r||.003)*Math.min(renderWidth,renderHeight)*w/renderWidth;ctx.lineWidth=gesture.type==='lasso'?2:r*2;ctx.beginPath();const pts=gesture.points;ctx.moveTo(pts[0][0]*w,pts[0][1]*h);for(const p of pts.slice(1))ctx.lineTo(p[0]*w,p[1]*h);if(pts.length===1)ctx.lineTo(pts[0][0]*w+.01,pts[0][1]*h+.01);ctx.stroke()}}
 let resTimeout;new ResizeObserver(()=>{clearTimeout(resTimeout);resTimeout=setTimeout(fit,60)}).observe(stage);new ResizeObserver(()=>{if(viewerOpen){clearTimeout(resTimeout);resTimeout=setTimeout(fit,60)}}).observe($('viewerStage'));

@@ -143,6 +143,7 @@ document.querySelector('.stagebar .modegroup').addEventListener('click',event=>{
  event.stopImmediatePropagation();
  setMode('play');
 },true);
+const PLACE_MODES=['pivot','extraPivot','spine','branch','faceMouth','faceBrow','faceEar'];// 그림에서 지정하는 도구: 안내줄의 순서 안내를 다른 알림이 덮지 않게
 function setMode(m){
   setTouchPreview(false);
   const PLACE=['pivot','extraPivot','spine','branch','faceMouth','faceBrow','faceEar'];
@@ -219,7 +220,7 @@ function tick(now){
     updateRendererBadge();
     if(qualityMode==='auto'){
       if(fps<29){slowSeconds++;fastSeconds=0}else if(fps>53){fastSeconds++;slowSeconds=0}else{slowSeconds=fastSeconds=0}
-      if(slowSeconds>=3&&qualityScale>.65){qualityScale=.7;slowSeconds=0;meshSegments=[20,30];if(gl)rebuildMesh();fit();setStatus('렌더 품질을 자동으로 조정했습니다.')}else if(fastSeconds>=8&&qualityScale<1){qualityScale=1;fastSeconds=0;meshSegments=[32,48];if(gl)rebuildMesh();fit()}
+      if(slowSeconds>=3&&qualityScale>.65){qualityScale=.7;slowSeconds=0;meshSegments=[20,30];if(gl)rebuildMesh();fit();if(!PLACE_MODES.includes(mode))setStatus('렌더 품질을 자동으로 조정했습니다.')}else if(fastSeconds>=8&&qualityScale<1){qualityScale=1;fastSeconds=0;meshSegments=[32,48];if(gl)rebuildMesh();fit()}
     }
   }
   requestAnimationFrame(tick);

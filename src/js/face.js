@@ -142,10 +142,12 @@ function faceEarStroke(points){
 function drawFaceParts(g,w,h,px){
  if(!['faceMouth','faceBrow','faceEar'].includes(mode))return;
  const f=faces[faceSel];if(!f)return;
- g.save();g.lineWidth=2*px;g.strokeStyle=g.fillStyle='#ffcf70';g.setLineDash([5*px,4*px]);
- const line=pts=>{g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p.x*w,p.y*h):g.moveTo(p.x*w,p.y*h));g.stroke()};
- const dot=p=>{g.beginPath();g.arc(p.x*w,p.y*h,4*px,0,Math.PI*2);g.fill()};
- if(mode==='faceMouth'){const m=faceDraft.length?null:f.mouth;if(m){line([m.l,m.c,m.r]);[m.l,m.c,m.r].forEach(dot)}faceDraft.forEach(dot)}
+ // 찍은 점은 눈 깜빡임 창처럼 또렷하게: 노란 점 + 어두운 테두리 + 순서 번호
+ g.save();g.lineWidth=2*px;g.strokeStyle='#ffcf70';g.setLineDash([5*px,4*px]);
+ const line=pts=>{g.save();g.strokeStyle='#1d1d24';g.lineWidth=4*px;g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p.x*w,p.y*h):g.moveTo(p.x*w,p.y*h));g.stroke();g.restore();g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p.x*w,p.y*h):g.moveTo(p.x*w,p.y*h));g.stroke()};
+ const dot=(p,n)=>{g.save();g.setLineDash([]);g.beginPath();g.arc(p.x*w,p.y*h,6*px,0,Math.PI*2);g.fillStyle='#ffcf70';g.fill();g.lineWidth=2*px;g.strokeStyle='#1d1d24';g.stroke();
+  if(n){g.font=`700 ${11*px}px system-ui,sans-serif`;g.textAlign='center';g.textBaseline='middle';g.lineWidth=3*px;g.strokeText(n,p.x*w,p.y*h-14*px);g.fillStyle='#fff';g.fillText(n,p.x*w,p.y*h-14*px)}g.restore()};
+ if(mode==='faceMouth'){const m=faceDraft.length?null:f.mouth;if(m){line([m.l,m.c,m.r]);dot(m.l,'1');dot(m.r,'2');dot(m.c,'3')}if(faceDraft.length>1)line(faceDraft.length>2?[faceDraft[0],faceDraft[2],faceDraft[1]]:faceDraft);faceDraft.forEach((p,i)=>dot(p,String(i+1)))}
  if(mode==='faceBrow'||mode==='faceEar'){(faceDraft.length?faceDraft:mode==='faceEar'?f.ears:f.brows).forEach(line);if(gesture?.type===mode)line(gesture.points.map(([x,y])=>({x,y})))}
  g.restore();
 }
@@ -160,6 +162,7 @@ function paintExprDialog(){
  const e=currentExpr();if(!e)return;
  const name=EXPRS.find(([id])=>id===exprId)[1];
  $('exprTitle').textContent=`얼굴 ${faceSel+1} · ${name} 다듬기`;$('exprPick').value=exprId;
+ for(const o of $('exprPreset').options)if(o.value)o.textContent=`${EXPRS.find(([id])=>id===o.value)[1]} 프리셋`+(o.value===exprId?' (처음 값)':'');
  $('exprSym').checked=e.sym;$('exprSideRow').hidden=e.sym;
  for(const r of document.querySelectorAll('input[name="exprSide"]'))r.checked=r.value===exprSide;
  const side=e.sym?e.L:e[exprSide];
@@ -170,8 +173,8 @@ function paintExprDialog(){
  for(const k of ['uf','um','ub','lf','lm','lb'])$('expr_'+k).disabled=!g.eyes.length;
  for(const k of ['mc','mn','mm','tr'])$('expr_'+k).disabled=!f.mouth;
  $('expr_bl').disabled=!g.eyes.length;
- $('exprSweat').value=String(e.sw);for(const [id,key] of [['exprTear','tear'],['exprSa','sa'],['exprSh','sh'],['exprSs','ss']]){$(id).checked=!!e[key];$(id).disabled=!g.eyes.length}$('exprSweat').disabled=!g.eyes.length;$('exprEar').checked=!!e.ear;$('exprBlushStyle').value=f.blushStyle;
- $('exprBlushStyle').options[0].textContent=`자동(${{grad:'그라데이션',fine:'그라데이션 + 섬세한 빗금',manga:'만화 빗금'}[g.autoStyle]})`;
+ for(const r of document.querySelectorAll('input[name="exprSweat"]')){r.checked=Number(r.value)===e.sw;r.disabled=!g.eyes.length}for(const [id,key] of [['exprTear','tear'],['exprSa','sa'],['exprSh','sh'],['exprSs','ss']]){$(id).checked=!!e[key];$(id).disabled=!g.eyes.length}$('exprEar').checked=!!e.ear;$('exprBlushStyle').value=f.blushStyle;
+ $('exprBlushStyle').options[0].textContent=`자동 · ${{grad:'그라데이션',fine:'잔 빗금',manga:'만화 빗금'}[g.autoStyle]}`;
  if(e.ear&&!f.ears.length)miss.push('귀');
  $('exprHint').textContent=miss.length?`${miss.join('·')} 자리를 찍지 않아 그 부분은 조절할 수 없습니다. ‘2. 얼굴 · 눈 깜빡임’에서 찍어 주세요.`:'막대를 움직이면 바로 반영됩니다. ‘원래 얼굴’을 누르고 있으면 바꾸기 전 모습을 봅니다.';
  faceLive={k:faceSel,id:exprId,amount:1};faceChanged(false);drawExprPreview();
@@ -190,7 +193,7 @@ function exprEdit(change){
 }
 for(const [k] of EXPR_FIELDS)$('expr_'+k).addEventListener('input',ev=>{const v=Number(ev.target.value);exprEdit(e=>{if(EXPR_TOP.includes(k))e[k]=v;else (e.sym?e.L:e[exprSide])[k]=v})});
 for(const [id,key] of [['exprTear','tear'],['exprSa','sa'],['exprSh','sh'],['exprSs','ss']])$(id).onchange=()=>exprEdit(e=>{e[key]=$(id).checked});
-$('exprSweat').onchange=()=>exprEdit(e=>{e.sw=Number($('exprSweat').value)});
+for(const r of document.querySelectorAll('input[name="exprSweat"]'))r.onchange=()=>exprEdit(e=>{e.sw=Number(r.value)});
 // 땀방울은 미리보기에서 끌어 옮긴다(얼굴마다 자리 기억)
 {let drag=null;
  exprPreview.addEventListener('pointerdown',ev=>{
@@ -212,11 +215,12 @@ $('exprBlushStyle').onchange=()=>exprEdit(()=>{faces[faceSel].blushStyle=$('expr
 $('exprSym').onchange=()=>exprEdit(e=>{e.sym=$('exprSym').checked;if(e.sym)e.L={...e[exprSide]};exprSide='L'});
 for(const r of document.querySelectorAll('input[name="exprSide"]'))r.onchange=()=>{exprSide=r.value;paintExprDialog()};
 $('exprPick').onchange=()=>{exprId=$('exprPick').value;exprSide='L';paintExprDialog()};
-$('exprFrom').onchange=()=>{const from=$('exprFrom').value;$('exprFrom').value='';if(!from)return;exprEdit(e=>Object.assign(e,presetExpr(from)));setStatus(`${EXPRS.find(([id])=>id===from)[1]} 프리셋 값에서 다시 시작합니다.`)};
-$('exprReset').onclick=async()=>{
- const name=EXPRS.find(([id])=>id===exprId)[1];
- if(!await askConfirm({title:'프리셋으로 되돌리기',message:`${name} 표정에서 고친 값을 모두 지우고 처음 프리셋 값으로 되돌릴까요?`,ok:'되돌리기'}))return;
- exprEdit(e=>Object.assign(e,presetExpr(exprId)));
+// 프리셋 불러오기: 고르면 지금 값을 그 프리셋 값으로 바꾼다(고친 값이 사라지므로 확인).
+$('exprPreset').onchange=async()=>{
+ const from=$('exprPreset').value;$('exprPreset').value='';if(!from)return;
+ const name=EXPRS.find(([id])=>id===from)[1],mine=EXPRS.find(([id])=>id===exprId)[1];
+ if(!await askConfirm({title:'프리셋 불러오기',message:from===exprId?`${mine} 표정에서 고친 값을 모두 지우고 처음 프리셋 값으로 되돌릴까요?`:`${mine} 표정의 지금 값을 지우고 ${name} 프리셋 값으로 바꿀까요?`,ok:from===exprId?'처음 값으로':'불러오기'}))return;
+ exprEdit(e=>Object.assign(e,presetExpr(from)));
 };
 {const b=$('exprCompare'),on=v=>{exprCompare=v;b.setAttribute('aria-pressed',String(v));faceLive=v?null:{k:faceSel,id:exprId,amount:1};faceChanged(false);drawExprPreview()};
  b.addEventListener('pointerdown',e=>{try{b.setPointerCapture(e.pointerId)}catch(_){}on(true)});for(const t of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(t,()=>exprCompare&&on(false));

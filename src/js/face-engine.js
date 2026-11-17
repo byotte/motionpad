@@ -251,7 +251,8 @@ function faceUpload(){
 function drawExprPreview(){
  if(!exprDialog.open)return;
  const k=faceSel,g=faceGeometry(k),box=exprPreview.parentElement,ctx=exprPreview.getContext('2d');
- const dpr=Math.min(2,window.devicePixelRatio||1),cw=Math.max(1,Math.min(720,Math.round(box.clientWidth*dpr))),ch=Math.max(1,Math.min(720,Math.round(box.clientHeight*dpr)));
+ // 가로·세로를 같은 비율로 줄인다(따로 자르면 폰처럼 화소가 촘촘한 화면에서 얼굴이 찌그러진다)
+ const dpr=Math.min(2,window.devicePixelRatio||1),bw=Math.max(1,box.clientWidth*dpr),bh=Math.max(1,box.clientHeight*dpr),fit=Math.min(1,720/Math.max(bw,bh)),cw=Math.max(1,Math.round(bw*fit)),ch=Math.max(1,Math.round(bh*fit));
  if(exprPreview.width!==cw||exprPreview.height!==ch){exprPreview.width=cw;exprPreview.height=ch}
  if(faceSrc?.bitmap!==bitmap||faceSrc.w!==renderWidth){const c=document.createElement('canvas');c.width=renderWidth;c.height=renderHeight;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(bitmap,0,0,renderWidth,renderHeight);faceSrc={bitmap,w:renderWidth,data:x.getImageData(0,0,renderWidth,renderHeight).data}}
  const r=g.rect||{x:0,y:0,w:renderWidth,h:renderHeight};
