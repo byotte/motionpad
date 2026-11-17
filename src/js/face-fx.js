@@ -172,8 +172,11 @@ function drawFaceFx(ctx,at,k,list,t,follow=true,src=null,sk=1){
    const q=faceQuad(e.inner,e.lo,e.outer,20),p0=fv.add(q[15],A.tear),nx=fv.add(q[16],A.tear),ang0=Math.atan2(nx.y-p0.y,nx.x-p0.x),ang=(-Math.sin(ang0)*-g.n.x+Math.cos(ang0)*-g.n.y)<0?ang0+Math.PI:ang0,// 맺힌 방울(+y)이 늘 아래로 처지게
    m=move(p0),c=at(m.x,m.y);
    const alpha=P.tear*o.op;
-   const am=[1,1.35,1.7][P.tearAmt||0];if(cas('tear'))faceCasualLens(ctx,c[0],c[1],e.w*.15*k*am,e.w*.065*k*(am*1.2-.2),ang,alpha);
-   else faceTearPool(ctx,c[0],c[1],e.w*.17*k,e.w*.06*k,ang,up,alpha,src,sk,t+e.c.x,P.tearAmt||0);
+   const am=P.tearAmt||0;
+   if(!am){if(cas('tear'))faceCasualLens(ctx,c[0],c[1],e.w*.15*k,e.w*.065*k,ang,alpha);else faceTearPool(ctx,c[0],c[1],e.w*.17*k,e.w*.06*k,ang,up,alpha,src,sk,t+e.c.x,0)}
+   else{// 보통·많음: 아랫꺼풀을 따라 차오른 물(꺼풀 선 위의 점들), 많음은 바깥쪽 1/3에 불룩 맺힘
+    const rim=q.slice(am===1?6:3,20).map(pp=>{const m2=move(fv.add(pp,A.tear));return at(m2.x,m2.y)});
+    faceTearRim(ctx,rim,{x:-g.n.x,y:-g.n.y},e.h*k*(am===1?.09:.13),am,alpha,src,sk,cas('tear'),t+e.c.x)}
    if(P.flow>.05){
     const Pq=(t/1.8)%1,len=Math.min(1,Pq/.6)*e.h*1.6,fade=Pq<.6?1:Math.max(0,1-(Pq-.6)/.4),steps=12,pts=[];
     for(let s=0;s<=steps;s++){const pp=move(fv.add(p0,fv.add(fv.mul(g.n,-len*s/steps),fv.mul(g.u,Math.sin(s*.8)*e.w*.02))));pts.push(at(pp.x,pp.y))}
@@ -227,7 +230,6 @@ function faceSweatReal(ctx,x,y,r,len,up,alpha,src,sk,seed){
  ctx.fillStyle='rgba(255,255,255,.92)';ctx.beginPath();ctx.ellipse(-r*.38,-r*.28,r*.13,r*.42,.15,0,Math.PI*2);ctx.fill();
  ctx.beginPath();ctx.ellipse(-tw*.2,-L*.55,tw*.35,L*.12,0,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,.6)';ctx.fill();
  faceSpecular(ctx,-r*.1,-r*.55,r*.16,.9);
- if(fHash(seed,31)>.5){ctx.translate(r*1.5,-L*.3);const q=r*.28;ctx.beginPath();ctx.arc(0,0,q,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,.18)';ctx.fill();ctx.lineWidth=Math.max(.5,q*.25);ctx.strokeStyle='rgba(40,30,30,.3)';ctx.stroke();faceSpecular(ctx,-q*.35,-q*.35,q*.45,.9)}
  ctx.restore();
 }
 // 흘러내린 자국: 젖은 광택 줄
@@ -249,6 +251,25 @@ function faceTearPool(ctx,x,y,rx,ry,ang,up,alpha,src,sk,seed,am=0){
  for(const [bx,by,bw,bh] of [[-rx*.45,-ry*.35,rx*.28,ry*.32],[rx*.25,-ry*.4,rx*.14,ry*.22],[dx-ry*.25,dy-ry*.35,ry*.18,ry*.3]]){ctx.beginPath();ctx.ellipse(bx,by,bw,bh,-.3,0,Math.PI*2);ctx.fill()}
  ctx.restore();
 }
+// 차오른 눈물(보통·많음, 레퍼런스): 아랫꺼풀 선을 따라 얇게 고인 물. 위쪽 가장자리는 꺼풀 선에 붙고 아래로 두께가 있다(가운데~바깥이 두껍다).
+// 많음은 바깥쪽 1/3에 물이 불룩 맺혀 금방이라도 흐를 듯. 안은 그림을 비추고, 아래 테두리는 어두운 조각, 위에는 흰 반사 줄·덩어리.
+function faceTearRim(ctx,pts,down,th,am,alpha,src,sk,casual,seed){
+ if(alpha<=.01||pts.length<3||th<=.3)return;const n=pts.length;
+ const thick=i=>{const u=i/(n-1);let w=Math.pow(Math.sin(Math.PI*u),.7)*(.6+.6*u);if(am===2)w*=1+1.7*Math.exp(-Math.pow((u-.72)/.1,2))*(1+.06*Math.sin(seed*3.3));return th*w};
+ const top=pts.map(([x,y],i)=>[x-down.x*thick(i)*.25,y-down.y*thick(i)*.25]),bot=pts.map(([x,y],i)=>[x+down.x*thick(i),y+down.y*thick(i)]);
+ const shape=()=>{ctx.beginPath();top.forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));for(let i=n-1;i>=0;i--)ctx.lineTo(...bot[i]);ctx.closePath()};
+ ctx.save();ctx.globalAlpha=clamp(alpha,0,1);ctx.lineJoin='round';ctx.lineCap='round';
+ if(casual){shape();ctx.fillStyle='rgba(170,215,255,.6)';ctx.fill();ctx.lineWidth=Math.max(1,th*.2);ctx.strokeStyle='rgba(70,130,200,.8)';ctx.stroke()}
+ else{
+  const [cx,cy]=pts[Math.floor(n*.6)],R=Math.hypot(pts[n-1][0]-pts[0][0],pts[n-1][1]-pts[0][1])*.6+th*3;
+  shape();ctx.save();ctx.clip();if(src){ctx.save();ctx.translate(cx,cy);ctx.scale(1,-1);try{ctx.drawImage(src,(cx-R/1.3)*sk,(cy-R/1.3)*sk,2*R/1.3*sk,2*R/1.3*sk,-R,-R,2*R,2*R)}catch(_){}ctx.restore()}
+  ctx.fillStyle='rgba(255,255,255,.07)';ctx.fill();ctx.restore();
+  ctx.beginPath();bot.forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));ctx.setLineDash([th*1.6,th*.7,th*2.4,th*.9]);ctx.lineWidth=Math.max(.7,th*.16);ctx.strokeStyle='rgba(30,22,28,.55)';ctx.stroke();ctx.setLineDash([]);
+  ctx.beginPath();top.slice(Math.floor(n*.2),Math.floor(n*.85)).forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));ctx.lineWidth=Math.max(.6,th*.18);ctx.strokeStyle='rgba(255,255,255,.75)';ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.92)';for(const u of am===2?[.45,.7,.78]:[.5,.75]){const i=Math.round(u*(n-1)),[x,y]=pts[i],d=thick(i)*.45;ctx.beginPath();ctx.ellipse(x+down.x*d,y+down.y*d,Math.max(.6,th*.28),Math.max(.6,th*.18),Math.atan2(down.y,down.x)+Math.PI/2,0,Math.PI*2);ctx.fill()}
+ }
+ ctx.restore();
+}
 function faceTearStream(ctx,pts,w,alpha,casual,up,src,sk){
  if(alpha<=.01)return;ctx.save();ctx.globalAlpha=clamp(alpha,0,1);ctx.lineCap='round';ctx.lineJoin='round';
  const path=()=>{ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p))};
@@ -263,7 +284,8 @@ function faceGlint(ctx,x,y,r,alpha,fat=false,v=.5){
  ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=clamp(alpha,0,1);ctx.translate(x,y);
  const cr=r*(fat?3:2.1);const core=ctx.createRadialGradient(0,0,0,0,0,cr);core.addColorStop(0,'rgba(255,255,250,1)');core.addColorStop(.25,'rgba(255,246,215,.7)');core.addColorStop(1,'rgba(255,230,180,0)');
  ctx.fillStyle=core;ctx.beginPath();ctx.arc(0,0,cr,0,Math.PI*2);ctx.fill();
- const H=r*(fat?3.2:4+3*v),V=r*(fat?2:2.5+1.7*(1-v)),wd=r*(fat?.38:.2);// 세로는 예전(7r)의 60% 이하
+ // 가로·세로 길이는 따로 무작위(어느 쪽으로도 치우치지 않게), 둘 다 예전 세로(7r)의 60% 이하
+ const w2=fHash(v*53,4),H=r*(fat?1.6+.9*v:2.5+1.7*v),V=r*(fat?1.6+.9*w2:2.5+1.7*w2),wd=r*(fat?.38:.2);
  for(const [ang,len,wid,a] of [[0,H,wd,1],[Math.PI/2,V,wd*.9,.9],[Math.PI/4,r*(fat?1.6:2.4),wd*.55,.45],[-Math.PI/4,r*(fat?1.6:2.4),wd*.55,.45]]){
   ctx.save();ctx.rotate(ang);const lg=ctx.createLinearGradient(-len,0,len,0);lg.addColorStop(0,'rgba(255,240,210,0)');lg.addColorStop(.5,`rgba(255,252,240,${a})`);lg.addColorStop(1,'rgba(255,240,210,0)');
   ctx.fillStyle=lg;ctx.beginPath();ctx.moveTo(-len,0);ctx.quadraticCurveTo(0,-wid,len,0);ctx.quadraticCurveTo(0,wid,-len,0);ctx.fill();ctx.restore()}
@@ -293,7 +315,8 @@ function faceHeartShape(ctx,x,y,sz,rot,alpha,casual,v=.5){
  if(alpha<=.01||sz<=.3)return;
  ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.globalAlpha=clamp(alpha,0,1);
  if(casual){const col=HEART_FLAT[Math.floor(v*HEART_FLAT.length)%HEART_FLAT.length];ctx.shadowColor=col;ctx.shadowBlur=sz*.35;heartPath(ctx,sz);ctx.fillStyle=col;ctx.fill();ctx.restore();return}
- const cool=v>.5,glow=cool?[150,185,255]:[255,140,215],mid=cool?[200,220,255]:[255,200,240],gap=.05+.06*fHash(v*97,1),N=48;
+ // 색은 하트 톤 안에서만: 분홍 · 장미 · 빨강
+ const tone=Math.floor(v*3)%3,glow=[[255,120,190],[255,90,140],[255,60,80]][tone],mid=[[255,205,232],[255,190,210],[255,175,180]][tone],gap=.05+.06*fHash(v*97,1),N=48;
  ctx.lineCap='round';
  const trail=(s,a)=>{let prev=heartPt(gap,s);for(let i=1;i<=N;i++){const t=gap+(Math.PI*2-2*gap)*i/N,p=heartPt(t,s),w=sz*(.04+.05*Math.abs(Math.sin(t*1.1+v*3)))*(i<4||i>N-4?.5:1);
    for(const [lw,col,blur] of [[w*5,`rgba(${glow},${.12*a})`,sz*.5],[w*2.2,`rgba(${mid},${.55*a})`,sz*.15],[w*.8,`rgba(255,255,255,${.95*a})`,0]]){ctx.shadowColor=`rgba(${glow},${a})`;ctx.shadowBlur=blur;ctx.strokeStyle=col;ctx.lineWidth=Math.max(.5,lw);ctx.beginPath();ctx.moveTo(...prev);ctx.lineTo(...p);ctx.stroke()}

@@ -149,6 +149,11 @@
 .exprTabs{display:flex;gap:0;border-bottom:1px solid var(--line)}/* 탭이 칸을 나눠 써서 넘치지 않는다(작은 가로 스크롤이 생기던 것) */
 .exprTab{flex:1 1 auto;min-width:0;min-height:var(--ctl-h);margin-bottom:-1px;padding:0 4px;text-align:center;overflow:hidden;text-overflow:ellipsis;border:1px solid transparent;border-bottom:0;border-radius:var(--r-ctl) var(--r-ctl) 0 0;background:transparent;color:var(--help);font:inherit;font-size:var(--fs-item);cursor:pointer;white-space:nowrap}
 .exprTab[aria-selected=true]{border-color:var(--line);background:var(--panel);color:var(--ink)}
-.exprTab.on::before{content:"";display:inline-block;width:5px;height:5px;margin-right:5px;border-radius:var(--r-round);background:var(--accent);vertical-align:middle}
+.exprTab{display:inline-flex;align-items:center;justify-content:center;gap:5px}
+.exprTab.on::before{content:"";flex:none;width:5px;height:5px;border-radius:var(--r-round);background:var(--accent)}
 .exprTabBody{padding-top:var(--sp2)}
 .exprFxMode{flex-wrap:wrap;margin-bottom:var(--sp1)}
+.exprHist{display:inline-flex;gap:2px;margin-left:auto}
+.exprHist .btn{border-color:transparent;background:transparent}
+.exprHist+.exprZoom{margin-left:0}
+#exprPreview{cursor:grab}

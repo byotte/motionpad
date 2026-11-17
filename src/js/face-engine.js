@@ -46,7 +46,7 @@ function faceGeometry(k){
    // 눈썹 굵기만큼(core)은 통째로 움직여 눈썹이 구불거리지 않게 한다
    // 아래로는 눈썹~윗꺼풀 거리의 55%까지만 휜다(윗꺼풀 쪽 45%는 그대로) → 눈두덩만 끌려오고 윗꺼풀 선은 안 딸려 온다
    const core=.22*browGap,rUp=.55*S,rDown=.55*browGap;
-   curves.push({pts:faceLine(ordered),rUp,rDown,core,ctrls:[0,1,2].map(h=>ctrl(`${s}.${['bh','bm','bt'][h]}`,h,n,.12*S,Math.min(.1*S,.6*(rDown-core))))});
+   curves.push({pts:faceLine(ordered),rUp,rDown,core,ctrls:[0,1,2].map(h=>ctrl(`${s}.${['bh','bm','bt'][h]}`,h,n,Math.min(.12*S,1.4*(rDown-core)),Math.min(.1*S,.6*(rDown-core)))/* 올리는 최대치 = 눈두덩 띠가 2.4배까지만 늘어나게(넘으면 결이 깨진다) */)});
   }
   // 윗눈꺼풀: 위로는 눈두덩, 아래로는 눈 높이 절반까지만 → 내리면 눈 위쪽이 덮인다
   {const rUp=Math.min(.6*browGap,.5*e.w),rDown=.55*e.h;
@@ -173,7 +173,7 @@ function faceField(k,expr,amount,time){
  for(const key in B){
   let v=key==='mm'?expr.mm:expr[key[0]][key.slice(2)];
   v=v*amount;
-  if(key==='mm')v+=30*tr*shake;if(key.endsWith('.mc'))v+=15*tr*(key[0]==='L'?shake:shake2);
+  if(key==='mm')v+=42*tr*shake;if(key.endsWith('.mc'))v+=4*tr*(key[0]==='L'?shake:shake2);// 입술 떨림: 가운데가 위아래로, 입꼬리는 거의 그대로(울먹울먹)
   if(!v)continue;
   const a=g.amps[key],coef=clamp(v,-100,100)/100*(v>0?a.pos:a.neg),{I,V}=B[key];
   for(let j=0;j<I.length;j++){const i=I[j];out[i]+=coef*V[j*2];out[i+1]+=coef*V[j*2+1]}
@@ -271,7 +271,7 @@ function drawExprPreview(){
  if(faceSrc?.bitmap!==bitmap||faceSrc.w!==renderWidth){const c=document.createElement('canvas');c.width=renderWidth;c.height=renderHeight;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(bitmap,0,0,renderWidth,renderHeight);faceSrc={bitmap,w:renderWidth,data:x.getImageData(0,0,renderWidth,renderHeight).data}}
  const r=g.rect||{x:0,y:0,w:renderWidth,h:renderHeight};
  // 보이는 범위: 지도 범위를 미리보기 비율에 맞춰 넓힌다
- const A=cw/ch,vw=Math.max(r.w,r.h*A)*1.05/exprZoom,vh=vw/A,vx=r.x+r.w/2-vw/2,vy=r.y+r.h/2-vh/2;// exprZoom: 위 메뉴줄의 확대·축소
+ const A=cw/ch,vw=Math.max(r.w,r.h*A)*1.05/exprZoom,vh=vw/A,vx=r.x+r.w/2-vw/2+exprPan.x,vy=r.y+r.h/2-vh/2+exprPan.y;// exprZoom: 위 메뉴줄의 확대·축소
  const F=!exprCompare&&g.rect?faceField(k,currentExpr(),1,elapsed):null,G=FACE_G,W=renderWidth,H=renderHeight,src=faceSrc.data;
  const ce=currentExpr(),Rv=!exprCompare&&g.rect&&ce?faceRedValues(g,{...ce,earBl:ce.ear?ce.bl:0},1):null,st=faceStyleUniform(g);
  // 셰이더 faceRed와 같은 계산(미리보기용)

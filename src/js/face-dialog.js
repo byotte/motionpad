@@ -1,7 +1,7 @@
 // 표정 세부 설정 창: 고르면 바로 반영, 얼굴 확대 미리보기(확대·축소). 열려 있는 동안 편집 화면에도 그 표정이 보인다.
 // 옵션은 눈·입·홍조·이펙트 묶음. 이펙트는 미리보기에서 끌어 자리를 옮기고, 세부 옵션(속도·빈도·진하기)을 이펙트마다 둔다.
 const exprDialog=$('exprDialog'),exprPreview=$('exprPreview');
-let exprId='smile',exprSide='L',exprRemembered=false,exprCompare=false,exprFrame=0,exprZoom=1,exprZoomManual=false;
+let exprPan={x:0,y:0},exprId='smile',exprSide='L',exprRemembered=false,exprCompare=false,exprFrame=0,exprZoom=1,exprZoomManual=false;
 const EXPR_TOP=['mm','tr','bl','ba'];
 const EXPR_FIELDS=['bh','bm','bt','uf','um','ub','lf','lm','lb','mc','mm','mn','tr','ba','bl'];
 // 이펙트 켬 여부는 표정 값(sw 개수·tear·ss·sa·sh), 모양은 표정마다 이펙트별 fxs(real·casual, 없으면 그림체로 자동)
@@ -40,11 +40,12 @@ function paintExprDialog(){
  if(e.ear&&!f.ears.length)miss.push('귀');
  $('exprHint').textContent=miss.length?`${miss.join('·')} 자리를 찍지 않아 그 부분은 조절할 수 없습니다. ‘2. 얼굴 · 눈 깜빡임’에서 찍어 주세요.`:'막대를 움직이면 바로 반영됩니다. 이펙트는 미리보기에서 끌어 옮길 수 있습니다.';
  $('exprZoomReset').textContent=Math.round(exprZoom*100)+'%';
+ refreshHistory();$('exprUndo').disabled=!undoStack.length;$('exprRedo').disabled=!redoStack.length;
  faceLive={k:faceSel,id:exprId,amount:1};faceChanged(false);drawExprPreview();
 }
 function openExprDialog(id){
  if(!ready||!faces[faceSel])return;
- exprId=id;exprSide='L';exprRemembered=false;exprCompare=false;exprZoom=1;exprZoomManual=false;
+ exprId=id;exprSide='L';exprRemembered=false;exprCompare=false;exprZoom=1;exprZoomManual=false;exprPan={x:0,y:0};
  exprDialog.showModal();paintExprDialog();
  cancelAnimationFrame(exprFrame);const loop=()=>{if(!exprDialog.open)return;const e=currentExpr();if(e&&(e.tr>0||e.sw||e.tear||e.sa||e.sh||e.ss))drawExprPreview();exprFrame=requestAnimationFrame(loop)};exprFrame=requestAnimationFrame(loop);
 }
@@ -79,7 +80,7 @@ $('exprPreset').onchange=async()=>{
 };
 // 확대·축소(위 메뉴줄). 이펙트를 고르는 동안은 얼굴 둘레까지 보이게 저절로 물러난다(직접 바꾼 뒤에는 그대로).
 function setExprZoom(z,manual=true){exprZoom=clamp(z,.3,3);if(manual)exprZoomManual=true;$('exprZoomReset').textContent=Math.round(exprZoom*100)+'%';drawExprPreview()}
-$('exprZoomIn').onclick=()=>setExprZoom(exprZoom*1.25);$('exprZoomOut').onclick=()=>setExprZoom(exprZoom/1.25);$('exprZoomReset').onclick=()=>setExprZoom(1);
+$('exprZoomIn').onclick=()=>setExprZoom(exprZoom*1.25);$('exprZoomOut').onclick=()=>setExprZoom(exprZoom/1.25);$('exprZoomReset').onclick=()=>{exprPan={x:0,y:0};setExprZoom(1)};
 $('exprFxBox').addEventListener('pointerdown',()=>{if(!exprZoomManual&&exprZoom>.55)setExprZoom(.55,false)});
 exprPreview.addEventListener('wheel',e=>{e.preventDefault();setExprZoom(exprZoom*(e.deltaY<0?1.1:1/1.1))},{passive:false});
 {const b=$('exprCompare'),on=v=>{exprCompare=v;b.setAttribute('aria-pressed',String(v));faceLive=v?null:{k:faceSel,id:exprId,amount:1};faceChanged(false);drawExprPreview()};
@@ -95,20 +96,25 @@ exprPreview.addEventListener('wheel',e=>{e.preventDefault();setExprZoom(exprZoom
   if(e.tear)for(const eye of g.eyes){const q=faceQuad(eye.inner,eye.lo,eye.outer,20);cand.push({key:'tear',at:fv.add(q[15],A.tear)})}
   if(e.ss)cand.push({key:'sparkle',at:A.sparkle});if(e.sa)cand.push({key:'anger',at:A.anger});if(e.sh)cand.push({key:'heart',at:A.heart});
   let best=null,bd=g.S*.35/Math.max(.5,exprZoom);for(const c of cand){const d=fv.len(fv.sub(c.at,p));if(d<bd){bd=d;best=c}}
-  if(!best)return;
+  if(!best){drag={pan:true,cx:ev.clientX,cy:ev.clientY,orig:{...exprPan}};try{exprPreview.setPointerCapture(ev.pointerId)}catch(_){}exprPreview.style.cursor='grabbing';return}// 이펙트가 아닌 곳: 미리보기 끌어 옮기기
   drag={...best,start:p,orig:best.key==='sweat'?null:{...(f.fxAt[best.key]||{a:0,b:0})},remembered:false};
   try{exprPreview.setPointerCapture(ev.pointerId)}catch(_){}ev.preventDefault();
   if(exprFxTab!==best.key){exprFxTab=best.key;paintExprDialog()}
  });
  exprPreview.addEventListener('pointermove',ev=>{
-  if(!drag)return;const f=faces[faceSel],g=faceGeometry(faceSel),p=toImg(ev);
+  if(!drag)return;
+  if(drag.pan){const r=exprPreview.getBoundingClientRect(),V=exprView;exprPan={x:drag.orig.x-(ev.clientX-drag.cx)/r.width*V.vw,y:drag.orig.y-(ev.clientY-drag.cy)/r.height*V.vh};drawExprPreview();return}
+  const f=faces[faceSel],g=faceGeometry(faceSel),p=toImg(ev);
   if(!drag.remembered){remember();drag.remembered=true}
   if(drag.key==='sweat'){const d=fv.sub(p,g.C);f.sweatAt[drag.i]={a:clamp(fv.dot(d,g.u)/g.S,-3,3),b:clamp(fv.dot(d,g.n)/g.S,-3,3)}}
   else{const d=fv.sub(p,drag.start);f.fxAt[drag.key]={a:clamp(drag.orig.a+fv.dot(d,g.u)/g.S,-3,3),b:clamp(drag.orig.b+fv.dot(d,g.n)/g.S,-3,3)}}
   scheduleSave();drawExprPreview();
  });
- for(const t of ['pointerup','pointercancel'])exprPreview.addEventListener(t,()=>{drag=null});
+ for(const t of ['pointerup','pointercancel'])exprPreview.addEventListener(t,()=>{drag=null;exprPreview.style.cursor=''});
 }
+// 되돌리기: 막대 하나를 잡았다 놓을 때마다(또는 고를 때마다) 한 번. 편집 화면의 되돌리기와 같은 기록을 쓴다.
+for(const el of [exprDialog.querySelector('.exprSettings'),exprDialog.querySelector('.exprToolbar')])el.addEventListener('pointerdown',()=>{exprRemembered=false},true);
+for(const [id,main] of [['exprUndo','undoBtn'],['exprRedo','redoBtn']])$(id).onclick=()=>{$(main).click();exprRemembered=false;faceChanged();paintExprDialog()};
 $('exprClose').onclick=()=>exprDialog.close();
 exprDialog.addEventListener('close',()=>{cancelAnimationFrame(exprFrame);faceLive=null;faceChanged(false)});
 for(const b of document.querySelectorAll('#exprList .chip'))b.onclick=()=>openExprDialog(b.dataset.expr);

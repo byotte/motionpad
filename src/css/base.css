@@ -18,3 +18,6 @@ select:focus-visible{outline:1px solid var(--accent);outline-offset:0}
 .iconBtn .ic{width:16px;height:16px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
 
+
+/* 스크롤바: 어디서나 테마 색(패널·대화창·도구줄 모두). 손잡이 = 선 색, 바탕 = 투명 */
+*{scrollbar-color:var(--line) transparent;scrollbar-width:thin}
