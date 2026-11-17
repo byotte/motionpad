@@ -181,12 +181,12 @@ function drawFaceFx(ctx,at,k,list,t,follow=true,src=null,sk=1){
    if(casual)faceAngerCasual(ctx,c[0],c[1],sz,P.anger*o.op*pop);else faceAnger(ctx,c[0],c[1],sz,P.anger*o.op*pop)}
   // 하트: 얼굴에서 둥실 떠올라 한 번 반짝이고, 비눗방울처럼 '뾱' 터지며 사라진다
   if(P.heart){const o=P.opt.heart,n=Math.max(1,Math.round(2*o.fr));for(let i=0;i<n;i++){
-   const Pq=(t/(2.6/o.sp)+i/n)%1;if(Pq>.92)continue;
+   const ph=t/(2.6/o.sp)+i/n,Pq=ph%1,v=fHash(i,Math.floor(ph));if(Pq>.92)continue;// v: 이 하트의 모양·색(한 번 떠오를 때마다 바뀜)
    const rise=Math.min(Pq,.78),pos=move(fv.add(A.heart,fv.add(fv.mul(g.u,S*(.1*Math.sin(i*2.3+rise*5)+.15*(i%2?-1:1)*fHash(i,Math.floor(t/(2.6/o.sp))))),fv.mul(g.n,S*(.05+.6*rise))))),c=at(pos.x,pos.y);
    const base=S*.11*k*(.55+.45*Math.min(1,Pq*4));
-   if(Pq<.78){faceHeartShape(ctx,c[0],c[1],base,Math.sin(Pq*6+i)*.15,P.heart*o.op,casual);
+   if(Pq<.78){faceHeartShape(ctx,c[0],c[1],base*(.8+.4*v),Math.sin(Pq*6+i)*.15+(v-.5)*.4,P.heart*o.op,casual,v);
     const fl=Pq>.48&&Pq<.66?Math.sin((Pq-.48)/.18*Math.PI):0;if(fl>0)faceGlint(ctx,c[0]-base*.35,c[1]-base*.4,base*.22,P.heart*o.op*fl,false,.5)}// 한 번 반짝
-   else faceHeartPop(ctx,c[0],c[1],base,(Pq-.78)/.14,P.heart*o.op,casual,i);
+   else faceHeartPop(ctx,c[0],c[1],base*(.8+.4*v),(Pq-.78)/.14,P.heart*o.op,casual,i,v);
   }}
   ctx.restore();
  }
@@ -256,22 +256,30 @@ function faceAnger(ctx,x,y,sz,alpha){
  ctx.restore();
 }
 function heartPath(ctx,sz){ctx.beginPath();ctx.moveTo(0,sz*.9);ctx.bezierCurveTo(-sz*1.4,-sz*.1,-sz*.6,-sz*1.1,0,-sz*.35);ctx.bezierCurveTo(sz*.6,-sz*1.1,sz*1.4,-sz*.1,0,sz*.9);ctx.closePath()}
-function faceHeartShape(ctx,x,y,sz,rot,alpha,casual){
+// 하트 색: 캐주얼은 분홍·빨강·연분홍·살구 중 하나(단색), 실사는 네온 분홍·자홍
+const HEART_FLAT=['#ff5c8a','#ff8fab','#e8304f','#ffc2d1','#ff7a6b','#f9a8c9'];
+// 하트(실사 = 네온: 외곽선만 빛남 · 겹 외곽선 · 빛나는 채움 중 v로 고름 / 캐주얼 = 테두리 없이 단색 채움, 은은한 번짐)
+function faceHeartShape(ctx,x,y,sz,rot,alpha,casual,v=.5){
  if(alpha<=.01||sz<=.3)return;
  ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.globalAlpha=clamp(alpha,0,1);
- if(casual){heartPath(ctx,sz);ctx.fillStyle='#ff6b9a';ctx.fill();ctx.lineWidth=Math.max(1,sz*.16);ctx.strokeStyle='#5a1830';ctx.stroke();ctx.fillStyle='rgba(255,255,255,.85)';ctx.beginPath();ctx.ellipse(-sz*.42,-sz*.42,sz*.16,sz*.1,-.6,0,Math.PI*2);ctx.fill()}
- else{ctx.shadowColor='rgba(255,90,140,.45)';ctx.shadowBlur=sz*.6;
-  const gr=ctx.createRadialGradient(-sz*.3,-sz*.45,sz*.1,0,0,sz*1.3);gr.addColorStop(0,'#ffb3c8');gr.addColorStop(.5,'#f2577f');gr.addColorStop(1,'#b81e4b');
-  heartPath(ctx,sz);ctx.fillStyle=gr;ctx.fill();ctx.shadowBlur=0;faceSpecular(ctx,-sz*.42,-sz*.42,sz*.3,.8)}
+ if(casual){const col=HEART_FLAT[Math.floor(v*HEART_FLAT.length)%HEART_FLAT.length];ctx.shadowColor=col;ctx.shadowBlur=sz*.35;heartPath(ctx,sz);ctx.fillStyle=col;ctx.fill()}
+ else{
+  // 밝은 피부 위에서도 분홍빛이 남게 보통 합성(빛 더하기는 하얗게 날아간다)
+  const kind=v<.45?'line':v<.75?'double':'fill',hue=v<.5?'245,40,165':'250,60,125';
+  ctx.lineJoin='round';
+  if(kind==='fill'){ctx.shadowColor=`rgba(${hue},.9)`;ctx.shadowBlur=sz*1.1;heartPath(ctx,sz);const gr=ctx.createRadialGradient(0,-sz*.2,sz*.1,0,0,sz*1.2);gr.addColorStop(0,'rgba(255,235,245,.95)');gr.addColorStop(.5,`rgba(${hue},.75)`);gr.addColorStop(1,`rgba(${hue},.35)`);ctx.fillStyle=gr;ctx.fill()}
+  const tube=(s,w)=>{heartPath(ctx,s);ctx.shadowColor=`rgba(${hue},1)`;ctx.shadowBlur=sz*.9;ctx.strokeStyle=`rgba(${hue},.9)`;ctx.lineWidth=w*2.4;ctx.stroke();ctx.shadowBlur=sz*.25;ctx.strokeStyle='rgba(255,228,242,.95)';ctx.lineWidth=w*.9;ctx.stroke()};
+  if(kind!=='fill'){tube(sz,Math.max(.8,sz*.09));if(kind==='double')tube(sz*.62,Math.max(.6,sz*.07))}
+ }
  ctx.restore();
 }
-// 터지는 하트: 살짝 부풀며 옅어지고, 작은 물방울 조각과 얇은 고리가 퍼진다(비눗방울이 '뾱')
-function faceHeartPop(ctx,x,y,sz,q,alpha,casual,seed){
- q=clamp(q,0,1);ctx.save();ctx.translate(x,y);ctx.globalAlpha=clamp(alpha*(1-q),0,1);
- if(q<.35){const s=sz*(1+q*1.2);heartPath(ctx,s);ctx.fillStyle=casual?'rgba(255,107,154,.6)':'rgba(242,87,127,.45)';ctx.fill()}
- ctx.lineWidth=Math.max(.8,sz*.08);ctx.strokeStyle=casual?'rgba(255,107,154,.9)':'rgba(255,200,215,.9)';ctx.beginPath();ctx.arc(0,0,sz*(.6+1.2*q),0,Math.PI*2);ctx.stroke();
- ctx.fillStyle=casual?'#ff6b9a':'rgba(255,215,228,.95)';
- for(let i=0;i<7;i++){const a=i/7*Math.PI*2+seed,d=sz*(.5+1.6*q);ctx.beginPath();ctx.arc(Math.cos(a)*d,Math.sin(a)*d,Math.max(.6,sz*.1*(1-q)),0,Math.PI*2);ctx.fill()}
+// 터지는 하트: 살짝 부풀며 옅어지고, 작은 조각과 얇은 고리가 퍼진다(비눗방울이 '뾱')
+function faceHeartPop(ctx,x,y,sz,q,alpha,casual,seed,v=.5){
+ q=clamp(q,0,1);const col=casual?HEART_FLAT[Math.floor(v*HEART_FLAT.length)%HEART_FLAT.length]:'rgba(245,60,160,.9)';
+ ctx.save();ctx.translate(x,y);ctx.globalAlpha=clamp(alpha*(1-q),0,1);
+ if(q<.35){heartPath(ctx,sz*(1+q*1.2));ctx.fillStyle=col;ctx.globalAlpha*=.55;ctx.fill();ctx.globalAlpha=clamp(alpha*(1-q),0,1)}
+ ctx.lineWidth=Math.max(.8,sz*.08);ctx.strokeStyle=col;ctx.beginPath();ctx.arc(0,0,sz*(.6+1.2*q),0,Math.PI*2);ctx.stroke();
+ ctx.fillStyle=col;for(let i=0;i<7;i++){const a=i/7*Math.PI*2+seed,d=sz*(.5+1.6*q);ctx.beginPath();ctx.arc(Math.cos(a)*d,Math.sin(a)*d,Math.max(.6,sz*.1*(1-q)),0,Math.PI*2);ctx.fill()}
  ctx.restore();
 }
 // ── 캐주얼·SD 모양: 테두리 있는 단순한 도형 ──
