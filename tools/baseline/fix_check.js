@@ -42,6 +42,28 @@ const results = [];
 const report = (id, ok, info) => { results.push({ id, ok }); console.log((ok ? '통과' : '실패'), id, info || ''); };
 const tests = {
 
+  // H-4: 자르기 전후에 같은 지점이 같은 그림 화소를 가리키는지(영역 가운데·눈 점), 틀 밖 영역은 지워지는지
+  async h4(browser) {
+    const page = await newPage(browser), log = [];
+    const zs = [Object.assign({}, ZONE, { id: 'q1', name: '왼위', x: .25, y: .25, rx: .08, ry: .08 }),
+      { id: 'q2', name: '다각', kind: 'polygon', polygon: [[.5, .2], [.6, .2], [.6, .3], [.5, .3]], x: .55, y: .25, rx: .05, ry: .05 },
+      Object.assign({}, ZONE, { id: 'q3', name: '밖', x: .95, y: .95, rx: .03, ry: .03 }), Object.assign({}, ZONE, { id: 'q4', name: '기울', x: .3, y: .5, rx: .08, ry: .04, rot: .5 })];
+    await openProject(page, project(dataURL(QUAD), zs, {}), 'h4');
+    const p = page.evaluate(() => window.MotionPadDebug.dev.crop(.1, .1, .6, .6));
+    await page.waitForSelector('#confirmDialog[open]'); const msg = await page.locator('#confirmMessage').innerText();
+    await page.locator('#confirmOk').click(); await p; await rafs(page, 8);
+    const st = await page.evaluate(() => { const s = window.MotionPadDebug.state(); return { img: s.image, zones: s.zones.map(z => z.name) }; });
+    const [dl] = await Promise.all([page.waitForEvent('download'), page.evaluate(() => document.getElementById('backupBtn').click())]);
+    const f = path.join(OUT, 'h4-saved.json'); await dl.saveAs(f); const d = JSON.parse(fs.readFileSync(f, 'utf8'));
+    const z1 = d.zones.find(z => z.id === 'q1'), z2 = d.zones.find(z => z.id === 'q2'), eye = d.extra.blink.eyes[0].points[0];
+    const col = await page.evaluate(([x, y]) => new Promise(r => requestAnimationFrame(() => { const v = document.getElementById('view'), c = document.createElement('canvas'); c.width = 100; c.height = 100; const g = c.getContext('2d'); g.drawImage(v, 0, 0, 100, 100); r([...g.getImageData(Math.round(x * 100), Math.round(y * 100), 1, 1).data].slice(0, 3)); })), [z1.x, z1.y]);
+    const near = (a, b) => Math.abs(a - b) < .004;
+    log.push(`안내 '${msg.slice(-30)}'`, `그림 ${st.img}`, `영역 ${st.zones}`, `왼위 ${z1.x.toFixed(3)},${z1.y.toFixed(3)} r${z1.rx.toFixed(3)} 색 ${col}`, `다각 ${z2.polygon[0].map(v => v.toFixed(3))}`, `눈 ${eye.x.toFixed(3)},${eye.y.toFixed(3)}`);
+    const ok = /밖/.test(msg) && String(st.zones) === '왼위,다각,기울' && (() => { const z4 = d.zones.find(z => z.id === 'q4'); log.push(`기울 ${z4.kind} ${z4.x.toFixed(3)},${z4.y.toFixed(3)}`); return z4.kind === 'raster' && Math.abs(z4.x - (.3 - .1) / .6) < .01 && Math.abs(z4.y - (.5 - .1) / .6) < .01; })() && near(z1.x, .25) && near(z1.y, .25) && near(z1.rx, .08 / .6) && col[0] > 150 && col[1] < 120
+      && near(z2.polygon[0][0], (.5 - .1) / .6) && near(z2.polygon[0][1], (.2 - .1) / .6) && near(eye.x, (.57 - .1) / .6) && near(eye.y, (.2 - .1) / .6) && !page.errors.length;
+    report('h4', ok, log.join(' · ') + (page.errors[0] || ''));
+  },
+
   // H-1 움직임 복사·붙여넣기, H-2 숫자 직접 입력·두 번 누르면 기준값, H-3 숨기기·순서
   async h(browser) {
     const page = await newPage(browser), log = [];
