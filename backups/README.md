@@ -28,7 +28,10 @@
 | G | `6780af1` | 쓰다듬기, 반복 영상 이음매 샘플 | `docs/progress/G.md` |
 | H-1~H-3 | `664f1d2` | 움직임 복사·숫자 직접 입력·숨기기·순서 | `docs/progress/H.md` |
 | H-4 | `4689892` | 그림 자르기 | `docs/progress/H.md` |
+| I(시험판) | 가지 `face-draft` `a0ef914` | 얼굴 자동 초안. 본판에는 없음, main에는 `motionpad-face-draft.html`만 | `docs/progress/I.md` |
 
 통째로 작업 전으로 돌리려면(배포본만): 위 백업 html을 `motionpad.html`로 복사해 올리면 된다. 소스까지 돌리려면 `git revert`를 위 표 아래에서 위 순서로.
 
 새 단계(C 이후)가 끝날 때마다 이 표에 한 줄씩 더한다.
+
+시험판을 채택하지 않으면: main에서 `motionpad-face-draft.html`을 지우고 가지 `face-draft`를 지우면 흔적이 없다.
