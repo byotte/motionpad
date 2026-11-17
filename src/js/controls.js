@@ -53,8 +53,8 @@ $('touchTestBtn').onclick=()=>{
 function previewMotion(){
  if(!viewerOpen&&mode!=='play')setTouchPreview(true);
 }
-// 3-M: 3-1 연속 움직임은 프리셋과 상관없이 늘 방향·세기·속도 셋이다. 세기는 3-2 '반응 세기'와 같은 값, 속도는 자동 움직임 속도.
-const QUICK_LINKS=[['quickStrength','strengthInput'],['quickSpeed','autoSpeedInput']];
+// 3-M: 3-1 연속 움직임은 프리셋과 상관없이 늘 방향·세기·속도 셋이다. 세기는 결정 2로 따로(autoStrength, 영역 속성표가 직접 묶음), 속도는 자동 움직임 속도.
+const QUICK_LINKS=[['quickSpeed','autoSpeedInput']];
 $('tailCutoutInput').onchange=e=>{
  const z=getSelected();
  if(!z||z.isBase)return;
@@ -85,6 +85,7 @@ function applyMotionPreset(z,preset){
   preset,auto:false,autoSpeed:1,breath:0,breathSpeed:1,wave:0,flow:0,twist:0,ripple:0,
   windStrength:0,windAngle:0,windSpeed:1,windNoise:30,windDelay:50,feather:17,spread:9
  },MOTION_PRESETS[preset]);
+ z.autoStrength=z.strength;// 프리셋은 두 세기를 같은 값으로 시작
  return true;
 }
 $('presetInput').onchange=e=>{

@@ -63,7 +63,7 @@ const MotionPhysics=Object.freeze({
     }
     const env=this.restEnvelope(z,t);z.autoEnv=env;
     const wind=this.wind(z,t).map(v=>v*env);
-    const strength=clamp(z.strength??0,0,80)/80;
+    const strength=clamp(z.autoStrength??z.strength??0,0,80)/80;// 연속 움직임 세기(4-1), 터치 반응 세기(strength)와 따로
     const idle=z.auto?this.wave(t*1.18*(z.autoSpeed||1),z.phase)*strength*env:0;
     const autoAxis=z.autoAxis||z.axis,[axisX,axisY]=TAP_DIRECTIONS[autoAxis]||[0,-1];
     // 양쪽 위로·아래로: 왼쪽 위(아래)로 한 번, 오른쪽 위(아래)로 한 번 번갈아 편다. 가운데를 지날 때 제자리로 내려온다.

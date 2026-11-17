@@ -42,6 +42,20 @@ const results = [];
 const report = (id, ok, info) => { results.push({ id, ok }); console.log((ok ? '통과' : '실패'), id, info || ''); };
 const tests = {
 
+  // 결정 2: 4-1 연속 움직임 세기(autoStrength)와 4-2 반응 세기(strength)를 따로. 옛 파일은 strength 값으로 읽는다.
+  async d2(browser) {
+    const page = await newPage(browser);
+    await openProject(page, project(dataURL(FIXTURE), [Object.assign({}, ZONE, { strength: 40 })], {}), 'd2');
+    const v = () => page.evaluate(() => [document.getElementById('quickStrength').value, document.getElementById('strengthInput').value].join('/'));
+    const a = await v();
+    await page.focus('#quickStrength');
+    await page.evaluate(() => { const e = document.getElementById('quickStrength'); e.value = 60; e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); });
+    const b = await v();
+    await page.locator('#undoBtn').click(); await rafs(page, 2);
+    const c = await v();
+    report('d2', a === '40/40' && b === '60/40' && c === '40/40', `연속/반응: 열었을 때 ${a} · 연속만 60 ${b} · 되돌리기 ${c}`);
+  },
+
   // B: 동그라미 0개, PC는 올리면 안내줄에 설명·떠나면 원래 안내, 폰은 이름을 누르면, 입 찍기 중에는 순서 안내가 그대로
   async b(browser) {
     const page = await newPage(browser);

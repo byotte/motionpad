@@ -18,6 +18,7 @@
 | 검수 오류 수리 묶음 1~4 (작업지시서 0-4) | 완료(2026-11-17): E1·E13·E14 / E3·E4·E5(+E6·E7) / E2 / L7·L8·L10·L11. 재현 시험 `tools/baseline/fix_check.js` | `fix-bundles.md` |
 | 작업지시서 A 겉 정리 | 완료(사용자 사진 확인 대기). 하위 항목마다 커밋을 나눠 하나씩 되돌릴 수 있다 | `A.md` |
 | 작업지시서 B 도움말 → 안내줄 | 완료. 문구는 초안 그대로(쓰면서 고침) | `B.md`, `B-help-draft.md` |
+| 결정 2: 4-1 세기 / 4-2 반응 세기 나누기 | 완료(`autoStrength`) | `D2-strength.md` |
 
 ## 개발 방법 (0-5부터)
 - **고치는 곳은 `src/`**. `motionpad.html`은 `node tools/build.js`로 만드는 결과물(배포본)이다. 직접 고치지 않는다. 구성은 `src/README.md`.

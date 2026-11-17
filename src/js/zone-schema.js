@@ -34,6 +34,8 @@ const ZONE_FIELDS=[
  num('spring',14,3,30,{input:'springInput',output:'springValue'}),
  num('damping',62,0,100,{input:'dampingInput',output:'dampingValue',fmt:pct}),
  flag('auto',{input:'autoInput',check:true}),
+ // 사용자 결정 2(검수 L3): 4-1 연속 움직임의 세기는 4-2 '반응 세기'(strength)와 따로. 옛 파일에는 없으므로 그 영역의 strength 값으로 읽는다.
+ {key:'autoStrength',save:z=>z.autoStrength,read:z=>clamp(zNum(z.autoStrength,clamp(zNum(z.strength,26),0,80)),0,80),ui:{input:'quickStrength',output:'quickStrengthValue'}},
  num('autoSpeed',1,.2,3,{input:'autoSpeedInput'}),
  num('feather',8,0,45,{input:'featherInput',output:'featherValue',mask:true}),
  num('breath',8,0,40,{input:'breathInput',output:'breathValue'}),
