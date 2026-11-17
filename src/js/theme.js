@@ -5,6 +5,7 @@ function paintTheme(){
  const theme=document.documentElement.dataset.theme||'violet';
  for(const radio of themeRadios)radio.checked=radio.value===theme;
  document.querySelector('meta[name="theme-color"]')?.setAttribute('content',getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());
+ readCanvasColors();drawOverlay();
 }
 paintTheme();
 for(const radio of themeRadios)radio.onchange=()=>{

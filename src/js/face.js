@@ -162,10 +162,10 @@ function drawFaceParts(g,w,h,px){
  if(!['faceMouth','faceBrow','faceEar'].includes(mode))return;
  const f=faces[faceSel];if(!f)return;
  // 찍은 점은 눈 깜빡임 창처럼 또렷하게: 노란 점 + 어두운 테두리 + 순서 번호
- g.save();g.lineWidth=2*px;g.strokeStyle='#ffcf70';g.setLineDash([5*px,4*px]);
- const line=pts=>{g.save();g.strokeStyle='#1d1d24';g.lineWidth=4*px;g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p.x*w,p.y*h):g.moveTo(p.x*w,p.y*h));g.stroke();g.restore();g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p.x*w,p.y*h):g.moveTo(p.x*w,p.y*h));g.stroke()};
- const dot=(p,n)=>{g.save();g.setLineDash([]);g.beginPath();g.arc(p.x*w,p.y*h,6*px,0,Math.PI*2);g.fillStyle='#ffcf70';g.fill();g.lineWidth=2*px;g.strokeStyle='#1d1d24';g.stroke();
-  if(n){g.font=`700 ${11*px}px system-ui,sans-serif`;g.textAlign='center';g.textBaseline='middle';g.lineWidth=3*px;g.strokeText(n,p.x*w,p.y*h-14*px);g.fillStyle='#fff';g.fillText(n,p.x*w,p.y*h-14*px)}g.restore()};
+ g.save();g.lineWidth=2*px;g.strokeStyle=CV.point;g.setLineDash([5*px,4*px]);
+ const line=pts=>{g.save();g.strokeStyle=CV.pointEdge;g.lineWidth=4*px;g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p.x*w,p.y*h):g.moveTo(p.x*w,p.y*h));g.stroke();g.restore();g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p.x*w,p.y*h):g.moveTo(p.x*w,p.y*h));g.stroke()};
+ const dot=(p,n)=>{g.save();g.setLineDash([]);g.beginPath();g.arc(p.x*w,p.y*h,6*px,0,Math.PI*2);g.fillStyle=CV.point;g.fill();g.lineWidth=2*px;g.strokeStyle=CV.pointEdge;g.stroke();
+  if(n){g.font=`700 ${11*px}px system-ui,sans-serif`;g.textAlign='center';g.textBaseline='middle';g.lineWidth=3*px;g.strokeText(n,p.x*w,p.y*h-14*px);g.fillStyle=CV.pointInk;g.fillText(n,p.x*w,p.y*h-14*px)}g.restore()};
  if(mode==='faceMouth'){const m=faceDraft.length?null:f.mouth;if(m){line([m.l,m.c,m.r]);dot(m.l,'1');dot(m.r,'2');dot(m.c,'3')}if(faceDraft.length>1)line(faceDraft.length>2?[faceDraft[0],faceDraft[2],faceDraft[1]]:faceDraft);faceDraft.forEach((p,i)=>dot(p,String(i+1)))}
  if(mode==='faceBrow'||mode==='faceEar'){(faceDraft.length?faceDraft:mode==='faceEar'?f.ears:f.brows).forEach(line);if(gesture?.type===mode)line(gesture.points.map(([x,y])=>({x,y})))}
  g.restore();

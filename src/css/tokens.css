@@ -39,6 +39,10 @@
   --viewerBg:#101114; --viewerBtn:#24242a; --viewerInk:#fff; --viewerHint:#fff8; --viewerHintShadow:0 1px 4px #0008;
   --rec:#e8505b; --recRing:#fff3; --recOn:#5a1f26;
   --sideW:clamp(250px,calc(15.625vw + 90px),315px);
+  /* 그림 위에 캔버스로 그리는 색(R3). JS는 테마가 바뀔 때만 읽는다(overlay.js readCanvasColors) */
+  --cv-label:var(--glass); --cv-labelInk:var(--ink);
+  --cv-point:#ffcf70; --cv-pointEdge:#1d1d24; --cv-pointInk:#fff; --cv-pivot2:#f7ab52; --cv-branch:#e3a3ff;
+  --cv-select:#83ffd3; --cv-selectFill:#83ffd344; --cv-shape:#7ef1c1; --cv-shapeFill:#7ef1c12a; --cv-erase:#ff8888; --cv-handle:#fff;
 }
 :root[data-theme="light"],.themeSample[data-theme="light"]{
   --bg:#e9eaee; --card:#f7f7f9; --panel:#f7f7f9; --button:#e4e5ea; --field:#e9eaef;
