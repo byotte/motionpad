@@ -3,7 +3,7 @@
 // 단계마다 프로젝트를 저장해 영역의 모양 값을 확인한다.
 //   node tools/baseline/shape_check.js [motionpad.html]
 'use strict';
-const { chromium } = require('playwright');
+const { chromium } = require('playwright');require('./detail_mode');
 const fs = require('fs');
 const path = require('path');
 

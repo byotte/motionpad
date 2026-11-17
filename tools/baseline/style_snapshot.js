@@ -3,7 +3,7 @@
 // 여러 장면(화면 크기·테마·상태)에서 보이는 모든 요소의 위치·크기·최종 스타일을 뽑아 요소 단위로 비교한다.
 // 결과: tools/baseline/out/style/<장면>.json 과 차이 요약(콘솔)
 'use strict';
-const { chromium } = require('playwright');
+const { chromium } = require('playwright');require('./detail_mode');
 const fs = require('fs');
 const path = require('path');
 

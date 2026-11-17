@@ -1,5 +1,5 @@
 // 디자인 조사: 실제 화면에 쓰인 글자 크기·굵기·색·모서리·버튼 높이·여백의 종류와 횟수를 센다. node tools/design/inventory.js
-const { chromium } = require('playwright');const fs=require('fs');
+const { chromium } = require('playwright');require('../baseline/detail_mode');const fs=require('fs');
 const R=require('path').resolve(__dirname,'../..');const FIX=R+'/tools/baseline/fixtures/character.png';
 (async()=>{
  const b=await chromium.launch();const agg={};

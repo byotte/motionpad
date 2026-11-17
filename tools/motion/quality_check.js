@@ -3,7 +3,7 @@
 //   node tools/motion/quality_check.js [대상.html] [결과 폴더 이름]   → tools/motion/out/quality/<이름>/*.png + 표
 // 실제 사용자 경로(그림 열기·타원 그리기·저장·열기·끌기)로 조작한다.
 'use strict';
-const { chromium } = require('playwright');
+const { chromium } = require('playwright');require('../baseline/detail_mode');
 const fs = require('fs'), path = require('path');
 const ROOT = path.resolve(__dirname, '../..');
 const TARGET = path.resolve(process.argv[2] || path.join(ROOT, 'motionpad.html'));

@@ -20,6 +20,10 @@
   .status{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
   /* L10: 옵션 패널이 남은 높이를 채운다(아래 빈 띠 없음). 화면 높이 나누기는 editor.css 맨 위 */
   .app>.workspace{grid-template-rows:auto minmax(0,1fr)}
+  /* C: 간단히에서는 그림이 남은 높이를 채우고 카드는 내용만큼(자세히는 위의 패널 높이). 높이 나누기는 이 두 줄 */
+  .app>.workspace.simpleMode{grid-template-rows:minmax(0,1fr) auto}
+  .workspace.simpleMode .stage{height:auto;min-height:0}
+  .workspace.simpleMode .side{max-height:45dvh}
   .side{min-height:0}
   /* 안내줄: 누르면 접히고 펴진다(오른쪽 꺾쇠가 표시) */
   .guideLine{cursor:pointer}

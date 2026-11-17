@@ -4,7 +4,7 @@
 //   --live: 감상 화면의 ● 녹화로 저장(같은 원본 경로를 타는지).
 // 헤드리스(소프트웨어 그래픽)는 이 크기에서 초당 1장 남짓이라 몇 분 걸린다.
 'use strict';
-const { chromium } = require('playwright');
+const { chromium } = require('playwright');require('../baseline/detail_mode');
 const fs = require('fs'), path = require('path'), cp = require('child_process');
 const ROOT = path.resolve(__dirname, '../..'), OUT = path.join(__dirname, 'out/hires');
 const args = process.argv.slice(2).filter(a => !a.startsWith('--')), LIVE = process.argv.includes('--live');

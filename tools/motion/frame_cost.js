@@ -13,7 +13,7 @@
 // 주의: 헤드리스 Chromium의 그래픽은 소프트웨어(SwiftShader)라 '그래픽 처리' 몫은 실기기와 다르다.
 //       JS 몫(물리·마스크·깜빡임 합성)은 실기기 경향과 같다. 같은 기계 전후 비교용.
 'use strict';
-const { chromium } = require('playwright');
+const { chromium } = require('playwright');require('../baseline/detail_mode');
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');

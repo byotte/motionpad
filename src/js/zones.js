@@ -69,7 +69,7 @@ $('markBaseBtn').onclick=()=>{
 $('baseClipInput').onchange=e=>{remember();baseClipEnabled=e.target.checked;markMask();scheduleSave();setStatus(baseClipEnabled?'자동 크롭을 적용했습니다. 원본 마스크는 유지됩니다.':'자동 크롭을 해제해 원본 영역을 복원했습니다.')};
 for(const r of document.querySelectorAll('input[name="bodyTarget"]'))r.onchange=()=>{if(!r.checked)return;remember();baseBackgroundExclude=r.value==='body';markMask();scheduleSave();refreshBaseUI();setStatus(baseBackgroundExclude?'몸체만 움직이고 배경은 고정됩니다.':'배경까지 그림 전체가 움직입니다.')};
 $('baseEdgeInput').oninput=e=>{baseEdge=Number(e.target.value);$('baseEdgeVal').textContent=String(baseEdge);markMask();scheduleSave()};
-function updateValues(){const z=getSelected();if(!z)return;$('zoneList').replaceChildren(...zones.map(zoneItem));for(const {key,ui} of ZONE_UI)if(ui.output)$(ui.output).textContent=(ui.fmt||String)(z[key]);updateQuickMotion(z);paintFaceRows(z);for(const d of document.querySelectorAll('.dirDial'))d.paint?.();refreshChangedMarks()}
+function updateValues(){const z=getSelected();if(!z)return;$('zoneList').replaceChildren(...zones.map(zoneItem));for(const {key,ui} of ZONE_UI)if(ui.output)$(ui.output).textContent=(ui.fmt||String)(z[key]);updateQuickMotion(z);paintFaceRows(z);for(const d of document.querySelectorAll('.dirDial'))d.paint?.();refreshChangedMarks();renderCard()}
 // 2-F: 영역 목록. PC는 세로 목록(이름 + 켜진 효과 이름표 + 잠금), 폰은 가로 이름표(CSS). 몸체는 늘 맨 앞.
 function zoneTags(z){const t=[],pc=v=>`${Math.round(v)}%`;
  if(z.isBase)t.push(['몸체','움직일 몸체']);
@@ -91,7 +91,7 @@ function zoneItem(item){const b=document.createElement('button');b.type='button'
  b.onclick=()=>{clearSelectionDrafts();selected=item.id;updateUI()};b.oncontextmenu=e=>{e.preventDefault();clearTimeout(pressTimer);selected=item.id;updateUI();showZoneMenu(item)};let pressTimer=null;b.addEventListener('pointerdown',()=>{clearTimeout(pressTimer);pressTimer=setTimeout(()=>{selected=item.id;updateUI();showZoneMenu(item)},620)});for(const ev of ['pointerup','pointercancel','pointerleave'])b.addEventListener(ev,()=>clearTimeout(pressTimer));return b}
 function updateUI(){const z=getSelected(),base=getBase();$('zoneCount').textContent=`${zones.length}개`;$('zoneList').replaceChildren(...zones.map(zoneItem));$('zoneList').hidden=!zones.length;
  refreshBaseUI();$('partsName').textContent=z?z.name:'';
- paintNoZoneGuide();$('noZone').hidden=!!z;$('editFields').hidden=$('zoneDetail').hidden=$('motionFields').hidden=!z;$('noZoneMotion').hidden=!!z;refreshBaseUI();if(!z)return;for(const {key,ui} of ZONE_UI){const node=$(ui.input),val=ui.toInput?ui.toInput(z[key]):z[key];if(ui.check)node.checked=val;else node.value=val}updateValues()}
+ paintNoZoneGuide();$('noZone').hidden=!!z;$('editFields').hidden=$('zoneDetail').hidden=$('motionFields').hidden=!z;$('noZoneMotion').hidden=!!z;refreshBaseUI();renderCard();if(!z)return;for(const {key,ui} of ZONE_UI){const node=$(ui.input),val=ui.toInput?ui.toInput(z[key]):z[key];if(ui.check)node.checked=val;else node.value=val}updateValues()}
 // 0-2: prompt() 대신 앱 자체 메뉴
 let zoneMenuTarget=null;
 function showZoneMenu(z){if(!z||$('zoneMenuDialog').open)return;zoneMenuTarget=z.id;$('zoneMenuTitle').textContent=`‘${z.name}’ 영역`;$('zoneMenuLock').textContent=z.locked?'잠금 해제':'잠금';$('zoneMenuDialog').showModal()}
@@ -107,7 +107,7 @@ for(const [id,m] of [['pivotMode','pivot'],['extraPivotMode','extraPivot'],['spi
 $('branchMode').onclick=()=>setMode('branch');$('panMode').onclick=()=>setMode('pan');
 $('brushMode').onclick=()=>setMode('brush');$('eraseMode').onclick=()=>setMode('erase');$('wandMode').onclick=()=>setMode('wand');$('lassoMode').onclick=()=>setMode('lasso');$('ellipseMode').onclick=()=>setMode('ellipse');$('editMode').onclick=()=>setMode('edit');$('showZones').onchange=()=>{};
 $('brushInput').oninput=e=>{brushSize=Number(e.target.value);$('brushValue').textContent=brushSize+'%'};$('toleranceInput').oninput=e=>$('toleranceValue').textContent=e.target.value;$('magnetInput').oninput=e=>$('magnetValue').textContent=e.target.value+'%';
-for(const {key,ui} of ZONE_UI){const id=ui.input,conv=ui.fromInput||(ui.check?x=>x:Number);$(id).addEventListener(ui.event||'input',e=>{const z=getSelected();if(!z)return;const value=conv(ui.check?e.target.checked:e.target.value);if(z[key]===value)return;z[key]=value;if(ui.mask)markMask();if(key==='name')updateUI();else updateValues();scheduleSave();if(!ui.noPreview)previewMotion()})}
+for(const {key,ui} of ZONE_UI){const id=ui.input,conv=ui.fromInput||(ui.check?x=>x:Number);$(id).addEventListener(ui.event||'input',e=>{const z=getSelected();if(!z)return;const value=conv(ui.check?e.target.checked:e.target.value);if(z[key]===value)return;z[key]=value;if(LEVEL_KEYS.includes(key))z.level='';if(ui.mask)markMask();if(key==='name')updateUI();else updateValues();scheduleSave();if(!ui.noPreview)previewMotion()})}
 for(const {ui} of ZONE_UI){const e=$(ui.input);e.addEventListener('pointerdown',ev=>{if(getSelected())rememberOnChange(ev.currentTarget)},{passive:true});e.addEventListener('focus',ev=>{if(getSelected())rememberOnChange(ev.currentTarget)})}
 async function deleteZone(){const z=getSelected();if(!z)return;if(!await askConfirm({title:'영역 삭제',message:`‘${z.name}’ 영역과 그 움직임 설정을 지울까요? 실행 취소로 되돌릴 수 있습니다.`,ok:'영역 삭제'}))return;if(!zones.includes(z))return;remember();zones=zones.filter(a=>a.id!==z.id);if(z.isBase){baseClipEnabled=false;lastBaseSignature=''}selected=zones[0]?.id||null;updateUI();markMask();scheduleSave()}
 $('toolDeleteBtn').onclick=()=>{if(!getSelected()){setStatus('지울 영역을 먼저 선택해 주세요.');return}deleteZone()};$('toolDuplicateBtn').onclick=()=>{if(!getSelected()){setStatus('복제할 영역을 먼저 선택해 주세요.');return}duplicateZone()};function duplicateZone(){const z=getSelected();if(!z)return;if(zones.length>=LIMIT){setStatus('영역 개수 제한입니다.');return}remember();const copy=structuredClone(clean(z));copy.tailCutout=false;copy.isBase=false;copy.id=newId();copy.name=z.name+' 복사';copy.x=clamp(copy.x+.03,0,1);copy.y=clamp(copy.y+.03,0,1);if(copy.pivotX!=null)copy.pivotX=clamp(copy.pivotX+.03,0,1);if(copy.pivotY!=null)copy.pivotY=clamp(copy.pivotY+.03,0,1);if(Array.isArray(copy.spine))copy.spine.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)});if(Array.isArray(copy.branch))copy.branch.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)});if(Array.isArray(copy.extraPivots))copy.extraPivots.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)});if(copy.kind==='brush')copy.strokes.forEach(st=>st.points.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)}));if(copy.kind==='polygon')copy.polygon.forEach(p=>{p[0]=clamp(p[0]+.03,0,1);p[1]=clamp(p[1]+.03,0,1)});const zz=sanitize(copy,zones.length);if(zz.kind==='raster'){rasterize(zz);recalcRaster(zz)}zones.push(zz);selected=zz.id;markMask();updateUI();scheduleSave();setMode('edit')}
@@ -124,7 +124,7 @@ function addShape(shape){
   remember();
   if(shape.kind==='ellipse')Object.assign(z,{kind:'ellipse',x:shape.x,y:shape.y,rx:shape.rx,ry:shape.ry,rot:0,scale:1,baseX:shape.x,baseY:shape.y,runs:[],strokes:[],polygon:[]});
   else{Object.assign(z,{kind:'polygon',polygon:shape.polygon.map(p=>p.slice()),rot:0,scale:1,runs:[],strokes:[]});recalcPolygon(z);z.baseX=z.x;z.baseY=z.y}
-  markMask();updateUI();scheduleSave();return true}
+  markMask();updateUI();scheduleSave();replacedNotice(z);return true}
  if(z||op==='subtract'){const temp=sanitize(shape,zones.length);return applySelectionBits(rasterize(temp))}
  if(zones.length>=LIMIT){setStatus(`영역 최대 ${LIMIT}개`);return false}
  remember();const n=sanitize({id:newId(),name:nextZoneName(),...shape},zones.length);zones.push(n);selected=n.id;markMask();updateUI();scheduleSave();return true}
@@ -147,6 +147,7 @@ function applySelectionBits(bits){const name=nextZoneName();
   if(!result.some(Boolean)){setStatus(op==='subtract'?'모두 빼면 영역이 비게 됩니다. 영역을 지우려면 영역 메뉴의 삭제를 쓰세요.':'선택된 부분이 없습니다.');return false}
   remember();
   Object.assign(z,{kind:'raster',runs:bitsToRuns(result),strokes:[],polygon:[]});recalcRaster(z);
+  if(op==='new')replacedNotice(z);
  }else{
   if(op==='subtract'){setStatus('뺄 영역을 먼저 선택해 주세요.');return false}
   if(zones.length>=LIMIT){setStatus('영역 개수 제한입니다.');return false}

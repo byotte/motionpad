@@ -14,7 +14,18 @@
 </div></div>
 <div class="stage" id="stage"><div class="surface" id="surface"><canvas id="view"></canvas><canvas id="fxLayer" aria-hidden="true"></canvas><canvas id="crackLayer" aria-hidden="true" hidden></canvas><canvas id="faceFxLayer" aria-hidden="true" hidden></canvas><canvas id="overlay"></canvas></div><canvas id="loupe" class="loupe" width="160" height="160" hidden aria-label="확대 미리보기"></canvas></div>
 <div class="guideLine"><svg class="ic" aria-hidden="true"><use href="#i-info"/></svg><span class="status" id="status" role="status">준비 중</span><span class="guideFold" aria-hidden="true"></span></div><div class="stagebottom"><div class="quick"><button class="btn iconBtn" id="undoBtn" title="실행 취소" aria-label="실행 취소" disabled><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button><button class="btn iconBtn" id="redoBtn" title="다시 실행" aria-label="다시 실행" disabled><svg class="ic" aria-hidden="true"><use href="#i-redo"/></svg></button><button class="btn iconBtn" id="zoomOutBtn" title="화면 축소" aria-label="화면 축소"><svg class="ic" aria-hidden="true"><use href="#i-minus"/></svg></button><button class="btn" id="zoomResetBtn" title="화면 원래 크기">100%</button><button class="btn iconBtn" id="zoomInBtn" title="화면 확대" aria-label="화면 확대"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></button><button class="btn iconBtn mode" id="panMode" title="화면 이동 (H, 스페이스를 누른 채 끌기)" aria-label="화면 이동" data-mode="pan"><svg class="ic" aria-hidden="true"><use href="#i-pan"/></svg></button></div><div class="viewToggles"><label class="tog"><input type="checkbox" id="showZones" checked>영역선</label><button class="touchSwitch" data-help-short="만져 보기: 그림을 눌러 움직임을 확인합니다. 편집: 도구로 고칩니다." id="touchTestBtn" type="button" aria-pressed="false" aria-label="편집 · 만져 보기 전환" title="그림을 눌러 움직임을 확인합니다. 다시 누르면 하던 도구로 돌아갑니다"><span class="tsEdit">편집</span><span class="tsTouch">만져 보기</span></button></div></div></section>
-<aside class="side"><p class="lead noZoneGuide" id="noZoneGuide" hidden>움직일 곳을 골라 보세요. 마술봉으로 누르거나 올가미로 둘러 그리면 됩니다.</p>
+<aside class="side"><button type="button" class="cardBack" id="cardSimpleBtn">◂ 간단히</button>
+<section class="quickCard" id="quickCard" aria-label="간단 설정">
+<div class="cardHead"><div class="cardZones" id="cardZones"></div><button type="button" class="cardMore" id="cardDetailBtn">자세히 ▸</button></div>
+<div id="cardEmpty"><p class="cardLead">마술봉으로 누르거나 올가미로 대충 둘러 그리면 됩니다.</p><div class="cardBig"><button type="button" class="btn" id="cardWand">눌러서 고르기<span>(마술봉)</span></button><button type="button" class="btn" id="cardLasso">둘러 그리기<span>(올가미)</span></button></div></div>
+<p class="cardAsk" id="cardAsk">이 부분은 무엇인가요?</p>
+<div class="cardParts" id="cardParts" role="group" aria-label="부위" data-help-short="부위를 고르면 움직임이 한 번에 정해집니다."></div>
+<p class="cardNote" id="cardBaseNote">몸체는 아래 ‘전체 숨쉬기’가 맡습니다.</p>
+<div class="cardRow" id="cardSizeRow" data-help-short="움직임 크기. 약 0.6배 · 중 · 강 1.5배."><span class="cardName helpName">크기</span><div class="seg" id="cardSize"><button type="button" data-v="s">약</button><button type="button" data-v="m">중</button><button type="button" data-v="l">강</button><button type="button" data-v="" class="segCustom">직접 맞춤</button></div><button type="button" class="btn cardStroke" id="cardStroke" data-help-short="붙은 곳에서 끝까지 한 번 그으면 그 방향으로 흔들립니다.">방향 긋기</button></div>
+<div class="cardRow" id="cardAutoRow" data-help-short="가만히 둬도 움직일지, 얼마나 빠르게."><span class="cardName helpName">저절로</span><div class="seg" id="cardAuto"><button type="button" data-v="off">끔</button><button type="button" data-v="slow">느리게</button><button type="button" data-v="mid">보통</button><button type="button" data-v="fast">빠르게</button></div></div>
+<div id="cardIdle"><label class="cardLine"><span>전체 숨쉬기</span><span class="headSwitch"><input type="checkbox" id="cardBreath" aria-label="전체 숨쉬기 켜기">켜기</span></label><button type="button" class="faceAdd cardFace" id="cardFace">+ 얼굴 표정·눈 깜빡임 넣기</button></div>
+</section>
+<p class="lead noZoneGuide" id="noZoneGuide" hidden>움직일 곳을 골라 보세요. 마술봉으로 누르거나 올가미로 둘러 그리면 됩니다.</p>
 
 <details id="zonesPanel"><summary>1. 영역 <span class="count" id="zoneCount">0개</span></summary>
 <div class="zoneList" id="zoneList" role="listbox" aria-label="영역 목록"></div>
@@ -74,7 +85,7 @@
 <div class="empty" id="noZoneMotion">먼저 영역을 만들거나 선택해 주세요.</div>
 <div id="motionFields" hidden>
 <details id="presetPanel"><summary>움직임 프리셋<i class="helpMark" hidden data-help-short="용도별로 맞춰 둔 움직임으로 시작합니다." data-help="용도별로 이미 설정된 연속 움직임·터치 움직임 프리셋을 활용해 보세요. 고른 뒤 자유롭게 수정할 수 있습니다."></i></summary>
-<div class="field"><div class="fieldhead"><label for="presetInput">움직임 종류</label></div><select id="presetInput"><option value="custom">직접 설정</option><option value="soft">부드러운 반응</option><option value="breathing">호흡</option><option value="jelly">볼 탄성 · 젤리</option><option value="tail">꼬리 흔들림</option><option value="flow">흐름·물결</option><option value="wind">긴 머리 흔들림</option><option value="scarf">목도리·옷자락</option></select></div>
+<div class="field"><div class="fieldhead"><label for="presetInput">움직임 종류</label></div><select id="presetInput"><option value="jelly">볼</option><option value="breathing">가슴·배</option><option value="wind">머리카락</option><option value="tail">꼬리</option><option value="ear">귀</option><option value="scarf">옷자락</option><option value="soft">기타</option><option value="flow">흐름·물결</option><option value="custom">직접 설정</option></select></div>
 </details>
 <details id="autoPanel"><summary>4-1. 연속 움직임<label class="headSwitch"><input type="checkbox" id="autoInput" aria-label="연속 움직임 켜기(자동으로 움직이기)">켜기</label></summary>
 <div id="quickMotion">

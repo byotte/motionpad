@@ -4,7 +4,7 @@
 // 결과: tools/baseline/out/<이름>/ 에 스크린샷, 저장 파일, results.json
 // 실제 사용자 경로(파일 입력·클릭·드래그)로만 조작한다. 앱 내부 코드를 건드리지 않는다.
 'use strict';
-const { chromium } = require('playwright');
+const { chromium } = require('playwright');require('./detail_mode');
 const fs = require('fs');
 const path = require('path');
 

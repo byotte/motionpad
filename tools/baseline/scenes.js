@@ -14,6 +14,10 @@ const PROPS = ['display', 'position', 'color', 'backgroundColor', 'backgroundIma
 
 // 장면 준비 (페이지 안 상태를 실제 사용 경로로 만든다)
 async function prep(page, state) {
+  await prepInner(page, state);
+  if (process.env.MP_SIMPLE && state !== 'welcome') await page.evaluate(() => { const b = document.getElementById('cardSimpleBtn'); if (b && b.offsetParent) b.click(); });
+}
+async function prepInner(page, state) {
   if (state === 'welcome') return;
   await page.setInputFiles('#imageFile', FIXTURE);
   await page.waitForSelector('.workspace:not([hidden])');

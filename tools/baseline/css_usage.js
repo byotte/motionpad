@@ -3,7 +3,7 @@
 // 모든 장면에서 보이는 요소마다 '실제로 이긴 선언'을 브라우저(CDP)에 물어, 한 번이라도 적용된 선언만 남긴 CSS를 만든다.
 // :hover·:focus·:disabled·::backdrop·스크롤바 같은 장면으로 재현하기 어려운 상태 규칙은 통째로 남긴다.
 'use strict';
-const { chromium } = require('playwright');
+const { chromium } = require('playwright');require('./detail_mode');
 const fs = require('fs');
 const path = require('path');
 const { VP, SCENES, prep } = require('./scenes');

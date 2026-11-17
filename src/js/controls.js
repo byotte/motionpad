@@ -94,8 +94,9 @@ $('presetInput').onchange=e=>{
  const preset=e.target.value;
  if(preset===z.preset)return;
  remember();
- if(preset==='custom'){z.preset='custom';markMask();updateQuickMotion(z);scheduleSave();return}
+ if(preset==='custom'){z.preset='custom';z.level='';markMask();updateQuickMotion(z);scheduleSave();renderCard();return}
  if(!applyMotionPreset(z,preset))return;
+ z.level='m';
  markMask();updateUI();scheduleSave();previewMotion();
  setStatus('프리셋을 적용했습니다. 그림을 터치해 보세요.');
 };

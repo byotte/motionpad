@@ -100,7 +100,7 @@ function projectMotion(axis,x,y){
  const [ax,ay]=direction,amount=x*ax+y*ay;
  return [amount*ax,amount*ay];
 }
-function impact(z,intensity=1,p=null,dir=null){
+function impact(z,intensity=1,p=null,dir=null,quiet=false){// quiet: 소리·표정·맞은 자리 없이 튕기기만(C-4 부위를 고른 직후)
  if(!z)return;
  const f=clamp(intensity,0,2.2),gain=dir?1:(z.tapGain??100)/100;
  const max=.004+z.strength/80*.015;
@@ -113,6 +113,7 @@ function impact(z,intensity=1,p=null,dir=null){
   z.physVY=clamp((z.physVY||0)+y*velocity,-.28,.28);
  }
  z.hitX=p?.x??z.x;z.hitY=p?.y??z.y;z.hitAt=elapsed;z.hitPower=f*gain;
+ if(quiet)return;
  faceHit(z,f*gain);markHit(z,p||{x:z.x,y:z.y},f*gain);
  if(f>0)playSfx(f);
 }

@@ -1,7 +1,7 @@
 // 검토용 장면 스크린샷 (개발 전용): node tools/baseline/shots.js <html> <출력 폴더> <화면-테마-상태> ...
 // 예) node tools/baseline/shots.js motionpad.html out/review pc-violet-rich mobile-light-dlg-sound
 'use strict';
-const { chromium } = require('playwright');
+const { chromium } = require('playwright');require('./detail_mode');
 const fs = require('fs'), path = require('path');
 const { VP, prep } = require('./scenes');
 (async () => {

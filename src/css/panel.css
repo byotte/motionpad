@@ -123,3 +123,33 @@
 .faceBox:not(.on) :is(.faceTitle,.faceOn){display:none}
 .faceBox.on .faceAdd{display:none}
 .side .noZoneGuide{margin:var(--sp3) 10px;color:var(--item)}
+/* C: 간단 카드. 늘 같은 자리(PC 오른쪽 칸 맨 위, 폰 그림 아래). 간단히에서는 카드만, 자세히에서는 지금 패널(+ 맨 위 '◂ 간단히') */
+.side.simple>:not(.quickCard){display:none}
+.side:not(.simple)>.quickCard{display:none}
+.cardBack{align-self:flex-start;margin:var(--sp1) 6px;padding:var(--sp1) var(--sp1);border:0;background:transparent;color:var(--accentInk);font:inherit;font-size:var(--fs-item);font-weight:var(--fw-item);cursor:pointer}
+.quickCard{display:flex;flex-direction:column;gap:var(--sp2);padding:var(--sp2) 10px var(--sp3)}
+.quickCard [hidden]{display:none!important}
+.cardHead{display:flex;align-items:center;gap:var(--sp1);min-width:0}
+.cardZones{display:flex;flex:1;gap:var(--sp1);min-width:0;overflow-x:auto;scrollbar-width:none}
+.cardZones .zoneItem{flex:none;width:auto;padding:2px 10px}
+.cardZones .zoneTags{display:none}
+.cardZones .zoneItem.active{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:transparent}
+.cardAdd{flex:none;min-height:var(--ctl-h);padding:0 10px;border:1px dashed var(--line);background:transparent;color:var(--accentInk);font-weight:var(--fw-title);white-space:nowrap}
+.cardMore{flex:none;margin-left:auto;padding:0 var(--sp1);border:0;background:transparent;color:var(--accentInk);font:inherit;font-size:var(--fs-item);font-weight:var(--fw-item);white-space:nowrap;cursor:pointer}
+.cardTitle{margin:0;color:var(--ink);font-size:var(--fs-title);font-weight:var(--fw-title)}
+.cardLead,.cardNote{margin:0;color:var(--item);font-size:var(--fs-item)}
+.cardAsk{margin:0;color:var(--ink);font-size:var(--fs-item);font-weight:var(--fw-title)}
+.cardBig{display:flex;gap:var(--sp2)}
+.cardBig .btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:48px;font-weight:var(--fw-title)}
+.cardBig .btn span{font-weight:var(--fw-help);color:var(--help);font-size:var(--fs-help)}
+.cardParts{display:flex;gap:var(--sp1);overflow-x:auto;scrollbar-width:thin;padding-bottom:2px}
+.cardParts .chip{flex:none;min-height:var(--ctl-h);padding:0 10px;background:transparent;white-space:nowrap}
+.cardParts .chip.on,.seg button.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);color:var(--ink)}
+.cardRow{display:flex;align-items:center;gap:var(--sp2);min-width:0}
+.cardName{flex:none;width:44px;color:var(--item);font-size:var(--fs-item)}
+.seg{display:inline-flex;gap:var(--sp1);min-width:0}
+.seg button{min-height:var(--ctl-h);padding:0 8px;border:1px solid var(--line);border-radius:var(--r-ctl);background:transparent;color:var(--item);font:inherit;font-size:var(--fs-item);white-space:nowrap;cursor:pointer}
+.cardStroke{margin-left:auto;flex:none}
+.cardLine{display:flex;align-items:center;justify-content:space-between;color:var(--item);font-size:var(--fs-item);cursor:pointer}
+.cardLine .headSwitch{margin-left:auto}
+.cardFace{padding:var(--sp1) 0;min-height:0;flex:none}

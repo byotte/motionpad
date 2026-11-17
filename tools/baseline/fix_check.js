@@ -2,7 +2,7 @@
 // 검수 오류 재현 시험(작업지시서 0-4). node tools/baseline/fix_check.js [대상.html] [e1 e2 e3 e4 e5 e6 ...]
 // 항목을 안 주면 전부. 각 항목은 '정상이면 통과'로 적혀 있다(고치기 전에는 실패해야 한다).
 'use strict';
-const { chromium } = require('playwright');
+const { chromium } = require('playwright');require('./detail_mode');
 const fs = require('fs'), path = require('path'), cp = require('child_process');
 const ROOT = path.resolve(__dirname, '../..'), OUT = path.join(__dirname, 'out/fix');
 fs.mkdirSync(OUT, { recursive: true });
@@ -41,6 +41,42 @@ async function newPage(browser, vp) {
 const results = [];
 const report = (id, ok, info) => { results.push({ id, ok }); console.log((ok ? '통과' : '실패'), id, info || ''); };
 const tests = {
+
+  // C-8: 간단 카드. 영역 → 부위 '볼' → 크기 '강' → 자세히에서 세기 → '직접 맞춤' → 되돌리기 두 번 → 저장·다시 열기 → 옛 프로젝트는 부위를 묻지 않음
+  async c(browser) {
+    const page = await newPage(browser), log = [];
+    await page.setInputFiles('#imageFile', FIXTURE); await page.waitForSelector('.workspace:not([hidden])'); await rafs(page, 3);
+    await page.locator('#cardSimpleBtn').click();
+    const box = await page.locator('#view').boundingBox(), P = (x, y) => [box.x + box.width * x, box.y + box.height * y];
+    await page.locator('#ellipseMode').click();
+    await page.mouse.move(...P(.3, .38)); await page.mouse.down(); await page.mouse.move(...P(.42, .5), { steps: 6 }); await page.mouse.up(); await rafs(page, 3);
+    const card = () => page.evaluate(() => { const z = window.MotionPadDebug.state().zones?.find?.(() => true); const q = s => document.querySelector(s);
+      const on = sel => [...document.querySelectorAll(sel + ' .on')].map(b => b.textContent).join(',');
+      return { ask: !q('#cardAsk').hidden, parts: on('#cardParts'), size: on('#cardSize'), auto: on('#cardAuto'), strength: document.getElementById('strengthInput').value, zone: q('#cardZones .zoneItem.active')?.textContent || '' }; });
+    let c1 = await card(); log.push('새 영역 묻기 ' + c1.ask);
+    await page.locator('#cardParts .chip', { hasText: '볼' }).first().click(); await rafs(page, 3);
+    let c2 = await card(); log.push(`볼 → ${c2.parts}/${c2.size}/${c2.zone}/세기 ${c2.strength}`);
+    await page.locator('#cardSize button', { hasText: '강' }).click(); await rafs(page, 2);
+    let c3 = await card(); log.push(`강 → 세기 ${c3.strength}`);
+    await page.locator('#cardDetailBtn').click(); await page.evaluate(() => { for (const d of document.querySelectorAll('aside details')) d.open = true; });
+    await page.focus('#strengthInput');
+    await page.evaluate(() => { const e = document.getElementById('strengthInput'); e.value = 20; e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); });
+    await page.locator('#cardSimpleBtn').click();
+    let c4 = await card(); log.push(`자세히 세기 20 → ${c4.size}`);
+    await page.locator('#undoBtn').click(); await rafs(page, 2); let c5 = await card();
+    await page.locator('#undoBtn').click(); await rafs(page, 2); let c6 = await card(); log.push(`되돌리기 ${c5.size}/${c5.strength} · ${c6.size}/${c6.strength}`);
+    await page.locator('#redoBtn').click(); await page.locator('#redoBtn').click(); await rafs(page, 2);
+    const [dl] = await Promise.all([page.waitForEvent('download'), page.evaluate(() => document.getElementById('backupBtn').click())]);
+    const f = path.join(OUT, 'c-saved.motionpad.json'); await dl.saveAs(f);
+    const saved = JSON.parse(fs.readFileSync(f, 'utf8')).zones[0];
+    await page.setInputFiles('#backupFile', f); await page.waitForSelector('.workspace:not([hidden])'); await rafs(page, 3);
+    await page.evaluate(() => document.querySelector('#cardZones .zoneItem')?.click()); let c7 = await card(); log.push(`다시 열기 ${saved.preset}/${saved.level}/${saved.name} → ${c7.parts}/${c7.size}`);
+    await openProject(page, project(dataURL(FIXTURE), [Object.assign({}, ZONE, { preset: 'custom' })], {}), 'c-old');
+    await page.evaluate(() => document.querySelector('#cardZones .zoneItem')?.click()); let c8 = await card(); log.push(`옛 프로젝트 묻기 ${c8.ask} 칩 ${c8.parts}`);
+    const ok = c1.ask && c2.parts === '볼' && c2.size === '중' && c2.zone.includes('볼') && Number(c3.strength) === 45 && c4.size === '직접 맞춤' && c5.size === '강' && c5.strength === '45' && c6.size === '중' && c6.strength === '30'
+      && saved.preset === 'jelly' && saved.level === '' && c7.parts === '볼' && c7.size === '직접 맞춤' && !c8.ask && c8.parts === '직접 설정' && !page.errors.length;
+    report('c', ok, log.join(' · ') + (page.errors[0] || ''));
+  },
 
   // 결정 2: 4-1 연속 움직임 세기(autoStrength)와 4-2 반응 세기(strength)를 따로. 옛 파일은 strength 값으로 읽는다.
   async d2(browser) {

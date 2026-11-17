@@ -13,6 +13,8 @@ const AUTO_AXES=['x','y','diag','diagBack','arcUp','arcDown','pulse'];
 const ZONE_FIELDS=[
  {key:'tailCutout',save:z=>!!z.tailCutout,read:z=>z.tailCutout===true},
  {key:'preset',save:z=>z.preset,read:z=>Object.hasOwn(MOTION_PRESETS,z.preset)?z.preset:"custom"},
+ // C-6: 간단 카드의 크기 단계 's'·'m'·'l', ''= 직접 맞춤(옛 파일). 카드만의 값은 이것 하나.
+ {key:'level',save:z=>z.level,read:z=>['s','m','l'].includes(z.level)?z.level:''},
  {key:'breathSpeed',save:z=>z.breathSpeed,read:z=>clamp(zNum(z.breathSpeed,1),.2,3)},
  {key:'isBase',save:z=>!!z.isBase,read:z=>!!z.isBase},
  {key:'id',save:z=>z.id,read:z=>String(z.id||newId())},

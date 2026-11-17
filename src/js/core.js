@@ -12,11 +12,12 @@ let undoStack=[],redoStack=[],lastHistoryJSON='',imagePixels=null,edgeScores=nul
 const stopEvent=e=>e.preventDefault();
 const MOTION_PRESETS=Object.freeze({
  soft:{strength:15,spring:11,damping:74,ripple:5,feather:19},
- breathing:{strength:12,spring:8,damping:88,breath:18,breathSpeed:.85,feather:23,spread:10},
+ breathing:{strength:30,spring:8,damping:88,breath:18,breathSpeed:.85,feather:23,spread:10},// C-4 가슴·배: 세기는 볼 탄성 수준
  jelly:{strength:30,spring:17,damping:55,ripple:13,feather:17,spread:10},
  tail:{strength:24,spring:9,damping:68,windStrength:38,windSpeed:1.1,windDelay:65,pivotEnabled:true},
  flow:{strength:9,spring:9,damping:85,wave:4,flow:22,feather:22,spread:13},
  wind:{strength:21,spring:10,damping:76,windStrength:52,windSpeed:1.3,windNoise:45,windDelay:75,pivotEnabled:true},
+ ear:{strength:15,spring:11,damping:74,ripple:5,feather:19,pivotEnabled:true,axis:'follow'},// C-4 귀: 부드러운 반응 바탕, 축 켬, 끄는 쪽으로
  scarf:{strength:25,spring:8,damping:80,windStrength:65,windAngle:-25,windSpeed:.9,windNoise:25,windDelay:84,pivotEnabled:true}
 });
 let statusHook=null;// B: 안내가 바뀔 때 도움말 층이 할 일(dialogs.js)

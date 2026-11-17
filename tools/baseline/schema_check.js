@@ -4,7 +4,7 @@
 //  ① 저장 결과(속성 순서 포함) ② 영역별 화면 표시값 ③ 슬라이더·체크 조작 후 저장 결과 ④ 되돌리기 후 저장 결과
 // 를 글자 단위로 비교한다.
 'use strict';
-const { chromium } = require('playwright');
+const { chromium } = require('playwright');require('./detail_mode');
 const fs = require('fs');
 const path = require('path');
 

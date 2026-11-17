@@ -1,6 +1,6 @@
 // 얼굴 기능 전후 프레임 계측(2026-11-17): node tools/motion/face_perf.js <html> <old|new> <zone|blink|shy|cry> <pc|phone>
 // 장면: zone = 영역 1개 자동, blink = + 눈 깜빡임 2개, shy = + 평소 표정 부끄러움 100%(휘기·홍조 빗금·땀), cry = + 울먹임 100%(입술 떨림 = 매 프레임 지도 다시 합침·눈물). old는 얼굴 기능 전 배포본(git show 32c14b5:motionpad.html). phone = 390×844 배율 3, CPU 4배 느리게.
-const { chromium } = require('playwright'); const path=require('path'),fs=require('fs');
+const { chromium } = require('playwright');require('../baseline/detail_mode'); const path=require('path'),fs=require('fs');
 const [file,kind,scene,dev,opt]=process.argv.slice(2);// opt 'cut' = 영역에 빈자리 채우기(외곽 흔들기)도 켬(E2: 얹는 그림에도 표정)
 const buf=fs.readFileSync('tools/baseline/fixtures/character.png');const W0=buf.readUInt32BE(16),H0=buf.readUInt32BE(20),f=Math.min(1,1900/Math.max(W0,H0)),rw=Math.round(W0*f),rh=Math.round(H0*f);
 const EYES=[[[.395,.40],[.48,.40],[.437,.36],[.437,.44]],[[.52,.40],[.605,.40],[.563,.36],[.563,.44]]];
