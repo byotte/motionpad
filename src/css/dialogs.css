@@ -108,15 +108,36 @@
 .previewBtn{flex:none}
 .previewBtn[aria-pressed=true]{border-color:var(--accent);color:var(--ink)}
 #soundPanel .optGroup:first-child{margin-top:0}
-/* 표정 다듬기 창: 눈 깜빡임 창과 같은 틀. 오른쪽 조절 막대가 길어 그 칸만 따로 내린다 */
-#exprPreview{display:block;width:100%;height:100%}
-.exprSettings{max-height:min(72dvh,760px);overflow:auto}
-.exprSettings .groupLabel{margin:var(--sp2) 0 0;padding-top:var(--sp2);border-top:1px solid var(--groupLine);font-size:var(--fs-item);font-weight:var(--fw-item);color:var(--item)}
-#exprCompare[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);color:var(--ink)}
-.exprRow{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp1) var(--sp2);margin:var(--sp1) 0;font-size:var(--fs-item);color:var(--item)}
+/* 표정 세부 설정 창: 왼쪽 미리보기, 오른쪽 옵션(스크롤은 옵션 칸에만). 옵션은 눈·입·홍조·이펙트 묶음 상자로. */
+#exprDialog{overflow:hidden;display:flex;flex-direction:column}
+#exprDialog[open]{display:flex}
+.exprMain{grid-template-columns:minmax(0,1fr) 360px;height:min(78dvh,720px);min-height:0}
+.exprStage{height:100%}
+#exprPreview{display:block;width:100%;height:100%;touch-action:none}
+.exprSettings{display:flex;flex-direction:column;gap:var(--sp2);min-width:0;height:100%;padding:var(--sp2);overflow-x:hidden;overflow-y:auto;background:var(--panel);border-left:1px solid var(--line)}
+.exprTop{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp1) var(--sp2)}
+.exprTop .toggle{margin:0}
+.exprBox{padding:var(--sp1) var(--sp2) var(--sp2);border:1px solid var(--groupLine);border-radius:var(--r-box)}
+.exprBox h3{display:flex;align-items:center;gap:var(--sp1);margin:0 0 var(--sp1);font-size:var(--fs-item);font-weight:var(--fw-title);color:var(--ink)}
+.exprSub{margin:var(--sp1) 0 0;font-size:var(--fs-help);color:var(--help)}
+.exprSlider{display:grid;grid-template-columns:6.2em minmax(0,1fr) 2.6em;align-items:center;gap:var(--sp2);min-height:20px;font-size:var(--fs-item);color:var(--item)}
+.exprSlider input{width:100%;min-width:0;margin:0}
+.exprSlider output{text-align:right;color:var(--accentInk)}
+.exprRow{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp1) var(--sp2);margin-top:var(--sp1);font-size:var(--fs-item);color:var(--item)}
 .exprRow select{flex:1;min-width:0}
 .exprRow .toggle{margin:0;white-space:nowrap}
-.exprMarks{flex-wrap:wrap;margin:var(--sp1) 0}
+.exprFxRow{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp1)}
+.exprFxRow .selOp,.exprFxWhich{gap:2px}
+.exprFxRow .selOp label,.exprFxWhich label{padding:0 6px}
+.exprFxRow .selOp{flex-wrap:wrap}
+.exprSweat{display:inline-flex;align-items:center;gap:var(--sp1);margin-left:auto;font-size:var(--fs-item);color:var(--item)}
+#exprFxMore{margin-top:var(--sp1)}
+#exprFxMore>summary{font-size:var(--fs-item);color:var(--item);cursor:pointer;padding:var(--sp1) 0}
+.exprFxWhich{flex-wrap:wrap;margin-bottom:var(--sp1)}
+#exprFxHome{margin-top:var(--sp1)}
+.exprZoom{display:inline-flex;align-items:center;gap:2px;margin-left:auto}
+.exprZoom .btn{border-color:transparent;background:transparent}
+#exprZoomReset{min-width:46px;padding-inline:2px}
+#exprCompare[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);color:var(--ink)}
 #exprCompare{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none}
-/* 폰에서 옆으로 밀리지 않게(창이 몇 px 넘쳐 손가락에 가로로 밀리면 내용이 왼쪽 끝에 붙어 보였다) */
-#exprDialog,.exprSettings{overflow-x:hidden}
+#exprHint{margin:0;font-size:var(--fs-item);color:var(--item)}

@@ -70,7 +70,7 @@ document.addEventListener('keydown',event=>{
  if(event.key==='Escape')for(const menu of document.querySelectorAll('.topMenu[open]'))menu.open=false;
 });
 // 3-M: 지금 프로젝트 이름. PC는 머리줄, 폰형은 파일 메뉴 맨 위
-function paintProjectName(){const on=!!ready,name=projectName||'내 프로젝트';for(const id of ['projectNameLabel','menuProjectName']){const e=$(id);e.hidden=!on;e.textContent=name;e.title='지금 프로젝트: '+name}document.title=on?`${name} — MotionPad`:'MotionPad'}
+function paintProjectName(){const on=!!ready,name=projectName||'내 프로젝트';for(const id of ['projectNameLabel','menuProjectName']){const e=$(id);e.hidden=!on;e.textContent=name;e.title='지금 프로젝트: '+name}document.title=on?`MotionPad — ${name}`:'MotionPad'}
 setInterval(paintProjectName,700);
 // 3-M: 프로젝트 닫기 → 시작 화면으로. 자동 저장본은 남겨 '이전 작업 이어하기'로 되돌아올 수 있다.
 $('menuClose').onclick=async()=>{

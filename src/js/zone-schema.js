@@ -73,6 +73,7 @@ const ZONE_FIELDS=[
  flag('comboOn',{input:'comboOn',check:true}),
  {key:'comboMode',save:z=>z.comboMode,read:z=>z.comboMode==='other'?'other':'more',ui:{input:'comboMode',fromInput:x=>x}},
  {key:'hitMark',save:z=>z.hitMark||'',read:z=>['red','crack'].includes(z.hitMark)?z.hitMark:'',ui:{input:'hitMarkInput',fromInput:x=>x}},
+ num('hitMarkSize',70,10,100,{input:'hitMarkSizeInput',output:'hitMarkSizeValue',fmt:pct}),
  {key:'comboFace',save:z=>z.comboFace,read:z=>faceRefOk(z.comboFace)?z.comboFace:'0:angry',ui:{input:'comboFaceInput',fromInput:x=>x}},
 ];
 // 저장하지 않는 실행 중 상태(물리·터치). 불러올 때마다 초기화된다.

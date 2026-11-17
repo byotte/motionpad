@@ -108,3 +108,13 @@
   input[type=range]{height:var(--ctl-h)}
   .selOp label{padding:0 12px}
 }
+
+/* 세로로 쌓이는 화면(폰): 미리보기는 위에 붙고 창 전체가 한 번에 내려간다 */
+@media (orientation:portrait),(max-width:779px){
+ #exprDialog{overflow-y:auto;overflow-x:hidden;display:block}
+ #exprDialog[open]{display:block}
+ .exprMain{height:auto;grid-template-columns:minmax(0,1fr)}
+ .exprStage{height:38dvh}
+ .exprSettings{height:auto;overflow:visible;border-left:0;border-top:1px solid var(--line)}
+ .exprZoom{margin-left:0}
+}

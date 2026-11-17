@@ -8,21 +8,23 @@ const EXPRS=[['smile','웃음'],['shy','부끄러움'],['cry','울먹임'],['ang
 const EXPR_SIDE_KEYS=['bh','bm','bt','uf','um','ub','lf','lm','lb','mc','mn'];
 // 프리셋 출발값(설계 §4 표의 방향만 옮긴 것, 3단계에서 눈으로 맞춘다)
 const EXPR_PRESETS={
- smile:{s:{bh:30,bm:30,bt:20,uf:0,um:5,ub:-25,lf:50,lm:75,lb:40,mc:70,mn:0},mm:-10,tr:0,bl:25,sw:0,tear:false,sa:false,sh:false,ss:true},
- shy:{s:{bh:35,bm:15,bt:-5,uf:0,um:-5,ub:-10,lf:30,lm:45,lb:25,mc:35,mn:30},mm:0,tr:0,bl:80,sw:2,tear:false,sa:false,sh:false,ss:false},
- cry:{s:{bh:60,bm:20,bt:-40,uf:0,um:-40,ub:-45,lf:10,lm:15,lb:0,mc:-60,mn:10},mm:25,tr:50,bl:10,sw:0,tear:true,sa:false,sh:false,ss:false},
- angry:{s:{bh:-90,bm:-40,bt:30,uf:-45,um:-25,ub:0,lf:25,lm:15,lb:0,mc:-50,mn:20},mm:5,tr:0,bl:45,sw:0,tear:false,sa:true,sh:false,ss:false},
- surprise:{s:{bh:45,bm:75,bt:40,uf:5,um:15,ub:5,lf:0,lm:-10,lb:0,mc:0,mn:60},mm:0,tr:0,bl:0,sw:1,tear:false,sa:false,sh:false,ss:false},
+ smile:{s:{bh:30,bm:30,bt:20,uf:0,um:5,ub:-25,lf:50,lm:75,lb:40,mc:70,mn:0},mm:-10,tr:0,bl:25,ba:50,sw:0,tear:false,sa:false,sh:false,ss:true},
+ shy:{s:{bh:35,bm:15,bt:-5,uf:0,um:-5,ub:-10,lf:30,lm:45,lb:25,mc:35,mn:-30},mm:0,tr:0,bl:80,ba:50,sw:2,tear:false,sa:false,sh:false,ss:false},
+ cry:{s:{bh:60,bm:20,bt:-40,uf:0,um:-40,ub:-45,lf:10,lm:15,lb:0,mc:-60,mn:-10},mm:25,tr:50,bl:10,ba:50,sw:0,tear:true,sa:false,sh:false,ss:false},
+ angry:{s:{bh:-90,bm:-40,bt:30,uf:-45,um:-25,ub:0,lf:25,lm:15,lb:0,mc:-50,mn:-20},mm:5,tr:0,bl:45,ba:50,sw:0,tear:false,sa:true,sh:false,ss:false},
+ surprise:{s:{bh:45,bm:75,bt:40,uf:5,um:15,ub:5,lf:0,lm:-10,lb:0,mc:0,mn:-60},mm:0,tr:0,bl:0,ba:50,sw:1,tear:false,sa:false,sh:false,ss:false},
 };
-function presetExpr(id){const p=EXPR_PRESETS[id];return {sym:true,L:{...p.s},R:{...p.s},mm:p.mm,tr:p.tr,bl:p.bl,ear:false,sw:p.sw,tear:p.tear,sa:p.sa,sh:p.sh,ss:p.ss}}
+function presetExpr(id){const p=EXPR_PRESETS[id];return {fxo:Object.fromEntries(FX_KEYS.map(k=>[k,{sp:100,fr:100,op:100}])),sym:true,L:{...p.s},R:{...p.s},mm:p.mm,tr:p.tr,bl:p.bl,ba:p.ba,ear:false,sw:p.sw,tear:p.tear,sa:p.sa,sh:p.sh,ss:p.ss}}
 function sanitizeExpr(e,id){
  if(!e||typeof e!=='object')return presetExpr(id);
  const v=(x,lo=-100)=>Number.isFinite(x)?clamp(Math.round(x),lo,100):0;
  const side=s=>Object.fromEntries(EXPR_SIDE_KEYS.map(k=>[k,v(s?.[k])]));
- return {sym:e.sym!==false,L:side(e.L),R:side(e.sym!==false?e.L:e.R),mm:v(e.mm),tr:v(e.tr,0),bl:Number.isFinite(e.bl)?v(e.bl,0):EXPR_PRESETS[id].bl,ear:e.ear===true,sw:Number.isFinite(e.sw)?clamp(Math.round(e.sw),0,3):EXPR_PRESETS[id].sw,...Object.fromEntries(['tear','sa','sh','ss'].map(k=>[k,typeof e[k]==='boolean'?e[k]:EXPR_PRESETS[id][k]]))};
+ return {sym:e.sym!==false,L:side(e.L),R:side(e.sym!==false?e.L:e.R),mm:v(e.mm),tr:v(e.tr,0),bl:Number.isFinite(e.bl)?v(e.bl,0):EXPR_PRESETS[id].bl,ba:Number.isFinite(e.ba)?v(e.ba,0):50,ear:e.ear===true,sw:Number.isFinite(e.sw)?clamp(Math.round(e.sw),0,3):EXPR_PRESETS[id].sw,...Object.fromEntries(['tear','sa','sh','ss'].map(k=>[k,typeof e[k]==='boolean'?e[k]:EXPR_PRESETS[id][k]])),
+  fxo:Object.fromEntries(FX_KEYS.map(k=>[k,Object.fromEntries(['sp','fr','op'].map(o=>[o,Number.isFinite(e.fxo?.[k]?.[o])?clamp(Math.round(e.fxo[k][o]),0,200):100]))]))};
 }
+const FX_KEYS=['sweat','tear','sparkle','anger','heart'];// 이펙트(세부 옵션 sp 속도·fr 빈도·op 진하기, 0~200%)
 const BLUSH_STYLES=['auto','grad','fine','manga'];
-function blankFace(){return {mouth:null,brows:[],ears:[],blushStyle:'auto',sweatAt:[],exprs:Object.fromEntries(EXPRS.map(([id])=>[id,presetExpr(id)]))}}
+function blankFace(){return {mouth:null,brows:[],ears:[],blushStyle:'auto',sweatAt:[],fxAt:{},exprs:Object.fromEntries(EXPRS.map(([id])=>[id,presetExpr(id)]))}}
 const faceUnit=p=>Number.isFinite(p?.x)&&Number.isFinite(p?.y)&&p.x>=0&&p.x<=1&&p.y>=0&&p.y<=1;
 function sanitizeFace(f){
  const out=blankFace();if(!f||typeof f!=='object')return out;
@@ -30,6 +32,7 @@ function sanitizeFace(f){
  if(Array.isArray(f.brows))out.brows=f.brows.slice(0,2).map(line=>Array.isArray(line)?line.slice(0,64).filter(faceUnit).map(({x,y})=>({x,y})):[]).filter(line=>line.length>=2);
  if(Array.isArray(f.ears))out.ears=f.ears.slice(0,2).map(line=>Array.isArray(line)?line.slice(0,64).filter(faceUnit).map(({x,y})=>({x,y})):[]).filter(line=>line.length>=2);
  if(BLUSH_STYLES.includes(f.blushStyle))out.blushStyle=f.blushStyle;
+ if(f.fxAt&&typeof f.fxAt==='object')for(const k of FX_KEYS){const p=f.fxAt[k];if(Number.isFinite(p?.a)&&Number.isFinite(p?.b))out.fxAt[k]={a:clamp(p.a,-3,3),b:clamp(p.b,-3,3)}}
  if(Array.isArray(f.sweatAt))out.sweatAt=f.sweatAt.slice(0,4).map(p=>Number.isFinite(p?.a)&&Number.isFinite(p?.b)?{a:clamp(p.a,-3,3),b:clamp(p.b,-3,3)}:null);
  for(const [id] of EXPRS)out.exprs[id]=sanitizeExpr(f.exprs?.[id],id);
  return out;
@@ -87,7 +90,7 @@ function addFace(){
 }
 async function removeFace(){
  const k=faceSel,n=faceEyes(k);
- if(!await askConfirm({title:'얼굴 삭제',message:`얼굴 ${k+1}을 지울까요?`+(n?` 이 얼굴에 찍은 눈 ${n}개의 깜빡임 설정과 입·눈썹 자리, 다듬은 표정도 함께 지워집니다.`:' 찍은 입·눈썹 자리와 다듬은 표정도 함께 지워집니다.'),ok:'얼굴 삭제'}))return;
+ if(!await askConfirm({title:'얼굴 삭제',message:`얼굴 ${k+1}을 지울까요?`+(n?` 이 얼굴에 찍은 눈 ${n}개의 깜빡임 설정과 입·눈썹 자리, 세부 설정한 표정도 함께 지워집니다.`:' 찍은 입·눈썹 자리와 세부 설정한 표정도 함께 지워집니다.'),ok:'얼굴 삭제'}))return;
  remember();
  // 뒤쪽 얼굴의 눈을 한 칸씩 당긴다(얼굴 번호와 눈 칸이 늘 짝을 이루게).
  for(let i=k*2;i<BLINK_MAX_EYES;i++){blinkEyes[i]=blinkEyes[i+2]??null;blinkPatches[i]=blinkPatches[i+2]??null}
@@ -118,7 +121,7 @@ function faceMouthTap(p){
  if(faceDraft.length<3){setStatus(FACE_MOUTH_PROMPTS[faceDraft.length]);drawOverlay();return}
  let [l,r,c]=faceDraft;if(l.x>r.x)[l,r]=[r,l];
  remember();faces[faceSel].mouth={l,r,c};faceDraft=[];faceChanged();paintFaces();scheduleSave();
- setMode(placeReturn);setStatus('입 자리를 찍었습니다. 표정을 눌러 입 모양을 다듬어 보세요.');
+ setMode(placeReturn);setStatus('입 자리를 찍었습니다. 아래 ‘표정 세부 설정’에서 표정을 눌러 입 모양을 바꿔 보세요.');
 }
 function faceBrowStroke(points){
  if(points.length<2){setStatus('눈썹을 따라 조금 더 길게 그어 주세요.');return}
@@ -127,7 +130,7 @@ function faceBrowStroke(points){
  faceDraft.push(line);
  if(faceDraft.length<Math.max(1,Math.min(2,faceEyes(faceSel)))){setStatus(faceBrowPrompt());drawOverlay();return}
  remember();faces[faceSel].brows=faceDraft.slice(0,2);faceDraft=[];faceChanged();paintFaces();scheduleSave();
- setMode(placeReturn);setStatus('눈썹을 그렸습니다. 표정을 눌러 눈썹을 다듬어 보세요.');
+ setMode(placeReturn);setStatus('눈썹을 그렸습니다. 아래 ‘표정 세부 설정’에서 표정을 눌러 눈썹 모양을 바꿔 보세요.');
 }
 // 귀(홍조의 '귀도 붉게'에만 쓴다): 한 획마다 바로 저장, 두 획이면 끝. 한쪽만 보이면 버튼을 다시 눌러 마친다.
 function faceEarStroke(points){
@@ -152,84 +155,6 @@ function drawFaceParts(g,w,h,px){
  g.restore();
 }
 
-// ── 표정 상세 세팅 창: 고르면 바로 반영, 얼굴 확대 미리보기. 열려 있는 동안 편집 화면에도 그 표정이 보인다. ──
-const exprDialog=$('exprDialog'),exprPreview=$('exprPreview');
-let exprId='smile',exprSide='L',exprRemembered=false,exprCompare=false,exprFrame=0;
-const EXPR_TOP=['mm','tr','bl'];
-const EXPR_FIELDS=[['bh','앞머리'],['bm','가운데'],['bt','꼬리'],['uf','앞'],['um','가운데'],['ub','뒤'],['lf','앞'],['lm','가운데'],['lb','뒤'],['mc','꼬리 높이'],['mn','꼬리 좁히기'],['mm','가운데'],['tr','떨림'],['bl','홍조']];
-function currentExpr(){return faces[faceSel]?.exprs[exprId]}
-function paintExprDialog(){
- const e=currentExpr();if(!e)return;
- const name=EXPRS.find(([id])=>id===exprId)[1];
- $('exprTitle').textContent=`얼굴 ${faceSel+1} · ${name} 다듬기`;$('exprPick').value=exprId;
- for(const o of $('exprPreset').options)if(o.value)o.textContent=`${EXPRS.find(([id])=>id===o.value)[1]} 프리셋`+(o.value===exprId?' (처음 값)':'');
- $('exprSym').checked=e.sym;$('exprSideRow').hidden=e.sym;
- for(const r of document.querySelectorAll('input[name="exprSide"]'))r.checked=r.value===exprSide;
- const side=e.sym?e.L:e[exprSide];
- for(const [k] of EXPR_FIELDS){const v=EXPR_TOP.includes(k)?e[k]:side[k];$('expr_'+k).value=v;$('expr_'+k+'V').textContent=(v>0&&!['tr','bl'].includes(k)?'+':'')+v}
- const f=faces[faceSel],g=faceGeometry(faceSel),miss=[];
- if(!g.eyes.length)miss.push('눈');if(!f.mouth)miss.push('입');if(!f.brows.length)miss.push('눈썹');
- for(const k of ['bh','bm','bt'])$('expr_'+k).disabled=!g.hasBrow;
- for(const k of ['uf','um','ub','lf','lm','lb'])$('expr_'+k).disabled=!g.eyes.length;
- for(const k of ['mc','mn','mm','tr'])$('expr_'+k).disabled=!f.mouth;
- $('expr_bl').disabled=!g.eyes.length;
- for(const r of document.querySelectorAll('input[name="exprSweat"]')){r.checked=Number(r.value)===e.sw;r.disabled=!g.eyes.length}for(const [id,key] of [['exprTear','tear'],['exprSa','sa'],['exprSh','sh'],['exprSs','ss']]){$(id).checked=!!e[key];$(id).disabled=!g.eyes.length}$('exprEar').checked=!!e.ear;$('exprBlushStyle').value=f.blushStyle;
- $('exprBlushStyle').options[0].textContent=`자동 · ${{grad:'그라데이션',fine:'잔 빗금',manga:'만화 빗금'}[g.autoStyle]}`;
- if(e.ear&&!f.ears.length)miss.push('귀');
- $('exprHint').textContent=miss.length?`${miss.join('·')} 자리를 찍지 않아 그 부분은 조절할 수 없습니다. ‘2. 얼굴 · 눈 깜빡임’에서 찍어 주세요.`:'막대를 움직이면 바로 반영됩니다. ‘원래 얼굴’을 누르고 있으면 바꾸기 전 모습을 봅니다.';
- faceLive={k:faceSel,id:exprId,amount:1};faceChanged(false);drawExprPreview();
-}
-function openExprDialog(id){
- if(!ready||!faces[faceSel])return;
- exprId=id;exprSide='L';exprRemembered=false;exprCompare=false;
- exprDialog.showModal();paintExprDialog();
- cancelAnimationFrame(exprFrame);const loop=()=>{if(!exprDialog.open)return;const e=currentExpr();if(e&&(e.tr>0||e.sw||e.tear||e.sa||e.sh||e.ss))drawExprPreview();exprFrame=requestAnimationFrame(loop)};exprFrame=requestAnimationFrame(loop);
-}
-function exprEdit(change){
- const e=currentExpr();if(!e)return;
- if(!exprRemembered){remember();exprRemembered=true}
- change(e);if(e.sym)e.R={...e.L};
- faceChanged(false);scheduleSave();paintExprDialog();
-}
-for(const [k] of EXPR_FIELDS)$('expr_'+k).addEventListener('input',ev=>{const v=Number(ev.target.value);exprEdit(e=>{if(EXPR_TOP.includes(k))e[k]=v;else (e.sym?e.L:e[exprSide])[k]=v})});
-for(const [id,key] of [['exprTear','tear'],['exprSa','sa'],['exprSh','sh'],['exprSs','ss']])$(id).onchange=()=>exprEdit(e=>{e[key]=$(id).checked});
-for(const r of document.querySelectorAll('input[name="exprSweat"]'))r.onchange=()=>exprEdit(e=>{e.sw=Number(r.value)});
-// 땀방울은 미리보기에서 끌어 옮긴다(얼굴마다 자리 기억)
-{let drag=null;
- exprPreview.addEventListener('pointerdown',ev=>{
-  const e=currentExpr(),f=faces[faceSel];if(!e?.sw||!exprView||!f)return;
-  const r=exprPreview.getBoundingClientRect(),V=exprView,x=V.vx+(ev.clientX-r.left)/r.width*V.vw,y=V.vy+(ev.clientY-r.top)/r.height*V.vh,g=faceGeometry(faceSel);
-  let best=-1,bd=g.S*.25;for(let i=0;i<Math.min(3,e.sw+1);i++){const p=faceSweatSpot(g,f,i),d=Math.hypot(p.x-x,p.y-y);if(d<bd){bd=d;best=i}}
-  if(best<0)return;drag={i:best,remembered:false};exprPreview.setPointerCapture?.(ev.pointerId);ev.preventDefault();
- });
- exprPreview.addEventListener('pointermove',ev=>{
-  if(!drag)return;const f=faces[faceSel],g=faceGeometry(faceSel),r=exprPreview.getBoundingClientRect(),V=exprView;
-  const x=V.vx+(ev.clientX-r.left)/r.width*V.vw,y=V.vy+(ev.clientY-r.top)/r.height*V.vh,d=fv.sub({x,y},g.C);
-  if(!drag.remembered){remember();drag.remembered=true}
-  f.sweatAt[drag.i]={a:clamp(fv.dot(d,g.u)/g.S,-3,3),b:clamp(fv.dot(d,g.n)/g.S,-3,3)};scheduleSave();drawExprPreview();
- });
- for(const t of ['pointerup','pointercancel'])exprPreview.addEventListener(t,()=>{drag=null});
-}
-$('exprEar').onchange=()=>{exprEdit(e=>{e.ear=$('exprEar').checked});paintFaces()};
-$('exprBlushStyle').onchange=()=>exprEdit(()=>{faces[faceSel].blushStyle=$('exprBlushStyle').value;faceChanged()});
-$('exprSym').onchange=()=>exprEdit(e=>{e.sym=$('exprSym').checked;if(e.sym)e.L={...e[exprSide]};exprSide='L'});
-for(const r of document.querySelectorAll('input[name="exprSide"]'))r.onchange=()=>{exprSide=r.value;paintExprDialog()};
-$('exprPick').onchange=()=>{exprId=$('exprPick').value;exprSide='L';paintExprDialog()};
-// 프리셋 불러오기: 고르면 지금 값을 그 프리셋 값으로 바꾼다(고친 값이 사라지므로 확인).
-$('exprPreset').onchange=async()=>{
- const from=$('exprPreset').value;$('exprPreset').value='';if(!from)return;
- const name=EXPRS.find(([id])=>id===from)[1],mine=EXPRS.find(([id])=>id===exprId)[1];
- if(!await askConfirm({title:'프리셋 불러오기',message:from===exprId?`${mine} 표정에서 고친 값을 모두 지우고 처음 프리셋 값으로 되돌릴까요?`:`${mine} 표정의 지금 값을 지우고 ${name} 프리셋 값으로 바꿀까요?`,ok:from===exprId?'처음 값으로':'불러오기'}))return;
- exprEdit(e=>Object.assign(e,presetExpr(from)));
-};
-{const b=$('exprCompare'),on=v=>{exprCompare=v;b.setAttribute('aria-pressed',String(v));faceLive=v?null:{k:faceSel,id:exprId,amount:1};faceChanged(false);drawExprPreview()};
- b.addEventListener('pointerdown',e=>{try{b.setPointerCapture(e.pointerId)}catch(_){}on(true)});for(const t of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(t,()=>exprCompare&&on(false));
- b.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();if(!exprCompare)on(true)}});b.addEventListener('keyup',()=>exprCompare&&on(false))}
-$('exprClose').onclick=()=>exprDialog.close();
-exprDialog.addEventListener('close',()=>{cancelAnimationFrame(exprFrame);faceLive=null;faceChanged(false)});
-for(const b of document.querySelectorAll('#exprList .chip'))b.onclick=()=>openExprDialog(b.dataset.expr);
-window.addEventListener('resize',()=>{if(exprDialog.open)drawExprPreview()});
-
 // ── 4단계: 영역·몸체에서 표정 가져다 쓰기. 고르는 칸은 '얼굴 k · 표정' 목록(얼굴이 하나면 표정 이름만). ──
 function faceRefParse(v){const m=/^([0-2]):(\w+)$/.exec(v||'');return m&&faces[+m[1]]&&EXPRS.some(([id])=>id===m[2])?{k:+m[1],id:m[2]}:null}
 function faceOptionList(withNone){
@@ -251,6 +176,7 @@ function paintFaceOptions(){
  const z=getSelected();if(z)paintFaceRows(z);
 }
 function paintFaceRows(z){
+ $('hitMarkSizeRow').hidden=!z.hitMark;// 맞은 자리는 얼굴 없이도 쓴다
  if(!$('autoFaceInput').options.length)return;
  for(const [id,key] of [['autoFaceInput','autoFace'],['tapFaceInput','tapFace'],['comboFaceInput','comboFace']])$(id).value=faceRefParse(z[key])?z[key]:id==='autoFaceInput'?'':($(id).options[0]?.value||'');
  $('autoFaceAmtRow').hidden=!faceRefParse(z.autoFace);
@@ -261,7 +187,7 @@ function paintFaceRows(z){
 $('ambientFaceInput').onchange=()=>{remember();ambient.face=$('ambientFaceInput').value;paintFaceOptions();scheduleSave();previewMotion()};
 $('ambientFaceAmt').addEventListener('pointerdown',()=>remember(),{passive:true});
 $('ambientFaceAmt').addEventListener('input',()=>{ambient.faceAmt=Number($('ambientFaceAmt').value);$('ambientFaceAmtValue').textContent=ambient.faceAmt+'%';scheduleSave()});
-// [다듬기]: 고른 얼굴·표정의 상세 세팅 창을 바로 연다
+// [세부 설정]: 고른 얼굴·표정의 상세 세팅 창을 바로 연다
 for(const b of document.querySelectorAll('.faceTune'))b.onclick=()=>{const r=faceRefParse($(b.dataset.for).value);if(!r)return;faceSel=r.k;paintFaces();openExprDialog(r.id)};
 // 얼굴을 지우면 그 얼굴을 쓰던 칸은 비우고, 뒤 얼굴 번호는 하나씩 당긴다.
 function faceRefsAfterRemove(k){

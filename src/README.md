@@ -41,6 +41,10 @@ node tools/build.js --check  # motionpad.html이 src/와 같은지 확인(커밋
 | touchfx | 플레이 화면 터치 이펙트(반짝임, 3-F) |
 | controls | 전체 움직임·소리 UI, 터치 미리보기, 움직임 조작, 모드 전환, fit·tick |
 | blink | 눈 깜빡임 |
+| face | 얼굴 목록·부위 입력(입·눈썹·귀)·표정 값·영역에서 쓰는 표정 칸 |
+| face-engine | 얼굴 지도(유동화·홍조), 표정 섞기, 셰이더 값, 표정 창 미리보기 |
+| face-fx | 맞은 자리(빨개짐·갈라짐), 얼굴 이펙트(땀·눈물·반짝이·💢·하트), 반응 층 |
+| face-dialog | 표정 세부 설정 창 |
 | dialogs | 도움말 말풍선, 대화창 공통 동작 |
 | shortcuts | PC 단축키(3-B) |
 | boot | 시작 |

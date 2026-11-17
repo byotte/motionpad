@@ -49,7 +49,7 @@
 <div class="faceRow faceSub"><span class="faceLabel">입<button type="button" class="helpDot" data-help="다문 입의 양쪽 입꼬리와 가운데, 세 점을 그림에서 차례로 누릅니다. 벌린 입이 그려진 그림이면 그 모양 그대로 찍으면 됩니다." aria-label="도움말"></button></span><span class="faceState" id="mouthState"></span><button type="button" class="btn mode" id="faceMouthMode" data-mode="faceMouth">입 찍기</button></div>
 <div class="faceRow faceSub"><span class="faceLabel">눈썹<button type="button" class="helpDot" data-help="눈썹을 따라 한 획씩 긋습니다(양쪽 눈이면 두 획). 모양과 자리만 쓰고 굵기는 상관없습니다. 눈썹을 쓰는 표정에만 필요합니다." aria-label="도움말"></button></span><span class="faceState" id="browState"></span><button type="button" class="btn mode" id="faceBrowMode" data-mode="faceBrow">눈썹 그리기</button></div>
 <div class="faceRow faceSub" id="faceEarRow" hidden><span class="faceLabel">귀<button type="button" class="helpDot" data-help="표정의 홍조에서 ‘귀도 붉게’를 켰을 때만 필요합니다. 귀의 바깥 선을 따라 긋습니다(보이는 귀만)." aria-label="도움말"></button></span><span class="faceState" id="earState"></span><button type="button" class="btn mode" id="faceEarMode" data-mode="faceEar">귀 그리기</button></div>
-<div class="faceRow faceExpr"><span class="faceLabel">표정 다듬기<button type="button" class="helpDot" data-help="표정을 누르면 그 표정을 다듬는 창이 열립니다. 다섯 표정은 프리셋 값으로 시작하고, 고친 값은 표정마다 따로 저장됩니다." aria-label="도움말"></button></span></div>
+<div class="faceRow faceExpr"><span class="faceLabel">표정 세부 설정<button type="button" class="helpDot" data-help="표정을 누르면 그 표정의 세부 설정 창이 열립니다. 다섯 표정은 프리셋 값으로 시작하고, 고친 값은 표정마다 따로 저장됩니다." aria-label="도움말"></button></span></div>
 <div class="exprList" id="exprList"><button type="button" class="chip" data-expr="smile">웃음</button><button type="button" class="chip" data-expr="shy">부끄러움</button><button type="button" class="chip" data-expr="cry">울먹임</button><button type="button" class="chip" data-expr="angry">화남</button><button type="button" class="chip" data-expr="surprise">놀람</button></div>
 </div>
 </section>
@@ -64,7 +64,7 @@
  <div class="optGroup" id="ambientFx">
  <div class="field"><div class="fieldhead"><label for="ambientBreath">부드러운 호흡</label><output id="ambientBreathVal">35%</output></div><input id="ambientBreath" type="range" min="0" max="100" value="35"></div>
  <div class="field"><div class="fieldhead"><label for="ambientSway">미세 흔들림</label><output id="ambientSwayVal">30%</output></div><input id="ambientSway" type="range" min="0" max="100" value="30"></div>
- <div class="faceOnly" hidden><div class="field"><div class="fieldhead"><label for="ambientFaceInput">평소 표정</label></div><div class="faceSelRow"><select id="ambientFaceInput"></select><button type="button" class="btn faceTune" data-for="ambientFaceInput">다듬기</button></div></div>
+ <div class="faceOnly" hidden><div class="field"><div class="fieldhead"><label for="ambientFaceInput">평소 표정</label></div><div class="faceSelRow"><select id="ambientFaceInput"></select><button type="button" class="btn faceTune" data-for="ambientFaceInput">세부 설정</button></div></div>
  <div class="field" id="ambientFaceAmtRow"><div class="fieldhead"><label for="ambientFaceAmt">표정 세기</label><output id="ambientFaceAmtValue">50%</output></div><input id="ambientFaceAmt" type="range" min="0" max="100" value="50"></div></div>
  <div class="field" hidden><div class="fieldhead"><label for="ambientLight">조명 숨쉬기</label><output id="ambientLightVal">25%</output></div><input id="ambientLight" type="range" min="0" max="100" value="0"></div>
  </div>
@@ -86,7 +86,7 @@
 </div>
 <input id="autoSpeedInput" type="range" min="0.2" max="3" step="0.1" hidden>
 <div class="field"><div class="fieldhead"><label for="autoRestInput">쉬는 간격</label><output id="autoRestValue">쉬지 않음</output></div><input id="autoRestInput" type="range" min="0" max="6" step="0.5"></div>
-<div class="faceOnly" hidden><div class="field"><div class="fieldhead"><label for="autoFaceInput">움직이는 동안 표정</label><button type="button" class="helpDot" data-help="이 영역이 자동으로 움직이는 동안 지을 표정입니다. 움직임 박자에 맞춰 표정이 살짝 오르내립니다." aria-label="도움말"></button></div><div class="faceSelRow"><select id="autoFaceInput"></select><button type="button" class="btn faceTune" data-for="autoFaceInput">다듬기</button></div></div>
+<div class="faceOnly" hidden><div class="field"><div class="fieldhead"><label for="autoFaceInput">움직이는 동안 표정</label><button type="button" class="helpDot" data-help="이 영역이 자동으로 움직이는 동안 지을 표정입니다. 움직임 박자에 맞춰 표정이 살짝 오르내립니다." aria-label="도움말"></button></div><div class="faceSelRow"><select id="autoFaceInput"></select><button type="button" class="btn faceTune" data-for="autoFaceInput">세부 설정</button></div></div>
 <div class="field" id="autoFaceAmtRow"><div class="fieldhead"><label for="autoFaceAmt">표정 세기</label><output id="autoFaceAmtValue">60%</output></div><input id="autoFaceAmt" type="range" min="0" max="100"></div></div>
 <details id="effects"><summary>기타 움직임 효과<button type="button" class="helpDot" data-help="강도를 과하게 올리면 그림이 왜곡될 수 있습니다. WebGL이 없는 브라우저에서는 일부 효과가 단순해집니다." aria-label="도움말"></button></summary>
 <div class="field"><div class="fieldhead"><label for="breathInput">호흡</label><output id="breathValue">0</output></div><input id="breathInput" type="range" min="0" max="40" step="1"></div>
@@ -112,12 +112,13 @@
 <div class="field"><div class="fieldhead"><label for="rippleInput">터치 파동</label><output id="rippleValue">0</output></div><input id="rippleInput" type="range" min="0" max="40" step="1"></div>
 <div class="faceOnly" hidden><p class="groupLabel">표정 반응</p>
 <label class="toggle"><input type="checkbox" id="tapFaceOn">표정 바꾸기</label>
-<div id="tapFaceRows"><div class="field"><div class="faceSelRow"><select id="tapFaceInput" aria-label="터치했을 때 표정"></select><button type="button" class="btn faceTune" data-for="tapFaceInput">다듬기</button></div></div>
+<div id="tapFaceRows"><div class="field"><div class="faceSelRow"><select id="tapFaceInput" aria-label="터치했을 때 표정"></select><button type="button" class="btn faceTune" data-for="tapFaceInput">세부 설정</button></div></div>
 <div class="field"><div class="fieldhead"><label for="tapFaceAmt">표정 세기</label><button type="button" class="helpDot" data-help="세게 칠수록, 여러 번 칠수록 진해지고 1~2초에 걸쳐 원래 표정으로 돌아옵니다. 평소 표정과 같으면 더해지고, 다르면 잠깐 이 표정이 앞섭니다." aria-label="도움말"></button><output id="tapFaceAmtValue">70%</output></div><input id="tapFaceAmt" type="range" min="0" max="100"></div>
 <label class="toggle"><input type="checkbox" id="comboOn">연타 반응<button type="button" class="helpDot" data-help="3초 안에 5번 넘게 치면 반응이 바뀝니다. 연타가 멈추면 천천히 원래 표정으로 돌아옵니다." aria-label="도움말"></button></label>
 <div id="comboRows"><div class="field"><select id="comboMode" aria-label="연타 반응 방식"><option value="more">더 진하게</option><option value="other">다른 표정으로</option></select></div>
-<div class="field" id="comboFaceRow"><div class="faceSelRow"><select id="comboFaceInput" aria-label="연타했을 때 표정"></select><button type="button" class="btn faceTune" data-for="comboFaceInput">다듬기</button></div></div></div></div></div>
+<div class="field" id="comboFaceRow"><div class="faceSelRow"><select id="comboFaceInput" aria-label="연타했을 때 표정"></select><button type="button" class="btn faceTune" data-for="comboFaceInput">세부 설정</button></div></div></div></div></div>
 <div class="field"><div class="fieldhead"><label for="hitMarkInput">맞은 자리</label><button type="button" class="helpDot" data-help="터치한 자리에 남는 표시입니다. 빨개짐: 붉은 기운이 번졌다가 1초쯤 뒤 빠집니다. 갈라짐: 갈라지는 선이 잠시 남았다 사라집니다. 여러 번 치면 진해지거나 늘어납니다." aria-label="도움말"></button></div><select id="hitMarkInput"><option value="">없음</option><option value="red">빨개짐</option><option value="crack">갈라짐</option></select></div>
+<div class="field" id="hitMarkSizeRow"><div class="fieldhead"><label for="hitMarkSizeInput">표시 크기</label><button type="button" class="helpDot" data-help="이 영역 크기에 비례합니다. 70%면 영역 지름의 70% 크기로 빨개지거나 갈라집니다. 영역 밖으로는 넘치지 않습니다." aria-label="도움말"></button><output id="hitMarkSizeValue">70%</output></div><input id="hitMarkSizeInput" type="range" min="10" max="100"></div>
 <details id="gainPanel"><summary>터치 종류별 배율</summary>
 <div class="field"><div class="fieldhead"><label for="tapGainInput">짧게 누름</label><output id="tapGainValue">100%</output></div><input id="tapGainInput" type="range" min="0" max="200" value="100"></div>
 <div class="field"><div class="fieldhead"><label for="dragGainInput">드래그</label><output id="dragGainValue">100%</output></div><input id="dragGainInput" type="range" min="0" max="200" value="100"></div>

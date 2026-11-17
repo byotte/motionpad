@@ -93,9 +93,11 @@ float hitRed(vec2 uv){
  float red=0.0;vec2 px=uv*u_imgSize;
  for(int i=0;i<4;i++){
   if(i>=u_hitCount)break;
-  vec4 h=u_hitMark[i];if(h.w<=0.0)continue;
+  vec4 h=u_hitMark[i];float zi=floor(h.w/4.0),s=h.w-zi*4.0;if(s<=0.0)continue;
   vec2 d=px-h.xy*u_imgSize;float dist=length(d)/h.z*(.88+.24*fNoise(d/(h.z*.35)+float(i)*9.0));
-  red+=h.w*pow(max(0.0,1.0-dist*dist),1.4);
+  // 그 영역 모양(마스크) 안에서만: 영역 밖으로 삐져나가지 않게
+  float inside=texture2D(u_mask,(vec2(mod(zi,4.0),floor(zi/4.0))+uv)/vec2(4.0,3.0)).a;
+  red+=s*pow(max(0.0,1.0-dist*dist),1.4)*inside;
  }
  return red*(.8+.2*fNoise(px*.75));
 }
@@ -223,7 +225,7 @@ void main(){
  // 피부색에 붉은 기운을 곱하듯 물들인다: 밝은 피부만 붉어지고 선화·음영은 그대로
  // 쓰지 않을 때는 계산하지 않는다(그림 전체 픽셀마다 도는 곳)
  float red=0.0;if(u_hitCount>0)red+=hitRed(uv);if(u_faceCount>0)red+=faceRed(uv);
- if(red>.001){float lum=dot(color.rgb,vec3(.3,.59,.11));color.rgb*=mix(vec3(1.0),vec3(1.0,.62,.64),min(red,1.25)*.62*smoothstep(.18,.55,lum));}
+ if(red>.001){float lum=dot(color.rgb,vec3(.3,.59,.11));color.rgb*=mix(vec3(1.0),vec3(1.0,.62,.64),min(red,1.6)*.6*smoothstep(.15,.55,lum));}
 #endif
  float light=1.0+u_ambient.w*(.026*sin(u_time*.98)+.009*sin(u_time*.49+1.0));
  if(u_baseExclude>.5){
