@@ -112,6 +112,8 @@ function faceSweatSpot(g,f,i){
  const right=g.eyes.find(e=>e.side==='R')||g.eyes.at(-1),base=right?right.outer:g.C;// 관자놀이·이마 근처(화면 오른쪽)
  return fv.add(base,fv.add(fv.mul(g.u,g.S*(.28+.1*(i%2))),fv.mul(g.n,g.S*(.45-.32*i))));
 }
+// 얼굴 외곽 타원(입력 없이 짐작): 가로 = 두 눈 사이 거리의 1.25배(눈 하나면 눈 너비의 2.6배), 세로 = 눈~입 거리의 1.5배
+function faceOutline(g){const e=g.eyes,eyeD=e.length===2?fv.len(fv.sub(e[1].c,e[0].c)):(e[0]?.w||g.S)*2.1;return {rx:Math.max(eyeD*1.25,g.S*.8),ry:Math.max(g.S*1.5,eyeD*1.1)}}
 function faceFxAnchors(g,f){
  const right=g.eyes.find(e=>e.side==='R')||g.eyes.at(-1),cheek=g.cheeks.find(c=>c.side==='R')||g.cheeks[0];
  const at=(key,p)=>fv.add(p,faceFxShift(g,f,key));
@@ -119,14 +121,14 @@ function faceFxAnchors(g,f){
   tear:at('tear',{x:0,y:0}),// 눈물은 눈마다 아랫꺼풀에 붙고, 옮긴 만큼만 더한다
   anger:at('anger',fv.add(g.C,fv.add(fv.mul(g.n,g.S*1.05),fv.mul(g.u,g.S*.75)))),
   heart:at('heart',cheek?fv.add(cheek.c,fv.mul(g.u,cheek.rx*1.2)):fv.add(g.C,fv.mul(g.u,g.S*.8))),
-  sparkle:at('sparkle',fv.add(g.C,fv.mul(g.n,g.S*.35))),
+  sparkle:at('sparkle',fv.add(g.C,fv.mul(g.n,-g.S*.25))),// 얼굴 외곽 타원의 가운데(눈 선보다 조금 아래)
   right,
  };
 }
 // 이 얼굴에 지금 그릴 이펙트(표정을 섞은 무게로). 옵션은 그 이펙트를 가장 강하게 쓰는 표정 것을 쓴다.
 function faceFxPlan(a){
  const f=faces[a.k];if(!f)return null;const P={sweat:0,sweatW:0,tear:0,flow:0,anger:0,angerBig:0,heart:0,sparkle:0,sparkleMore:0,opt:{}};
- const take=(key,w,x)=>{if(!P.opt[key]||w>P.opt[key].w)P.opt[key]={w,...fxOpt(x,key)}};
+ const g=faceGeometry(a.k),take=(key,w,x)=>{if(!P.opt[key]||w>P.opt[key].w)P.opt[key]={w,...fxOpt(x,key),casual:(x.fxs?.[key]||(g.sd>.6?'casual':'real'))==='casual'}};// 모양은 이펙트마다(그 이펙트를 가장 강하게 쓰는 표정 것)
  for(const [id,w] of a.mix){const x=f.exprs[id];if(!x||w<.05)continue;const m=a.more;
   const sw=x.sw+(m>.3&&(id==='shy'||id==='surprise')&&x.sw?1:0);if(sw&&w>P.sweatW*.8){P.sweat=Math.max(P.sweat,Math.min(3,sw));P.sweatW=Math.max(P.sweatW,w);take('sweat',w,x)}
   if(x.tear){P.tear=Math.max(P.tear,w);take('tear',w,x);if(id==='cry')P.flow=Math.max(P.flow,m*w)}
@@ -143,17 +145,18 @@ function drawFaceFx(ctx,at,k,list,t,follow=true,src=null,sk=1){
  const move=p=>{if(!follow)return p;const ux=p.x/renderWidth,uy=p.y/renderHeight,z=hit(ux,uy);if(!z)return p;const [dx,dy]=cpuDeformation(z,ux,uy);return {x:p.x+dx*renderWidth,y:p.y+dy*renderHeight}};
  for(const a of list){
   const g=faceGeometry(a.k),P=faceFxPlan(a),f=faces[a.k];if(!P||!g.eyes.length)continue;
-  const S=g.S,up=Math.atan2(g.n.y,g.n.x),A=faceFxAnchors(g,f),casual=faceFxStyle(g,f)==='casual';
+  const S=g.S,up=Math.atan2(g.n.y,g.n.x),A=faceFxAnchors(g,f),cas=k=>!!P.opt[k]?.casual;
   ctx.save();ctx.lineJoin=ctx.lineCap='round';
   // 반짝이: 얼굴 둘레 아무 데서나 나타나 한두 번 반짝이고 사라진다. 모양·밝기(3단계)는 하나하나 다르게.
-  if(P.sparkle){const o=P.opt.sparkle,n=Math.round(2+3*o.fr+2*P.sparkleMore),c0=move(A.sparkle);
+  if(P.sparkle){const o=P.opt.sparkle,n=Math.round(2+3*o.fr+2*P.sparkleMore),c0=move(A.sparkle),FO=faceOutline(g);
    for(let i=0;i<n;i++){
     const period=(1.8+1.6*fHash(i,7))/o.sp,ph=t/period+fHash(i,3),cyc=Math.floor(ph),life=Math.min(.95,.75/o.sp)/period,q=(ph-cyc)/life;if(q>1)continue;
-    const ang=-Math.PI*(.05+1.1*fHash(i,cyc)),rad=S*(1.25+1.05*fHash(cyc,i+11));
-    const p=fv.add(c0,fv.add(fv.mul(g.u,Math.cos(ang)*rad),fv.mul(g.n,-Math.sin(ang)*rad))),c=at(p.x,p.y);
+    // 얼굴 외곽(눈·입으로 짐작한 타원) 바로 바깥, 위쪽 반 둘레에
+    const ang=-Math.PI*(.05+1.1*fHash(i,cyc)),out=1+.2*fHash(cyc,i+11);
+    const p=fv.add(c0,fv.add(fv.mul(g.u,Math.cos(ang)*FO.rx*out),fv.mul(g.n,-Math.sin(ang)*FO.ry*out))),c=at(p.x,p.y);
     const twice=fHash(i+5,cyc)>.55,env=twice?Math.pow(Math.abs(Math.sin(q*Math.PI*2)),1.3)*(q<.5?1:.75):Math.sin(q*Math.PI);
     const level=[.45,.72,1][(i+cyc)%3],fat=fHash(cyc,i+23)>.7,size=S*k*(.045+.035*fHash(i,cyc+5))*(.75+.25*level);
-    if(casual)faceStar(ctx,c[0],c[1],size*1.6,P.sparkle*o.op*env*level);
+    if(cas('sparkle'))faceStar(ctx,c[0],c[1],size*1.6,P.sparkle*o.op*env*level);
     else faceGlint(ctx,c[0],c[1],size,P.sparkle*o.op*env*level,fat,fHash(i+9,cyc));
    }}
   // 땀방울: 맺힘 → 살짝 부풂 → 짧게 흘러내리며 늘어짐 → 움직이는 도중에 옅어짐(빈도가 낮으면 사이에 쉼)
@@ -161,32 +164,32 @@ function drawFaceFx(ctx,at,k,list,t,follow=true,src=null,sk=1){
    const period=2.4/o.sp+(2.4/o.fr-2.4)*.5,Pq=((t/period+i*.37)%1)*(period*o.sp/2.4);if(Pq>.86)continue;
    const grow=Math.min(1,Pq/.12),swell=Pq<.12?grow:Pq<.35?1+.12*(Pq-.12)/.23:1.12,slide=Pq<.35?0:(Pq-.35)/.5,alpha=P.sweatW*o.op*(Pq<.6?1:1-(Pq-.6)/.26);
    const start=move(faceSweatSpot(g,f,i)),base=move(fv.add(faceSweatSpot(g,f,i),fv.mul(g.n,-slide*S*.22))),c=at(base.x,base.y),r=S*.065*swell*k;
-   if(casual)faceCasualDrop(ctx,c[0],c[1],r,1+.45*slide,up,alpha);
+   if(cas('sweat'))faceCasualDrop(ctx,c[0],c[1],r,1+.45*slide,up,alpha);
    else{if(slide>.05){const s0=at(start.x,start.y);faceWetTrail(ctx,s0,c,r*.35,alpha*.8)}faceWaterDrop(ctx,c[0],c[1],r,1+.45*slide,up,alpha,src,sk)}
   }}
   // 눈물: 아랫꺼풀 곡선 위 바깥쪽 1/3에 기울기를 따라 맺힌다. 진할 때는 볼을 타고 흘러내린다.
   if(P.tear){const o=P.opt.tear;for(const e of g.eyes){
    const q=faceQuad(e.inner,e.lo,e.outer,20),p0=fv.add(q[15],A.tear),nx=fv.add(q[16],A.tear),ang=Math.atan2(nx.y-p0.y,nx.x-p0.x),m=move(p0),c=at(m.x,m.y);
    const alpha=P.tear*o.op;
-   if(casual)faceCasualLens(ctx,c[0],c[1],e.w*.15*k,e.w*.065*k,ang,alpha);
+   if(cas('tear'))faceCasualLens(ctx,c[0],c[1],e.w*.15*k,e.w*.065*k,ang,alpha);
    else faceTearPool(ctx,c[0],c[1],e.w*.17*k,e.w*.06*k,ang,up,alpha,src,sk,t+e.c.x);
    if(P.flow>.05){
     const Pq=(t/1.8)%1,len=Math.min(1,Pq/.6)*e.h*1.6,fade=Pq<.6?1:Math.max(0,1-(Pq-.6)/.4),steps=12,pts=[];
     for(let s=0;s<=steps;s++){const pp=move(fv.add(p0,fv.add(fv.mul(g.n,-len*s/steps),fv.mul(g.u,Math.sin(s*.8)*e.w*.02))));pts.push(at(pp.x,pp.y))}
-    if(len>1)faceTearStream(ctx,pts,e.w*.05*k,P.flow*fade*o.op,casual,up,src,sk);
+    if(len>1)faceTearStream(ctx,pts,e.w*.05*k,P.flow*fade*o.op,cas('tear'),up,src,sk);
    }
   }}
   // 💢: 머리 위 바깥쪽. 진할 때 커진다.
   if(P.anger){const o=P.opt.anger,pos=move(A.anger),c=at(pos.x,pos.y),beat=Math.sin(t*7*o.sp),pop=o.fr<1?Math.max(0,Math.sin(t*o.fr*2)):1,sz=S*.2*k*(1+.5*P.angerBig)*(1+.08*beat);
-   if(casual)faceAngerCasual(ctx,c[0],c[1],sz,P.anger*o.op*pop);else faceAnger(ctx,c[0],c[1],sz,P.anger*o.op*pop)}
+   if(cas('anger'))faceAngerCasual(ctx,c[0],c[1],sz,P.anger*o.op*pop);else faceAnger(ctx,c[0],c[1],sz,P.anger*o.op*pop)}
   // 하트: 얼굴에서 둥실 떠올라 한 번 반짝이고, 비눗방울처럼 '뾱' 터지며 사라진다
   if(P.heart){const o=P.opt.heart,n=Math.max(1,Math.round(2*o.fr));for(let i=0;i<n;i++){
    const ph=t/(2.6/o.sp)+i/n,Pq=ph%1,v=fHash(i,Math.floor(ph));if(Pq>.92)continue;// v: 이 하트의 모양·색(한 번 떠오를 때마다 바뀜)
    const rise=Math.min(Pq,.78),pos=move(fv.add(A.heart,fv.add(fv.mul(g.u,S*(.1*Math.sin(i*2.3+rise*5)+.15*(i%2?-1:1)*fHash(i,Math.floor(t/(2.6/o.sp))))),fv.mul(g.n,S*(.05+.6*rise))))),c=at(pos.x,pos.y);
    const base=S*.11*k*(.55+.45*Math.min(1,Pq*4));
-   if(Pq<.78){faceHeartShape(ctx,c[0],c[1],base*(.8+.4*v),Math.sin(Pq*6+i)*.15+(v-.5)*.4,P.heart*o.op,casual,v);
+   if(Pq<.78){faceHeartShape(ctx,c[0],c[1],base*(.8+.4*v),Math.sin(Pq*6+i)*.15+(v-.5)*.4,P.heart*o.op,cas('heart'),v);
     const fl=Pq>.48&&Pq<.66?Math.sin((Pq-.48)/.18*Math.PI):0;if(fl>0)faceGlint(ctx,c[0]-base*.35,c[1]-base*.4,base*.22,P.heart*o.op*fl,false,.5)}// 한 번 반짝
-   else faceHeartPop(ctx,c[0],c[1],base*(.8+.4*v),(Pq-.78)/.14,P.heart*o.op,casual,i,v);
+   else faceHeartPop(ctx,c[0],c[1],base*(.8+.4*v),(Pq-.78)/.14,P.heart*o.op,cas('heart'),i,v);
   }}
   ctx.restore();
  }

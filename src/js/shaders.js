@@ -82,7 +82,7 @@ float faceRed(vec2 uv){
     float line=1.0-smoothstep(hw,hw+soft,abs(f-.5));
     float keep=smoothstep(.2+.35*j,.35+.35*j,t.a);// 가운데에 몰리고 바깥으로 짧아진다(선마다 들쭉날쭉)
     if(!manga)keep*=step(.32,fNoise(vec2(id*3.1,along/(st.z*2.6))));// 섬세한 빗금: 짧게 끊긴 선
-    v+=line*keep*(manga?.85:.5)*smoothstep(.0,.15,t.a);
+    v+=line*keep*(manga?.85:.5)*smoothstep(.0,.15,t.a)*min(1.0,t.b*1.4);// 진하기 = 선의 짙기(그려지는 범위는 그대로)
    }
    red+=v;
   }

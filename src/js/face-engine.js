@@ -122,6 +122,9 @@ function fNoise(x,y){const i=Math.floor(x),j=Math.floor(y);let a=x-i,b=y-j;a=a*a
 function faceRedBasis(g,area=50){
  const sc=area<=50?.5+area/100:1+(area-50)/50;// 면적 0~100 → 뺨 크기 0.5~2배(50 = 추정한 크기)
  if(!g.rect)return null;if(g.red&&g.redArea===Math.round(area/5))return g.red;g.redArea=Math.round(area/5);
+ // 귀 덩어리 미리 계산: 귀 방향(u·n) 범위, 띠 두께 = 귀 너비의 35%, 얼굴 쪽(toward: u 방향에서 얼굴 가운데가 어느 쪽인지)
+ const earShapes=g.ears.map(pts=>{const U=pts.map(p=>p.x*g.u.x+p.y*g.u.y),N=pts.map(p=>p.x*g.n.x+p.y*g.n.y),u0=Math.min(...U),u1=Math.max(...U)+1e-3,n0=Math.min(...N),n1=Math.max(...N)+1e-3;
+  return {pts,u0,u1,n0,n1,depth:Math.max(2,.35*Math.min(u1-u0,n1-n0)),toward:(g.C.x*g.u.x+g.C.y*g.u.y)<(u0+u1)/2?-1:1}});
  const G=FACE_G,{rect}=g,cheek=new Float32Array(G*G),hatch=new Float32Array(G*G),ear=new Float32Array(G*G),ang=Math.atan2(g.u.y,g.u.x);
  for(let j=0;j<G;j++){const py=rect.y+(j+.5)/G*rect.h;for(let i=0;i<G;i++){const px=rect.x+(i+.5)/G*rect.w,idx=j*G+i;
   for(const ch of g.cheeks){
@@ -133,8 +136,16 @@ function faceRedBasis(g,area=50){
    cheek[idx]=Math.max(cheek[idx],w);
    hatch[idx]=Math.max(hatch[idx],Math.pow(Math.max(0,1-z*z),.8));
   }
-  for(const line of g.ears){let best=Infinity;for(let s=0;s<line.length-1;s++){const a=line[s],b=line[s+1],vx=b.x-a.x,vy=b.y-a.y,l2=vx*vx+vy*vy||1e-6,h=clamp(((px-a.x)*vx+(py-a.y)*vy)/l2,0,1);best=Math.min(best,Math.hypot(px-a.x-vx*h,py-a.y-vy*h))}
-   if(best<g.earW*2)ear[idx]=Math.max(ear[idx],Math.pow(1-best/(g.earW*2),1.3))}
+  for(const E of earShapes){
+   // 귀(사용자가 그린 테두리를 닫은 덩어리): 테두리 안쪽 35% 띠와 위쪽 40%는 확실히, 얼굴과 붙은 쪽 아래는 덜 붉게
+   const pts=E.pts;let best=Infinity,inside=false;
+   for(let s=0,m=pts.length;s<m;s++){const a=pts[s],b=pts[(s+1)%m],vx=b.x-a.x,vy=b.y-a.y,l2=vx*vx+vy*vy||1e-6,h=clamp(((px-a.x)*vx+(py-a.y)*vy)/l2,0,1);best=Math.min(best,Math.hypot(px-a.x-vx*h,py-a.y-vy*h));
+    if((a.y>py)!==(b.y>py)&&px<(b.x-a.x)*(py-a.y)/(b.y-a.y)+a.x)inside=!inside}
+   const pu=px*g.u.x+py*g.u.y,pn=px*g.n.x+py*g.n.y,up=(pn-E.n0)/(E.n1-E.n0),side=E.toward<0?(pu-E.u0)/(E.u1-E.u0):(E.u1-pu)/(E.u1-E.u0);
+   let w;
+   if(inside){const band=best<E.depth?1:.5+.5*Math.max(0,1-(best-E.depth)/E.depth);w=up>.6?1:band*(side<.3?.55+.45*side/.3:1)}
+   else w=best<g.earW*.7?.85*Math.pow(1-best/(g.earW*.7),1.2):0;
+   ear[idx]=Math.max(ear[idx],w)}
  }}
  g.red={cheek,hatch,ear};return g.red;
 }
@@ -145,7 +156,7 @@ function faceRedValuesRaw(g,expr,amount){
  const bl=(expr.bl||0)/100*amount,eb=(expr.earBl||0)/100*amount;if(bl<=.001&&eb<=.001)return null;
  const B=faceRedBasis(g,expr.ba??50);if(!B)return null;
  const n=B.cheek.length,b=new Float32Array(n),h=new Float32Array(n);
- for(let i=0;i<n;i++){b[i]=Math.min(1,1.7*bl*B.cheek[i]+1.4*eb*B.ear[i]);h[i]=g.style==='grad'?0:Math.min(1,1.4*bl*B.hatch[i])}
+ for(let i=0;i<n;i++){b[i]=Math.min(1,1.7*bl*B.cheek[i]+2*eb*B.ear[i]);h[i]=g.style==='grad'||bl<.01?0:B.hatch[i]}// 빗금 자리는 진하기와 상관없이(진하기는 선의 짙기에만)
  return {b,h};
 }
 // 셰이더 값: x 스타일(0 그라데이션·1 섬세한 빗금·2 만화 빗금), y 빗금의 가로지르는 방향(각도), z 빗금 간격(그림 화소), w 얼룩 크기(그림 화소)
@@ -270,7 +281,7 @@ function drawExprPreview(){
   let v=tb*(.8+.2*fNoise(x*.75,y*.75))*(.72+.28*fNoise(x/st[3]+k*7,y/st[3]+k*7));
   if(st[0]>.5&&ta>.01){const s=(x*nd[0]+y*nd[1])/st[2],id=Math.floor(s),f=s-id,along=x*ld[0]+y*ld[1],jj=fHash(id,k+3),manga=st[0]>1.5,hw=manga?.13:.07,soft=1/st[2];
    const line=1-smoothstep(hw,hw+soft,Math.abs(f-.5));let keep=smoothstep(.2+.35*jj,.35+.35*jj,ta);if(!manga)keep*=fNoise(id*3.1,along/(st[2]*2.6))>=.32?1:0;
-   v+=line*keep*(manga?.85:.5)*smoothstep(0,.15,ta)}
+   v+=line*keep*(manga?.85:.5)*smoothstep(0,.15,ta)*Math.min(1,tb*1.4)}
   return v};
  const img=ctx.createImageData(cw,ch),out=img.data;
  const fieldAt=(x,y,o)=>{const fx=(x-r.x)/r.w*G-.5,fy=(y-r.y)/r.h*G-.5;if(fx<0||fy<0||fx>=G-1||fy>=G-1){o[0]=o[1]=0;return}

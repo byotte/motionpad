@@ -20,6 +20,7 @@ function sanitizeExpr(e,id){
  const v=(x,lo=-100)=>Number.isFinite(x)?clamp(Math.round(x),lo,100):0;
  const side=s=>Object.fromEntries(EXPR_SIDE_KEYS.map(k=>[k,v(s?.[k])]));
  return {sym:e.sym!==false,L:side(e.L),R:side(e.sym!==false?e.L:e.R),mm:v(e.mm),tr:v(e.tr,0),bl:Number.isFinite(e.bl)?v(e.bl,0):EXPR_PRESETS[id].bl,ba:Number.isFinite(e.ba)?v(e.ba,0):50,ear:e.ear===true,sw:Number.isFinite(e.sw)?clamp(Math.round(e.sw),0,3):EXPR_PRESETS[id].sw,...Object.fromEntries(['tear','sa','sh','ss'].map(k=>[k,typeof e[k]==='boolean'?e[k]:EXPR_PRESETS[id][k]])),
+  fxs:Object.fromEntries(FX_KEYS.filter(k=>['real','casual'].includes(e.fxs?.[k])).map(k=>[k,e.fxs[k]])),
   fxo:Object.fromEntries(FX_KEYS.map(k=>[k,Object.fromEntries(['sp','fr','op'].map(o=>[o,Number.isFinite(e.fxo?.[k]?.[o])?clamp(Math.round(e.fxo[k][o]),0,200):100]))]))};
 }
 const FX_KEYS=['sweat','tear','sparkle','anger','heart'];// 이펙트(세부 옵션 sp 속도·fr 빈도·op 진하기, 0~200%)
@@ -111,7 +112,7 @@ $('faceTitle').onclick=()=>{faceOpen=!faceOpen;paintFaces()};
 let faceDraft=[];
 const FACE_MOUTH_PROMPTS=['입: 화면 왼쪽 입꼬리를 눌러 주세요.','입: 화면 오른쪽 입꼬리를 눌러 주세요.','입: 입 가운데(윗입술과 아랫입술이 만나는 선의 가운데)를 눌러 주세요.'];
 function faceBrowPrompt(){const total=Math.max(1,faceEyes(faceSel));return total===1?'눈썹: 눈썹을 따라 한 획으로 그어 주세요.':faceDraft.length?'눈썹: 이제 화면 오른쪽 눈썹을 따라 한 획으로 그어 주세요.':'눈썹: 화면 왼쪽 눈썹을 따라 한 획으로 그어 주세요.'}
-function faceModeStatus(m){faceDraft=[];if(m==='faceMouth')setStatus(FACE_MOUTH_PROMPTS[0]);if(m==='faceBrow')setStatus(faceBrowPrompt());if(m==='faceEar')setStatus('귀: 귀의 바깥 선을 따라 한 획으로 그어 주세요. 양쪽 귀가 보이면 두 획입니다.')}
+function faceModeStatus(m){faceDraft=[];if(m==='faceMouth')setStatus(FACE_MOUTH_PROMPTS[0]);if(m==='faceBrow')setStatus(faceBrowPrompt());if(m==='faceEar')setStatus('귀: 귀 테두리를 따라 한 바퀴 둘러 그어 주세요(귓구멍 쪽 얼굴과 붙은 곳까지).')}
 for(const [id,m] of [['faceMouthMode','faceMouth'],['faceBrowMode','faceBrow'],['faceEarMode','faceEar']])$(id).onclick=()=>{
  if(!ready){setStatus('먼저 그림을 열어 주세요.');return}
  if(m==='faceBrow'&&!faceEyes(faceSel)){setStatus('눈썹은 눈을 기준으로 정리합니다. 먼저 ‘눈 찍기 · 설정’으로 눈을 찍어 주세요.');return}
@@ -134,13 +135,14 @@ function faceBrowStroke(points){
  setMode(placeReturn);setStatus('눈썹을 그렸습니다. 아래 ‘표정 세부 설정’에서 표정을 눌러 눈썹 모양을 바꿔 보세요.');
 }
 // 귀(홍조의 '귀도 붉게'에만 쓴다): 한 획마다 바로 저장, 두 획이면 끝. 한쪽만 보이면 버튼을 다시 눌러 마친다.
+// 귀: 한 획(귀 테두리를 한 바퀴 둘러 긋기)마다 저장하고 바로 하던 도구로 돌아간다(표시가 남아 있지 않게).
+// 귀가 하나 있으면 두 번째로 더하고, 둘이면 새로 그린 것으로 바꾼다. 반대쪽 귀는 '귀 그리기'를 한 번 더.
 function faceEarStroke(points){
- if(points.length<2){setStatus('귀를 따라 조금 더 길게 그어 주세요.');return}
- const n=clamp(Math.round(points.length/3),6,24),line=Array.from({length:n},(_,i)=>{const [x,y]=spinePoint(points,i/(n-1));return {x,y}});
- if(!faceDraft.length)remember();faceDraft.push(line);
- faces[faceSel].ears=faceDraft.slice(0,2);faceChanged();paintFaces();scheduleSave();
- if(faceDraft.length>=2){faceDraft=[];setMode(placeReturn);setStatus('귀를 그렸습니다.');return}
- setStatus('귀 하나를 그렸습니다. 다른 쪽 귀도 그리거나, 다 됐으면 ‘귀 그리기’를 다시 눌러 마칩니다.');drawOverlay();
+ if(points.length<3){setStatus('귀 테두리를 따라 한 바퀴 둘러 그어 주세요.');return}
+ const n=clamp(Math.round(points.length/3),8,40),line=Array.from({length:n},(_,i)=>{const [x,y]=spinePoint(points,i/(n-1));return {x,y}});
+ remember();const f=faces[faceSel];f.ears=f.ears.length===1?[f.ears[0],line]:[line];
+ faceChanged();paintFaces();scheduleSave();setMode(placeReturn);
+ setStatus(f.ears.length===1?'귀를 그렸습니다. 반대쪽 귀도 보이면 ‘귀 그리기’를 한 번 더 눌러 그어 주세요.':'귀 두 개를 그렸습니다.');
 }
 // 편집 화면 위 표시: 부위를 찍는 동안 이 얼굴의 입·눈썹(찍은 것과 찍는 중인 것)
 function drawFaceParts(g,w,h,px){
