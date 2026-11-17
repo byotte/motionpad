@@ -120,7 +120,7 @@ overlay.addEventListener('pointerdown',e=>{
   const p=pointerPos(e);pointers.set(e.pointerId,p);paintLoupe(p);
   if(viewerOpen||mode==='play'||touchPreview){
     if(pointers.size>1){if(!viewerOpen){if(gesture?.type==='play')stopPlay(zones.find(v=>v.id===gesture.id));beginPinch(true)}return}
-    const z=hit(p.x,p.y);gesture={type:'play',id:z?.id||null,start:p,last:p,time:performance.now(),lastTime:performance.now(),dragged:false};
+    const z=hit(p.x,p.y);if(z&&touchOn())stepTouched();gesture={type:'play',id:z?.id||null,start:p,last:p,time:performance.now(),lastTime:performance.now(),dragged:false};
     if(z){z.dragging=false;z.desiredX=z.desiredY=z.desiredScale=0;z.hitX=p.x;z.hitY=p.y;z.grabX=p.x;z.grabY=p.y}return;
   }
   if(mode==='pan'||spacePanHeld){

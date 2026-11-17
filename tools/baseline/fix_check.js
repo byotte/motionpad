@@ -42,6 +42,29 @@ const results = [];
 const report = (id, ok, info) => { results.push({ id, ok }); console.log((ok ? '통과' : '실패'), id, info || ''); };
 const tests = {
 
+  // D: 세 걸음 띠. 새 그림 → ①, 영역 → ②, 부위 → ③, 만져 보며 영역 누름 → 끝 문구, 다음 새 그림에는 안 보임, 프로젝트 열기에는 안 보임
+  async d(browser) {
+    const page = await newPage(browser, { width: 390, height: 844, isMobile: true, hasTouch: true }), log = [];
+    await page.evaluate(() => localStorage.removeItem('motionpad-steps'));
+    await page.setInputFiles('#imageFile', FIXTURE); await page.waitForSelector('.workspace:not([hidden])'); await rafs(page, 3);
+    await page.evaluate(() => { const b = document.getElementById('cardSimpleBtn'); if (b.offsetParent) b.click(); });
+    const st = () => page.evaluate(() => { const b = document.getElementById('stepsBar'); return b.hidden ? '숨음' : (b.querySelector('.stepsDone').hidden ? 'now=' + (b.querySelector('li.now')?.dataset.step || '-') : '끝'); });
+    log.push(await st());
+    const box = await page.locator('#view').boundingBox(), P = (x, y) => [box.x + box.width * x, box.y + box.height * y];
+    await page.locator('#ellipseMode').click();
+    await page.mouse.move(...P(.3, .38)); await page.mouse.down(); await page.mouse.move(...P(.42, .5), { steps: 6 }); await page.mouse.up(); await rafs(page, 3);
+    log.push(await st());
+    await page.locator('#cardParts .chip', { hasText: '볼' }).first().click(); await rafs(page, 3);
+    log.push(await st());
+    await page.mouse.click(...P(.36, .44)); await rafs(page, 3);
+    log.push(await st());
+    const fits = await page.evaluate(() => { const b = document.getElementById('stepsBar').getBoundingClientRect(); return b.left >= 0 && b.right <= innerWidth; });
+    await page.setInputFiles('#imageFile', FIXTURE); await rafs(page, 4); log.push('다음 새 그림 ' + await st());
+    await page.evaluate(() => localStorage.removeItem('motionpad-steps'));
+    await openProject(page, project(dataURL(FIXTURE), [], {}), 'd'); log.push('프로젝트 열기 ' + await st());
+    report('d', log.join('|') === 'now=1|now=2|now=3|끝|다음 새 그림 숨음|프로젝트 열기 숨음' && fits && !page.errors.length, log.join(' · ') + ' · 폰 폭 안 ' + fits + (page.errors[0] || ''));
+  },
+
   // C-8: 간단 카드. 영역 → 부위 '볼' → 크기 '강' → 자세히에서 세기 → '직접 맞춤' → 되돌리기 두 번 → 저장·다시 열기 → 옛 프로젝트는 부위를 묻지 않음
   async c(browser) {
     const page = await newPage(browser), log = [];

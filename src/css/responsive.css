@@ -80,6 +80,9 @@
   .quick .precisionSwitch{gap:2px;padding:0 2px}
   .tog{padding:0 4px;font-size:var(--fs-help)}
   .viewToggles{gap:var(--sp2)}
+  /* D: 좁은 폰은 지금 걸음만 글자, 나머지는 번호만 */
+  .steps li:not(.now){font-size:0}
+  .steps li::before{font-size:var(--fs-help)}
   /* A-4·A-6 좁은 폰: 화면 이동은 두 손가락으로 하므로 버튼은 감추고, 스위치 칸 여백을 줄여 아래 줄을 한 줄로 */
   #panMode{display:none}
   .touchSwitch{font-size:var(--fs-help)}

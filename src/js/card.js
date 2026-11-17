@@ -119,6 +119,7 @@ function paintPanelMode(){
 function segPaint(box,value){for(const b of box.querySelectorAll('button')){const on=b.dataset.v===value;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on))}}
 function renderCard(){
  if(!cardReady)return;
+ paintSteps();
  const z=getSelected(),none=!zones.length;
  const zonesBox=$('cardZones');
  if(none){const t=document.createElement('span');t.className='cardTitle';t.textContent='움직일 곳을 골라 보세요';zonesBox.replaceChildren(t)}
@@ -173,3 +174,39 @@ $('ambientOn').addEventListener('change',renderCard);
 cardReady=true;
 paintPanelMode();
 renderCard();
+// D: 세 걸음 띠(그림 위쪽에 겹침, 그림을 밀지 않음). 창으로 막는 튜토리얼이 아니라 한 일을 따라 체크만 한다.
+// 보이는 때: 영역이 0개인 그림을 새로 열었을 때만(프로젝트 열기·이어하기는 안 보임), 한 번 셋을 다 마친 브라우저는 다시 안 보임.
+var steps={on:false,touched:false,doneTimer:0};// var: renderCard가 이 줄보다 먼저 불린다
+function stepsDoneBefore(){try{return localStorage.getItem('motionpad-steps')==='done'}catch(_){return false}}
+function startSteps(){
+ if(stepsDoneBefore()||zones.length){stopSteps();return}
+ steps.on=true;steps.touched=false;
+ $('stepsBar').hidden=false;$('stepsBar').querySelector('.stepsDone').hidden=true;$('stepsBar').querySelector('.steps').hidden=false;
+ paintSteps();
+}
+function stopSteps(){
+ steps.on=false;clearTimeout(steps.doneTimer);
+ $('stepsBar').hidden=true;
+ for(const id of ['wandMode','lassoMode','cardWand','cardLasso'])$(id).classList.remove('stepHint');
+}
+function stepNow(){
+ if(!zones.length)return 1;
+ if(!zones.some(z=>!z.isBase&&z.preset!=='custom'))return 2;
+ if(!steps.touched)return 3;
+ return 4;
+}
+function paintSteps(){
+ if(!steps?.on)return;
+ const now=stepNow();
+ for(const li of $('stepsBar').querySelectorAll('li')){const n=Number(li.dataset.step);li.classList.toggle('done',n<now);li.classList.toggle('now',n===now)}
+ for(const id of ['wandMode','lassoMode','cardWand','cardLasso'])$(id).classList.toggle('stepHint',now===1);
+ if(now===4&&!steps.doneTimer){
+  try{localStorage.setItem('motionpad-steps','done')}catch(_){}
+  $('stepsBar').querySelector('.steps').hidden=true;$('stepsBar').querySelector('.stepsDone').hidden=false;
+  steps.doneTimer=setTimeout(()=>{steps.doneTimer=0;stopSteps()},5000);
+ }
+}
+// ③ 만져 보는 상태에서 영역을 한 번 누름(pointer.js가 부른다)
+function stepTouched(){if(steps.on&&!steps.touched){steps.touched=true;paintSteps()}}
+$('stepsClose').onclick=()=>stopSteps();
+$('stepsAgain').onclick=()=>{try{localStorage.removeItem('motionpad-steps')}catch(_){}$('layoutSettings').close?.();if(ready){steps.on=false;startSteps()}setStatus(ready&&zones.length?'처음 안내는 영역이 없는 새 그림을 열 때 보입니다.':'처음 안내를 다시 보입니다.')};
