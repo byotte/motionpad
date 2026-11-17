@@ -38,7 +38,7 @@ async function prep(page, state) {
     await page.mouse.up();
     await page.waitForFunction(() => document.getElementById('outlineControls').dataset.ready === '1', null, { timeout: 60000 });
   }
-  if (state === 'help') { await page.locator('#wandMode').click(); await page.locator('#wandbar [data-help]').first().click(); }
+  if (state === 'help') { await page.locator('#wandMode').click(); await page.locator('#wandbar .helpName').first().click(); }
   if (state === 'touchprev') {
     await page.locator('#wandMode').click();
     await page.evaluate(() => { const e = document.getElementById('strengthInput'); e.value = String(Number(e.value) + 5); e.dispatchEvent(new Event('input', { bubbles: true })); });

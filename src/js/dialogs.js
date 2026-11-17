@@ -1,19 +1,102 @@
-const localHelp=$('localHelp');
-function showLocalHelp(button){
- (button.closest('dialog')||document.body).append(localHelp);// 대화창 안에서는 창 위에 떠야 보인다
- localHelp.textContent=button.dataset.help;
- localHelp.hidden=false;
- const rect=button.getBoundingClientRect();
- localHelp.style.left=Math.max(8,Math.min(rect.left,innerWidth-localHelp.offsetWidth-8))+'px';
- localHelp.style.top=(rect.top>=localHelp.offsetHeight+8?rect.top-localHelp.offsetHeight-4:rect.bottom+4)+'px';
+// B: 도움말은 동그라미(ⓘ) 대신 하던 동작을 따라오는 안내줄. 설명은 '잠깐 얹히는 글'이라 원래 안내(setStatus)를 지우지 않는다.
+// PC: 항목(이름·막대·버튼이 든 한 줄)에 마우스를 0.15초 올리면 뜨고 떠나면 원래 안내로. 폰: 항목 이름을 누르거나 막대를 잡으면 뜨고 5초 뒤·다른 곳을 누르면 돌아간다.
+// 이름을 누르면(PC도) 고정되어 '더 보기'를 누를 수 있다. 대화창 안의 항목은 그 창 아래 안내 칸에 뜬다.
+// 그림에서 자리를 찍는 도구(PLACE_MODES)가 켜져 있는 동안은 띄우지 않는다(순서 안내가 덮이면 안 된다).
+const HELP_ROW='.field,summary,.faceRow,.toggle,.exprSlider,.exprBox,.empty,.fxRow,.videoRow,.brushbar';
+const helpState={row:null,layer:null,pinned:false,timer:0,hoverTimer:0,refold:null};
+const helpHover=()=>matchMedia('(hover:hover)').matches;
+function helpIdleText(){return helpHover()?'항목에 마우스를 올리면 설명이 나옵니다.':'항목 이름을 누르면 설명이 나옵니다.'}
+// 안내 칸 하나에 '설명 층'을 겹쳐 둔다(원래 안내 요소는 그대로, 같은 칸에 겹침)
+function helpLayerFor(host){
+ if(host._helpLayer)return host._helpLayer;
+ const wrap=document.createElement(host.tagName==='SPAN'?'span':'div');
+ wrap.className='hintWrap';
+ host.replaceWith(wrap);
+ wrap.append(host);
+ const layer=document.createElement('span');
+ layer.className='helpLayer';
+ layer.hidden=true;
+ const text=document.createElement('span');
+ text.className='helpText';
+ const more=document.createElement('button');
+ more.type='button';
+ more.className='helpMore';
+ more.textContent='더 보기';
+ const full=document.createElement('div');
+ full.className='helpFull';
+ full.hidden=true;
+ more.onclick=()=>{full.hidden=!full.hidden;more.textContent=full.hidden?'더 보기':'접기';clearTimeout(helpState.timer)};
+ layer.append(text,more);
+ wrap.append(layer,full);
+ host._helpLayer={wrap,layer,text,more,full};
+ return host._helpLayer;
 }
-document.querySelectorAll('[data-help]').forEach(button=>{
- button.addEventListener('mouseenter',()=>{if(matchMedia('(hover:hover)').matches)showLocalHelp(button);});
- button.addEventListener('mouseleave',()=>{localHelp.hidden=true;});
- button.onclick=e=>{e.preventDefault();e.stopPropagation();if(localHelp.hidden||localHelp.dataset.owner!==button.dataset.help)showLocalHelp(button);else localHelp.hidden=true;localHelp.dataset.owner=button.dataset.help};
+function helpHostOf(row){
+ const dialog=row.closest('dialog');
+ if(!dialog)return $('status');
+ if(dialog.id==='exprDialog')return $('exprHint');
+ if(dialog.id==='blinkDialog')return $('blinkHint');
+ let line=dialog.querySelector('.dlgHelp');
+ if(!line){
+  line=document.createElement('p');
+  line.className='dlgHelp';
+  line.textContent=helpIdleText();
+  (dialog.querySelector('.dlgBody')||dialog).append(line);
+ }
+ return line;
+}
+function showHelp(row,pin){
+ const host=helpHostOf(row);
+ if(host===$('status')&&PLACE_MODES.includes(mode))return;
+ if(helpState.layer&&helpState.row!==row)clearHelp();
+ const h=helpLayerFor(host);
+ h.text.textContent=row.dataset.helpShort;
+ h.more.hidden=!row.dataset.help;
+ h.full.textContent=row.dataset.help||'';
+ if(helpState.row!==row){h.full.hidden=true;h.more.textContent='더 보기'}
+ h.layer.hidden=false;
+ h.wrap.classList.add('helping');
+ helpState.row=row;helpState.layer=h;helpState.pinned=helpState.pinned||!!pin;
+ // 폰에서 안내줄을 접어 둔 사람: 잠깐 펴서 보여 주고 돌아갈 때 다시 접는다
+ const line=host.closest('.guideLine');
+ if(line?.classList.contains('folded')){line.classList.remove('folded');helpState.refold=line}
+ clearTimeout(helpState.timer);
+ if(!helpHover())helpState.timer=setTimeout(()=>{if(helpState.layer?.full.hidden)clearHelp()},5000);
+}
+function clearHelp(){
+ clearTimeout(helpState.timer);clearTimeout(helpState.hoverTimer);
+ const h=helpState.layer;
+ if(h){h.layer.hidden=true;h.full.hidden=true;h.wrap.classList.remove('helping')}
+ helpState.refold?.classList.add('folded');
+ helpState.row=helpState.layer=helpState.refold=null;helpState.pinned=false;
+}
+// 표시를 항목 줄로 옮긴다: HTML의 .helpMark(짧은 한 줄·긴 설명)를 그 줄의 data-help-short·data-help로, 이름 글자는 .helpName
+for(const mark of document.querySelectorAll('.helpMark')){
+ const row=mark.parentElement.closest(HELP_ROW)||mark.parentElement;
+ row.dataset.helpShort=mark.dataset.helpShort;
+ if(mark.dataset.help)row.dataset.help=mark.dataset.help;
+ const name=row.matches('summary')?row:row.querySelector('label,.faceLabel,b,legend,strong')||row;
+ name.classList.add('helpName');
+ mark.remove();
+}
+for(const dlg of document.querySelectorAll('dialog'))if(dlg.querySelector('[data-help-short]'))helpHostOf(dlg.querySelector('[data-help-short]'));
+statusHook=()=>{if(helpState.layer&&PLACE_MODES.includes(mode)&&helpState.layer.wrap.contains($('status')))clearHelp()};
+document.addEventListener('pointerover',e=>{
+ if(e.pointerType!=='mouse'||helpState.pinned)return;
+ const row=e.target.closest?.('[data-help-short]');
+ clearTimeout(helpState.hoverTimer);
+ if(row===helpState.row)return;
+ helpState.hoverTimer=setTimeout(()=>row?showHelp(row):clearHelp(),150);// 빠르게 지나갈 때 깜빡이지 않게
 });
-document.addEventListener('pointerdown',event=>{if(!event.target.closest('[data-help]'))localHelp.hidden=true;});
-window.addEventListener('scroll',()=>{localHelp.hidden=true;},true);
+document.addEventListener('pointerdown',e=>{
+ if(e.target.closest('.helpLayer,.helpFull'))return;
+ const row=e.target.closest('[data-help-short]');
+ if(row&&e.target.closest('.helpName')){if(helpState.row===row&&helpState.pinned)clearHelp();else{clearHelp();showHelp(row,true)}return}
+ if(row&&e.target.closest('input,select,button,textarea')){if(!helpState.pinned||helpState.row!==row){clearHelp();showHelp(row)}return}
+ if(helpState.layer)clearHelp();
+},true);
+document.addEventListener('focusin',e=>{const row=e.target.closest?.('[data-help-short]');if(row&&!helpState.pinned&&e.target.matches(':focus-visible'))showHelp(row)});
+document.addEventListener('focusout',e=>{const row=e.target.closest?.('[data-help-short]');if(row&&row===helpState.row&&!helpState.pinned&&helpHover()&&!row.matches(':hover'))clearHelp()});
 document.querySelectorAll('[data-dialog]').forEach(button=>{
  button.onclick=()=>{
   $(button.dataset.dialog).showModal();

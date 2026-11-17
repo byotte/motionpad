@@ -64,7 +64,6 @@
 .fieldhead{display:flex;align-items:center;justify-content:space-between;min-width:0;margin:0 0 var(--sp1)}
 .fieldhead label{min-width:0;padding-right:5px;overflow-wrap:anywhere}
 /* 항목 이름 뒤 도움말 점: 문구 바로 뒤에 붙고 값은 오른쪽 끝 */
-.fieldhead>.helpDot{margin-inline-end:auto}
 .field label{font-size:var(--fs-item);color:var(--item)}
 .field output{font-size:var(--fs-item);font-weight:var(--fw-item);color:var(--item);font-variant-numeric:tabular-nums}
 .field output.changed{color:var(--accent)}

@@ -32,7 +32,8 @@ async function openProject(page, proj, name) {
   await page.evaluate(() => { for (const d of document.querySelectorAll('aside details')) d.open = true; }); await rafs(page, 2);
 }
 async function newPage(browser, vp) {
-  const ctx = await browser.newContext({ viewport: vp || { width: 1200, height: 900 }, acceptDownloads: true }), page = await ctx.newPage(), errors = [];
+  const { isMobile, hasTouch, ...size } = vp || { width: 1200, height: 900 };
+  const ctx = await browser.newContext({ viewport: size, isMobile: !!isMobile, hasTouch: !!hasTouch, acceptDownloads: true }), page = await ctx.newPage(), errors = [];
   await ctx.addInitScript(() => { try { Object.defineProperty(window, 'showSaveFilePicker', { value: undefined }); } catch (_) {} });
   page.on('pageerror', e => errors.push(String(e))); page.on('console', m => { if (m.type() === 'error') errors.push(m.text().slice(0, 200)); });
   await page.goto('file://' + TARGET); page.errors = errors; return page;
@@ -40,6 +41,28 @@ async function newPage(browser, vp) {
 const results = [];
 const report = (id, ok, info) => { results.push({ id, ok }); console.log((ok ? '통과' : '실패'), id, info || ''); };
 const tests = {
+
+  // B: 동그라미 0개, PC는 올리면 안내줄에 설명·떠나면 원래 안내, 폰은 이름을 누르면, 입 찍기 중에는 순서 안내가 그대로
+  async b(browser) {
+    const page = await newPage(browser);
+    await openProject(page, project(dataURL(FIXTURE), [ZONE], {}), 'b');
+    const st = () => page.evaluate(() => { const l = document.querySelector('.guideLine .helpLayer'); return { dots: document.querySelectorAll('.helpDot,#localHelp,[data-help]:not([data-help-short])').length, help: l && !l.hidden ? l.querySelector('.helpText').textContent : '', status: document.getElementById('status').textContent }; });
+    await page.evaluate(() => { document.getElementById('status').textContent = '원래 안내'; });
+    const row = page.locator('[data-help-short]').filter({ hasText: '경계 부드러움' }).first();
+    await row.hover(); await page.waitForTimeout(350); const a = await st();
+    await page.mouse.move(5, 5); await page.waitForTimeout(350); const b = await st();
+    await page.evaluate(() => document.getElementById('faceOnInput').click()); await rafs(page, 2);
+    await page.evaluate(() => document.getElementById('faceMouthMode').click()); await rafs(page, 2);
+    const prompt = (await st()).status;
+    await row.hover(); await page.waitForTimeout(350); const c = await st();
+    await page.context().close();
+    const phone = await newPage(browser, { width: 390, height: 844, isMobile: true, hasTouch: true });
+    await openProject(phone, project(dataURL(FIXTURE), [ZONE], {}), 'b');
+    const name = phone.locator('[data-help-short] .helpName, summary.helpName').filter({ hasText: '경계 부드러움' }).first();
+    await name.tap(); await phone.waitForTimeout(200);
+    const d = await phone.evaluate(() => { const l = document.querySelector('.guideLine .helpLayer'); return l && !l.hidden ? l.querySelector('.helpText').textContent : ''; });
+    report('b', a.dots === 0 && a.help && !b.help && b.status && b.status !== a.help && !c.help && c.status === prompt && d, `동그라미 ${a.dots} · 올림 '${a.help}' · 떠남 '${b.help}'/${b.status} · 입 찍기 중 '${c.help}' 안내 '${c.status}' · 폰 이름 누름 '${d}'`);
+  },
 
   // A-8: 숫자는 기준값과 다를 때만 강조색(영역 = 프리셋 값, 몸체 = 기본값)
   async a8(browser) {
