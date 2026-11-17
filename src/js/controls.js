@@ -1,5 +1,5 @@
 // Ambient and audio UI are deliberately independent of the selected region.
-const AMBIENT_DEFAULT={enabled:true,breath:35,sway:30,light:0,face:'',faceAmt:50};
+const AMBIENT_DEFAULT={enabled:true,breath:35,sway:30,light:0,face:'',faceAmt:50,idleFace:'',idleEvery:'mid'};// F-3 idleFace·idleEvery: 가끔 짓는 표정
 const ambient={...AMBIENT_DEFAULT};// 3-M: 조명 숨쉬기는 체감되지 않아 뺐다(늘 0)
 let playerVisible=true, sfxType=SFX_DEFAULT, zoomLevel=1,panX=0,panY=0;
 let qualityMode='auto',qualityScale=1,meshSegments=[32,48],frames=0,fpsLast=performance.now(),fps=60,slowSeconds=0,fastSeconds=0,visibleRAF=true;
@@ -109,12 +109,13 @@ $('playerVisibleInput').onchange=()=>{playerVisible=$('playerVisibleInput').chec
 $('sfxTypeInput').onchange=e=>{sfxType=e.target.value;scheduleSave()};
 $('viewerSfxVolume').oninput=e=>{ $('sfxVolume').value=e.target.value;$('sfxVolumeValue').textContent=e.target.value+'%';scheduleSave()};
 $('sfxVolume').addEventListener('input',e=>{$('viewerSfxVolume').value=e.target.value});
-function playSfx(power=1){
+function playSfx(power=1,z=null){
   if(effectMuted||sfxType==='off')return;
   const vol=Number($('sfxVolume').value)/100;if(!vol)return;
+  const kind=z?.sfx&&Object.hasOwn(builtinSfx64,z.sfx)?z.sfx:sfxType;// F-1: 영역에 고른 효과음이 있으면 그것
   try{ensureAudio();if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});
-    if(sfxType==='file'){playFileSfx(power);return}
-    playBuiltinSfx(sfxType,power);
+    if(kind==='file'){playFileSfx(power);return}
+    playBuiltinSfx(kind,power);
   }catch(e){console.warn('효과음 오류',e)}
 }
 function extraState(){return {blink:{eyes:blinkEyesForSave(),speed:blinkSpeed,interval:blinkInterval},faces:facesForSave(),base:{clip:baseClipEnabled,exclude:baseBackgroundExclude,edge:baseEdge},projectName:projectName||'내 프로젝트',maskColor:$('maskColorInput').value,maskOpacity:Number($('maskOpacityInput').value),track:$('trackSelect').value,musicVolume:Number($('musicVolume').value),sfxVolume:Number($('sfxVolume').value),sfxType,playerVisible,ambient:{...ambient},qualityMode}}
@@ -134,7 +135,7 @@ function restoreExtra(d){
   sfxType=d?.sfxType==='off'||Object.hasOwn(builtinSfx64,d?.sfxType??'')||(d?.sfxType==='file'&&sfxBlob)?d.sfxType:SFX_DEFAULT;$('sfxTypeInput').value=$('viewerEffects').value=sfxType;
   playerVisible=d?.playerVisible!==false;$('playerVisibleInput').checked=playerVisible;
   for(const k of ['enabled','breath','sway'])ambient[k]=d?.ambient?.[k]??AMBIENT_DEFAULT[k];ambient.light=0;
-  ambient.face=faceRefOk(d?.ambient?.face)?d.ambient.face:'';ambient.faceAmt=clamp(Number(d?.ambient?.faceAmt??50)||0,0,100);paintFaceOptions();
+  ambient.face=faceRefOk(d?.ambient?.face)?d.ambient.face:'';ambient.faceAmt=clamp(Number(d?.ambient?.faceAmt??50)||0,0,100);ambient.idleFace=faceRefOk(d?.ambient?.idleFace)?d.ambient.idleFace:'';ambient.idleEvery=['rare','mid','often'].includes(d?.ambient?.idleEvery)?d.ambient.idleEvery:'mid';paintFaceOptions();
   $('ambientOn').checked=ambient.enabled;refreshBaseUI();
   for(const [k,id] of [['breath','ambientBreath'],['sway','ambientSway'],['light','ambientLight']])$(id).value=ambient[k];
   updateAmbientLabels();applyPlayerVisibility();setTrack(d?.track||'dream');
@@ -284,3 +285,14 @@ document.addEventListener('click',e=>{
  input.dispatchEvent(new Event('change',{bubbles:true}));
 },true);
 $('faceAddBtn').onclick=()=>{const f=$('faceOnInput');if(!f.checked)f.click()};
+// F-2: 터치 반응이 일어날 때 폰 진동(세게 칠수록 조금 길게, 최대 20ms). 진동이 없는 기기(아이폰 등)는 스위치를 감추고 아무 일도 없다.
+// 브라우저에 기억(앱 설정). 녹화 중에는 진동하지 않는다.
+const canVibrate=typeof navigator.vibrate==='function';
+$('vibrateRow').hidden=!canVibrate;
+try{$('vibrateInput').checked=localStorage.getItem('motionpad-vibrate')!=='off'}catch(_){}
+$('vibrateInput').onchange=e=>{try{localStorage.setItem('motionpad-vibrate',e.target.checked?'on':'off')}catch(_){}};
+function haptic(power=1){
+ if(!canVibrate||!$('vibrateInput').checked||effectMuted)return;
+ if(liveRecording||videoRecorder&&videoRecorder.state!=='inactive')return;
+ try{navigator.vibrate(Math.round(clamp(6+power*8,8,20)))}catch(_){}
+}

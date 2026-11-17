@@ -141,7 +141,7 @@ async function recordVideo(opts={}){
  const chunks=[];let recorder;
  try{recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:plan.bitrate,...(sound?{audioBitsPerSecond:160_000}:{})});}
  catch(e){track.stop();sound?.stop();endExportRender();$('exportVideoBtn').disabled=false;liveDone('');showNotice('영상 내보내기','영상 녹화를 시작하지 못했습니다.'+why(e));return}
- blinkEpoch=elapsed;
+ blinkEpoch=elapsed;if(!opts.live)idleFaceRecord(duration);
  videoRecorder=recorder;videoCancelled=false;videoErrorMessage='';
  $('cancelVideoBtn').hidden=false;
  $('videoProgress').textContent=`녹화 준비 중 · ${W}×${H} · ${duration}초 / ${fps} FPS`;

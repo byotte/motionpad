@@ -82,6 +82,7 @@ async function choosePart(part){
  remember();
  applyMotionPreset(z,part.preset);
  z.level='m';
+ z.sfx=part.sfx;// F-1 '기타'는 전체 설정을 따름
  autoStash.delete(z.id);
  if(part.name&&/^영역 \d+$/.test(z.name))z.name=uniquePartName(part.name,z.id);
  markMask();updateUI();scheduleSave();

@@ -1,3 +1,5 @@
+// F-1: 터치 파일에 넣을 내장 효과음 = 전체 설정 하나 + 영역마다 고른 것(빼먹으면 받은 쪽에서 소리가 빠진다)
+function touchSfxIds(){return [...new Set([sfxType,...zones.map(z=>z.sfx)])].filter(id=>id&&Object.hasOwn(builtinSfx64,id))}
 /* 터치 파일 내보내기: 받은 사람이 열어서 바로 만져 보는 html 파일 하나. 서버 없이 파일만 주고받는다.
    TOUCH_SHELL은 효과음·음악을 뺀 이 앱의 사본(gzip+base64)으로, 빌드가 채운다(tools/build.js).
    여기에 그림(편집용 크기, WebP)·영역·설정, 고른 효과음 하나, 고르면 배경음악 한 곡을 넣어 저장한다.
@@ -18,7 +20,7 @@ async function touchMusicBlob(){
 }
 async function touchPlan(){
  const img=await touchImageBlob(),music=await touchMusicBlob().catch(()=>null);
- const sfx=sfxType==='file'?b64Size(sfxBlob?.size||0):(builtinSfx64[sfxType]?.length||0);
+ const sfx=(sfxType==='file'?b64Size(sfxBlob?.size||0):0)+touchSfxIds().reduce((n,id)=>n+(builtinSfx64[id]?.length||0),0);
  const base=TOUCH_SHELL_BYTES+b64Size(img?.size||0)+sfx+JSON.stringify(zones.map(clean)).length+JSON.stringify(extraState()).length+2048;
  return {img,music,base,musicBytes:music?b64Size(music.size):0};
 }
@@ -59,7 +61,8 @@ $('touchExportBtn').onclick=async()=>{
    audioName:withMusic?touchMusicName():'',sfxName,
    image:await toDataURL(p.img),audio:withMusic?await toDataURL(p.music):null,
    sfx:sfxType==='file'&&sfxBlob?await toDataURL(sfxBlob):null};
-  const data={project,music:withMusic,sfxId:sfxType,sfx64:builtinSfx64[sfxType]||null};
+  const sfxs=Object.fromEntries(touchSfxIds().map(id=>[id,builtinSfx64[id]]));
+  const data={project,music:withMusic,sfxId:sfxType,sfx64:builtinSfx64[sfxType]||null,sfxs};
   const json=JSON.stringify(data).replace(/</g,'\\u003c');
   const at=shell.indexOf('<body>\n');if(at<0)throw Error('터치 파일 틀이 올바르지 않습니다');
   const inject=`<script>document.documentElement.classList.add('touchFile')<\/script><script type="application/json" id="mpTouch">${json}<\/script>\n`;

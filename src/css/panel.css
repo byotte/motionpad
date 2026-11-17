@@ -153,3 +153,5 @@
 .cardLine{display:flex;align-items:center;justify-content:space-between;color:var(--item);font-size:var(--fs-item);cursor:pointer}
 .cardLine .headSwitch{margin-left:auto}
 .cardFace{padding:var(--sp1) 0;min-height:0;flex:none}
+.field.dim{opacity:.45}
+.faceOffNote{margin:var(--sp1) 0 0;color:var(--warning)}

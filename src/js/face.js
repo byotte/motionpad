@@ -182,12 +182,18 @@ function faceOptionList(withNone){
 function paintFaceOptions(){
  const show=faceOn&&faces.length>0;
  for(const el of document.querySelectorAll('.faceOnly'))el.hidden=!show;
- for(const [id,none] of [['ambientFaceInput',true],['autoFaceInput',true],['tapFaceInput',false],['comboFaceInput',false]]){
+ for(const [id,none] of [['idleFaceInput',true],['ambientFaceInput',true],['autoFaceInput',true],['tapFaceInput',false],['comboFaceInput',false]]){
   const sel=$(id),keep=sel.value;
   sel.replaceChildren(...faceOptionList(none).map(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;return o}));
   sel.value=keep;
  }
  $('ambientFaceInput').value=faceRefParse(ambient.face)?ambient.face:'';
+ $('idleFaceInput').value=faceRefParse(ambient.idleFace)?ambient.idleFace:'';
+ for(const r of document.querySelectorAll('input[name="idleEvery"]'))r.checked=r.value===ambient.idleEvery;
+ $('idleEveryRow').hidden=!ambient.idleFace;
+ // E10을 화면에 적는다: 평소·가끔 표정은 '움직임 켜기'를 따른다
+ $('faceOffNote').hidden=ambient.enabled;
+ for(const id of ['ambientFaceInput','idleFaceInput'])$(id).closest('.field').classList.toggle('dim',!ambient.enabled);
  $('ambientFaceAmt').value=ambient.faceAmt;$('ambientFaceAmtValue').textContent=ambient.faceAmt+'%';
  $('ambientFaceAmtRow').hidden=!$('ambientFaceInput').value;
  const z=getSelected();if(z)paintFaceRows(z);
@@ -223,3 +229,6 @@ function faceSupportNotice(){
 }
 $('faceOnInput').addEventListener('change',()=>{if(faceOn)faceSupportNotice()});
 $('hitMarkInput').addEventListener('change',()=>{if($('hitMarkInput').value==='red')faceSupportNotice()});
+$('idleFaceInput').onchange=()=>{remember();ambient.idleFace=$('idleFaceInput').value;idleFace.next=0;paintFaceOptions();scheduleSave()};
+for(const r of document.querySelectorAll('input[name="idleEvery"]'))r.onchange=()=>{remember();ambient.idleEvery=r.value;idleFace.next=0;scheduleSave()};
+$('ambientOn').addEventListener('change',()=>paintFaceOptions());

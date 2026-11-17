@@ -2,13 +2,15 @@
 /* 효과음: 사용자가 만든 녹음 17개. 목록은 묶음(마찰음·효과음) 순, 묶음 안은 가나다순. 고르는 칸에서는 묶음 이름을 흐린 제목(optgroup)으로 보인다. */
 const SFX_LIST=[{id:'ball',group:'마찰음',name:'공'},{id:'metal',group:'마찰음',name:'금속'},{id:'blunt-hit',group:'마찰음',name:'둔탁한 타격'},{id:'wood',group:'마찰음',name:'목재'},{id:'heavy-thud',group:'마찰음',name:'묵직한 울림'},{id:'water',group:'마찰음',name:'물'},{id:'water-surface',group:'마찰음',name:'물 표면'},{id:'iron-bowl',group:'마찰음',name:'쇠 그릇'},{id:'cloth-flap',group:'마찰음',name:'옷 펄럭임'},{id:'glass',group:'마찰음',name:'유리잔'},{id:'skin-hard',group:'마찰음',name:'피부 강하게'},{id:'skin-rub',group:'마찰음',name:'피부 문지름'},{id:'skin-soft',group:'마찰음',name:'피부 약하게'},{id:'machine',group:'효과음',name:'기계음'},{id:'ttoing',group:'효과음',name:'뚀잉'},{id:'boing',group:'효과음',name:'띠요옹'},{id:'bubble',group:'효과음',name:'버블'}];
 const builtinSfx64={'ball':'@@base64(sfx/ball.wav)','metal':'@@base64(sfx/metal.wav)','blunt-hit':'@@base64(sfx/blunt-hit.wav)','wood':'@@base64(sfx/wood.wav)','heavy-thud':'@@base64(sfx/heavy-thud.wav)','water':'@@base64(sfx/water.wav)','water-surface':'@@base64(sfx/water-surface.wav)','iron-bowl':'@@base64(sfx/iron-bowl.wav)','cloth-flap':'@@base64(sfx/cloth-flap.wav)','glass':'@@base64(sfx/glass.wav)','skin-hard':'@@base64(sfx/skin-hard.wav)','skin-rub':'@@base64(sfx/skin-rub.wav)','skin-soft':'@@base64(sfx/skin-soft.wav)','machine':'@@base64(sfx/machine.wav)','ttoing':'@@base64(sfx/ttoing.wav)','boing':'@@base64(sfx/boing.wav)','bubble':'@@base64(sfx/bubble.wav)'};
-// 터치 파일에는 만든 사람이 고른 효과음 하나만 들어 있다.
-if(touchData){for(const k of Object.keys(builtinSfx64))delete builtinSfx64[k];if(touchData.sfx64)builtinSfx64[touchData.sfxId]=touchData.sfx64}
+// 터치 파일에는 만든 사람이 고른 효과음(전체 설정)과 영역마다 고른 효과음만 들어 있다.
+if(touchData){for(const k of Object.keys(builtinSfx64))delete builtinSfx64[k];if(touchData.sfx64)builtinSfx64[touchData.sfxId]=touchData.sfx64;Object.assign(builtinSfx64,touchData.sfxs||{})}// F-1: 영역마다 고른 효과음도 함께 들어 있다
 const SFX_DEFAULT=SFX_LIST[0].id;
 function paintSfxOptions(){for(const id of ['sfxTypeInput','viewerEffects']){const s=$(id),file=s.querySelector('option[value="file"]');s.querySelectorAll('optgroup').forEach(g=>g.remove());const groups=new Map();
  for(const t of SFX_LIST){if(!groups.has(t.group)){const g=document.createElement('optgroup');g.label=t.group;groups.set(t.group,g);s.insertBefore(g,file)}const o=document.createElement('option');o.value=t.id;o.textContent=t.name;groups.get(t.group).appendChild(o)}
  s.value=SFX_DEFAULT}}
 paintSfxOptions();
+// F-1: 영역 효과음 고르는 칸(첫 칸 '전체 설정을 따름' + 내장 효과음)
+{const s=$('zoneSfxInput'),groups=new Map();for(const t of SFX_LIST){if(!groups.has(t.group)){const g=document.createElement('optgroup');g.label=t.group;groups.set(t.group,g);s.append(g)}const o=document.createElement('option');o.value=t.id;o.textContent=t.name;groups.get(t.group).append(o)}}
 const builtinSfxBuffers=new Map();
 function decodeBuiltinSfx(){
  if(!audioCtx)return;

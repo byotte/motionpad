@@ -76,7 +76,7 @@
  <div class="field"><div class="fieldhead"><label for="ambientBreath">부드러운 호흡</label><output id="ambientBreathVal">35%</output></div><input id="ambientBreath" type="range" min="0" max="100" value="35"></div>
  <div class="field"><div class="fieldhead"><label for="ambientSway">미세 흔들림</label><output id="ambientSwayVal">30%</output></div><input id="ambientSway" type="range" min="0" max="100" value="30"></div>
  <div class="faceOnly" hidden><div class="field"><div class="fieldhead"><label for="ambientFaceInput">평소 표정</label></div><div class="faceSelRow"><select id="ambientFaceInput"></select><button type="button" class="btn faceTune" data-for="ambientFaceInput">세부 설정</button></div></div>
- <div class="field" id="ambientFaceAmtRow"><div class="fieldhead"><label for="ambientFaceAmt">표정 세기</label><output id="ambientFaceAmtValue">50%</output></div><input id="ambientFaceAmt" type="range" min="0" max="100" value="50"></div></div>
+ <div class="field" id="ambientFaceAmtRow"><div class="fieldhead"><label for="ambientFaceAmt">표정 세기</label><output id="ambientFaceAmtValue">50%</output></div><input id="ambientFaceAmt" type="range" min="0" max="100" value="50"></div><div class="field" id="idleFaceRow"><div class="fieldhead"><label for="idleFaceInput">가끔 짓는 표정</label><i class="helpMark" hidden data-help-short="아무도 만지지 않으면 몇 초에 한 번 짓고 풀립니다."></i></div><select id="idleFaceInput"></select></div><div class="field" id="idleEveryRow"><div class="fieldhead"><span>얼마나 자주</span></div><div class="selOp" id="idleEvery" role="radiogroup" aria-label="가끔 짓는 표정 빈도"><label><input type="radio" name="idleEvery" value="rare">가끔</label><label><input type="radio" name="idleEvery" value="mid" checked>보통</label><label><input type="radio" name="idleEvery" value="often">자주</label></div></div><p class="mini faceOffNote" id="faceOffNote" hidden>움직임 켜기가 꺼져 있어 평소 표정·가끔 짓는 표정도 쉬고 있습니다.</p></div>
  <div class="field" hidden><div class="fieldhead"><label for="ambientLight">조명 숨쉬기</label><output id="ambientLightVal">25%</output></div><input id="ambientLight" type="range" min="0" max="100" value="0"></div>
  </div>
 </details>
@@ -114,6 +114,7 @@
 </details>
 </details>
 <details id="advanced"><summary>4-2. 터치 움직임</summary>
+<div class="field"><div class="fieldhead"><label for="zoneSfxInput">효과음</label><i class="helpMark" hidden data-help-short="이 영역을 칠 때 나는 소리. 비우면 소리 창 설정을 따릅니다."></i></div><select id="zoneSfxInput"><option value="">전체 설정을 따름</option></select></div>
 <div class="field"><div class="fieldhead"><label for="axisInput">방향</label></div><select id="axisInput"><option value="follow">끄는 쪽으로</option><option value="y">고정: 위아래</option><option value="x">고정: 좌우</option><option value="diag">고정: ↘↖ 대각선</option><option value="diagBack">고정: ↙↗ 대각선</option><option value="pulse">고정: 확대·축소</option></select></div>
 <div class="field"><div class="fieldhead"><label for="strengthInput">반응 세기</label><output id="strengthValue">26</output></div><input id="strengthInput" type="range" min="0" max="80" step="1"></div>
 <div class="field"><div class="fieldhead"><label for="springInput">반발 속도</label><output id="springValue">14</output></div><input id="springInput" type="range" min="3" max="30" step="1"></div>

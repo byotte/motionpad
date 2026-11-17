@@ -115,7 +115,7 @@ function impact(z,intensity=1,p=null,dir=null,quiet=false){// quiet: 소리·표
  z.hitX=p?.x??z.x;z.hitY=p?.y??z.y;z.hitAt=elapsed;z.hitPower=f*gain;
  if(quiet)return;
  faceHit(z,f*gain);markHit(z,p||{x:z.x,y:z.y},f*gain);
- if(f>0)playSfx(f);
+ if(f>0){playSfx(f,z);haptic(f)}
 }
 function impulse(z,amount=1,p=null,dir=null){impact(z,amount,p,dir)}
 

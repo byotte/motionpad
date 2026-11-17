@@ -42,6 +42,30 @@ const results = [];
 const report = (id, ok, info) => { results.push({ id, ok }); console.log((ok ? '통과' : '실패'), id, info || ''); };
 const tests = {
 
+  // F-1: 영역 효과음이 저장·표시되고 터치 파일에 쓰인 효과음이 모두 들어간다. F-3: 가끔 짓는 표정이 저절로 지어졌다 풀린다
+  async f(browser) {
+    const page = await newPage(browser), log = [];
+    const P = (x, y) => ({ x: x / 800, y: y / 1000 });
+    const eye = (cx) => ({ points: [P(cx - 30, 400), P(cx + 30, 400), P(cx, 372), P(cx, 428)], protection: [], cover: 24, curve: 0 });
+    await openProject(page, project(dataURL(FIXTURE), [Object.assign({}, ZONE, { sfx: 'boing' })], { blink: { eyes: [eye(345), eye(450)], speed: 100, interval: 30 },
+      faces: { on: true, list: [{ mouth: { l: P(385, 465), r: P(415, 465), c: P(400, 472) }, brows: [[P(315, 358), P(350, 352), P(385, 355)], [P(415, 355), P(450, 352), P(485, 358)]] }] },
+      ambient: { enabled: true, breath: 0, sway: 0, face: '', faceAmt: 50, idleFace: '0:shy', idleEvery: 'often' }, sfxType: 'ball' }), 'f');
+    const ui = await page.evaluate(() => [document.getElementById('zoneSfxInput').value, document.getElementById('idleFaceInput').value, document.querySelector('input[name="idleEvery"]:checked')?.value].join('/'));
+    log.push('표시 ' + ui);
+    const grab = () => page.evaluate(() => new Promise(r => requestAnimationFrame(() => { const v = document.getElementById('view'), c = document.createElement('canvas'); c.width = 200; c.height = 250; const g = c.getContext('2d'); g.drawImage(v, 0, 0, 200, 250); r([...g.getImageData(76, 108, 14, 12).data]); })));
+    const diff = (a, b) => { let d = 0; for (let i = 0; i < a.length; i += 4) d += Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]); return d / (a.length / 4); };
+    const first = await grab(); let peak = 0;
+    for (let i = 0; i < 16; i++) { await page.waitForTimeout(500); peak = Math.max(peak, diff(first, await grab())); }
+    log.push('가끔 표정 볼 색 변화 최대 ' + peak.toFixed(1));
+    await page.evaluate(() => document.getElementById('touchDialog').showModal());
+    const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 120000 }), page.evaluate(() => document.getElementById('touchExportBtn').click())]);
+    const tf = path.join(OUT, 'f-touch.html'); await dl.saveAs(tf);
+    const m = fs.readFileSync(tf, 'utf8').match(/"sfxs":\{([^}]*)\}/);
+    const keys = m ? [...m[1].matchAll(/"([a-z-]+)":/g)].map(x => x[1]).sort().join(',') : '';
+    log.push('터치 파일 효과음 ' + keys);
+    report('f', ui === 'boing/0:shy/often' && peak > 4 && keys === 'ball,boing' && !page.errors.length, log.join(' · ') + (page.errors[0] || ''));
+  },
+
   // D: 세 걸음 띠. 새 그림 → ①, 영역 → ②, 부위 → ③, 만져 보며 영역 누름 → 끝 문구, 다음 새 그림에는 안 보임, 프로젝트 열기에는 안 보임
   async d(browser) {
     const page = await newPage(browser, { width: 390, height: 844, isMobile: true, hasTouch: true }), log = [];
@@ -286,7 +310,9 @@ const tests = {
     const dl = page.waitForEvent('download', { timeout: 600000 }).catch(() => null);
     await page.locator('#exportVideoBtn').click();
     await page.waitForFunction(() => /영상 녹화|실패|못했/.test(document.getElementById('videoProgress').textContent), null, { timeout: 180000 });
+    if (process.env.DBG) console.log('녹화 시작 확인');
     await page.waitForTimeout(3000);
+    if (process.env.DBG) console.log('3초 뒤');
     const px = await page.evaluate(() => new Promise(r => requestAnimationFrame(() => { const c = document.createElement('canvas'); c.width = c.height = 100; const g = c.getContext('2d'); g.drawImage(document.getElementById('view'), 0, 0, 100, 100); r([...g.getImageData(45, 45, 1, 1).data].slice(0, 3)); })));
     await dl;
     report('e1', px[0] > 150 && px[1] < 120 && px[2] < 120, '(45,45) 색 ' + px.join(',') + ' (정상 = 빨강)' + (page.errors.length ? ' 오류 ' + page.errors[0] : ''));

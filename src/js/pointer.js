@@ -221,7 +221,7 @@ function finishPointer(e,cancelled=false){
   if(g.type==='move'){if(pointers.size===0){gesture=null;updateUI();scheduleSave()}return}
   if(g.type==='handle'){if(pointers.size===0){gesture=null;updateUI();scheduleSave()}return}
   if(g.type==='pan'){if(!pointers.size)gesture=null;return}
-  if(cancelled){if(g.type==='play')stopPlay(zones.find(v=>v.id===g.id));if(!pointers.size)gesture=null;setStatus('터치가 중단되어 그리기를 취소했습니다.');return}
+  if(cancelled){if(g.type==='play'){const z=zones.find(v=>v.id===g.id);if(z)z.stroking=false;stopPlay(z)}if(!pointers.size)gesture=null;setStatus('터치가 중단되어 그리기를 취소했습니다.');return}
   if(g.type==='play'){
     if(pointers.size===0){
       const z=zones.find(v=>v.id===g.id);
@@ -234,9 +234,9 @@ function finishPointer(e,cancelled=false){
             const gain=(z.flickGain??100)/100;
             const v=clamp(len/Math.max(.12,age)*.34,.15,1.6)*gain;
             stopPlay(z);impact(z,v,p,{x:dx/len,y:dy/len});
-          }else{stopPlay(z);playSfx(clamp(len/.15,.3,1.2))}// 천천히 끌다 놓을 때: 당긴 거리만큼 소리
+          }else{stopPlay(z);playSfx(clamp(len/.15,.3,1.2),z);haptic(clamp(len/.15,.3,1.2))}// 천천히 끌다 놓을 때: 당긴 거리만큼 소리
         }else if(age<.36){stopPlay(z);impact(z,.65,p)}
-        else{stopPlay(z);playSfx(.5)}// 길게 눌렀다 뗄 때
+        else{stopPlay(z);playSfx(.5,z);haptic(.5)}// 길게 눌렀다 뗄 때
       }gesture=null;
     }return;
   }

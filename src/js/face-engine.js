@@ -196,6 +196,25 @@ function faceReactLevel(z){
 function faceComboWeight(z){if(!z.comboOn||z.faceComboAt==null)return 0;return clamp(1-(elapsed-z.faceComboAt-1.2)/.8,0,1)}
 // 지금 보일 표정(얼굴마다 섞은 값). 겹치는 규칙(설계 §6):
 // 기본 = 몸체 평소 표정 + 움직이는 영역의 표정. 터치 반응이 같은 표정이면 더하고(100%까지), 다른 표정이면 그만큼 기본 표정이 옅어진다.
+// F-3 가끔 짓는 표정: 간격(가끔 12·보통 7·자주 4초, ±30%)마다 0.4초에 올라와 1.2초 머물고 0.6초에 풀린다.
+// 터치 반응 표정이 떠 있는 동안과 그 뒤 2초는 쉰다. 영상(연속 움직임) 녹화는 시작 때 시계를 0으로, 끝 0.5초 안에는 새로 시작하지 않는다.
+const IDLE_EVERY={rare:12,mid:7,often:4};
+const idleFace={next:0,start:-1,lastTouch:-99,noStartAfter:Infinity};
+function idleInterval(){return (IDLE_EVERY[ambient.idleEvery]||7)*(.7+.6*Math.random())}
+function idleFaceRecord(duration){idleFace.start=-1;idleFace.next=elapsed+idleInterval();idleFace.noStartAfter=elapsed+duration-.5;setTimeout(()=>{idleFace.noStartAfter=Infinity},duration*1000+500)}
+function idleFaceAmount(){
+ const t=elapsed;
+ if(t-idleFace.lastTouch<2){idleFace.start=-1;if(idleFace.next<t+2)idleFace.next=t+2+idleInterval()*.5;return 0}
+ if(idleFace.start<0){
+  if(!idleFace.next)idleFace.next=t+idleInterval();
+  if(t<idleFace.next||t>idleFace.noStartAfter)return 0;
+  idleFace.start=t;
+ }
+ const u=t-idleFace.start;
+ if(u>=2.2){idleFace.start=-1;idleFace.next=t+idleInterval();return 0}
+ const ease=x=>x*x*(3-2*x);
+ return u<.4?ease(u/.4):u<1.6?1:1-ease((u-1.6)/.6);
+}
 function faceActive(){
  if(!faceOn||!faces.length)return faceLastActive=[];
  if(faceLive&&faces[faceLive.k]){const e=faces[faceLive.k].exprs[faceLive.id];return faceLastActive=e?[{k:faceLive.k,expr:{...e,earBl:e.ear?e.bl:0},amount:faceLive.amount,mix:new Map([[faceLive.id,1]]),more:0}]:[]}
@@ -212,12 +231,14 @@ function faceActive(){
    else add(z.tapFace,Math.min(1,amt*(1+.15*cw)+(lv>1?.1*(lv-1):0)),'touch');// 더 진하게: +15%(그 이상의 효과는 6단계)
   }
  }
+   idleFace.lastTouch=elapsed;
  const out=[];
  for(const [k,{base,touch}] of per){
   const mix=new Map(base);let lead=0;
   for(const [id,a] of touch){if(base.has(id))mix.set(id,Math.min(1,base.get(id)+a));else{mix.set(id,Math.min(1,(mix.get(id)||0)+a));lead=Math.max(lead,Math.min(1,a))}}
   for(const id of base.keys())if(!touch.has(id))mix.set(id,mix.get(id)*(1-lead));
   const e={L:{},R:{},mm:0,tr:0,bl:0,earBl:0};
+ if(ambient.enabled&&ambient.idleFace)add(ambient.idleFace,idleFaceAmount(),'base');
   for(const key of EXPR_SIDE_KEYS)e.L[key]=e.R[key]=0;
   let baW=0,baS=0;for(const [id,a] of mix){const x=faces[k].exprs[id];if(!x||a<=0)continue;for(const key of EXPR_SIDE_KEYS){e.L[key]+=a*x.L[key];e.R[key]+=a*x.R[key]}e.mm+=a*x.mm;e.tr+=a*x.tr;e.bl+=a*(x.bl||0);baW+=a*(x.bl||0);baS+=a*(x.bl||0)*(x.ba??50);if(x.ear)e.earBl+=a*(x.bl||0)}
   for(const key of EXPR_SIDE_KEYS){e.L[key]=clamp(e.L[key],-100,100);e.R[key]=clamp(e.R[key],-100,100)}
