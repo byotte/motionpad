@@ -1,7 +1,7 @@
 // 얼굴 기능 전후 프레임 계측(2026-11-17): node tools/motion/face_perf.js <html> <old|new> <zone|blink|shy|cry> <pc|phone>
 // 장면: zone = 영역 1개 자동, blink = + 눈 깜빡임 2개, shy = + 평소 표정 부끄러움 100%(휘기·홍조 빗금·땀), cry = + 울먹임 100%(입술 떨림 = 매 프레임 지도 다시 합침·눈물). old는 얼굴 기능 전 배포본(git show 32c14b5:motionpad.html). phone = 390×844 배율 3, CPU 4배 느리게.
 const { chromium } = require('playwright'); const path=require('path'),fs=require('fs');
-const [file,kind,scene,dev]=process.argv.slice(2);
+const [file,kind,scene,dev,opt]=process.argv.slice(2);// opt 'cut' = 영역에 빈자리 채우기(외곽 흔들기)도 켬(E2: 얹는 그림에도 표정)
 const buf=fs.readFileSync('tools/baseline/fixtures/character.png');const W0=buf.readUInt32BE(16),H0=buf.readUInt32BE(20),f=Math.min(1,1900/Math.max(W0,H0)),rw=Math.round(W0*f),rh=Math.round(H0*f);
 const EYES=[[[.395,.40],[.48,.40],[.437,.36],[.437,.44]],[[.52,.40],[.605,.40],[.563,.36],[.563,.44]]];
 (async()=>{
@@ -16,6 +16,7 @@ const EYES=[[[.395,.40],[.48,.40],[.437,.36],[.437,.44]],[[.52,.40],[.605,.40],[
  const ov=await p.locator('#overlay').boundingBox();const at=(x,y)=>[ov.x+x*ov.width,ov.y+y*ov.height];
  await click('#ellipseMode');await p.mouse.move(...at(.36,.25));await p.mouse.down();await p.mouse.move(...at(.64,.55),{steps:4});await p.mouse.up();
  await p.evaluate(()=>{const a=document.getElementById('autoInput');a.checked=true;a.dispatchEvent(new Event('input',{bubbles:true}));a.dispatchEvent(new Event('change',{bubbles:true}))});
+ if(opt==='cut')await p.evaluate(()=>{const c=document.getElementById('tailCutoutInput');if(!c.checked)c.click()});
  if(scene!=='zone'){
   if(kind==='new')await click('#faceOnInput');
   await click('#eyeEntry');await p.waitForTimeout(300);
@@ -41,6 +42,6 @@ const EYES=[[[.395,.40],[.48,.40],[.437,.36],[.437,.44]],[[.52,.40],[.605,.40],[
  const g=(m,k)=>m.find(x=>x.name===k).value;
  const fr=frames.slice(1).sort((a,b)=>a-b),avg=fr.reduce((a,b)=>a+b,0)/fr.length;
  const js=(g(m1,'ScriptDuration')-g(m0,'ScriptDuration'))*1000/fr.length;
- console.log(JSON.stringify({kind,scene,dev,fps:+(1000/avg).toFixed(1),p95:+fr[Math.floor(fr.length*.95)].toFixed(1),jsPerFrame:+js.toFixed(2),errs}));
+ console.log(JSON.stringify({kind,scene,dev,opt,fps:+(1000/avg).toFixed(1),p95:+fr[Math.floor(fr.length*.95)].toFixed(1),jsPerFrame:+js.toFixed(2),errs}));
  await b.close();
 })();

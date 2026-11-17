@@ -256,7 +256,7 @@ function facePrepare(){
  return faceTexCount;
 }
 function faceUpload(){
- if(program!==programFace)return;
+ if(!isFaceProgram())return;
  gl.activeTexture(gl.TEXTURE7);gl.bindTexture(gl.TEXTURE_2D,faceTex);
  gl.uniform1i(uni.faceCount,faceTexCount);
  if(faceTexRects){gl.uniform4fv(uni.faceRect,faceTexRects);gl.uniform4fv(uni.faceStyle,faceTexStyles)}

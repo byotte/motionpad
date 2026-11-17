@@ -19,6 +19,15 @@ function rebuildMesh(){
     gl.enableVertexAttribArray(idx);gl.vertexAttribPointer(idx,2,gl.FLOAT,false,16,ofs*4);
   }
 }
+// E2: 얼굴판 + 얹는 그림(빈자리 채우기)에도 표정을 주는 판. 둘을 함께 쓸 때만 처음 쓰는 순간 만든다(다른 그림은 느려지지 않게).
+let programFaceTail=null,uniFaceTail=null,faceTailFailed=false,glLinkLocate=null;
+function faceTailProgram(){
+ if(programFaceTail||faceTailFailed||!glLinkLocate)return programFaceTail;
+ try{const r=glLinkLocate('#define FACE\n#define FACE_TAIL\n'+FRAG);programFaceTail=r.pr;uniFaceTail=r.u}
+ catch(e){console.warn('얹는 그림 얼굴판 셰이더 실패: 빈자리 채우기 영역에는 표정을 빼고 그린다',e);faceTailFailed=true}
+ return programFaceTail;
+}
+function isFaceProgram(){return !!program&&(program===programFace||program===programFaceTail)}
 function setupGL(){
   try{
     gl=view.getContext('webgl',{alpha:false,antialias:false,preserveDrawingBuffer:true,powerPreference:'default'});
@@ -34,6 +43,7 @@ function setupGL(){
      for(const [n,unit] of [['u_tex',0],['u_mask',1],['u_baseMask',2],['u_background',3],['u_tailOriginal',4],['u_tailMask',5],['u_dist',6],['u_face',7]])gl.uniform1i(L(n),unit);
      return u};
     programBase=link(FRAG);uniBase=locate(programBase);
+    programFaceTail=uniFaceTail=null;faceTailFailed=false;glLinkLocate=src=>{const pr=link(src);return {pr,u:locate(pr)}};
     try{programFace=link('#define FACE\n'+FRAG);uniFace=locate(programFace);faceSupported=true}
     catch(e){console.warn('얼굴판 셰이더 실패: 얼굴 표정·홍조·빨개짐을 끈다',e);programFace=uniFace=null;faceSupported=false}
     program=programBase;uni=uniBase;gl.useProgram(program);
@@ -150,10 +160,12 @@ function render(){
      const ep=z.extraPivots||[];pe.set([ep[0]?.[0]??-1,ep[0]?.[1]??-1,ep[1]?.[0]??-1,ep[1]?.[1]??-1],i*4);
    }
    // 얼굴판은 얼굴 표정·홍조·빨개짐이 보일 때만(평소에는 기본판이 더 빠르다)
-   const faceN=facePrepare(),hits=hitMarkUniform(),want=faceSupported&&(faceN>0||hitMarkCount>0)?programFace:programBase;
-   if(program!==want){program=want;uni=want===programFace?uniFace:uniBase}
+   const faceN=facePrepare(),hits=hitMarkUniform(),faceWant=faceSupported&&(faceN>0||hitMarkCount>0);
+   const tailFace=faceWant&&tailPlate&&tailCutoutZones().length>0?faceTailProgram():null;
+   const want=tailFace||(faceWant?programFace:programBase);
+   if(program!==want){program=want;uni=want===programFaceTail?uniFaceTail:want===programFace?uniFace:uniBase}
    gl.useProgram(program);
-   if(program===programFace){gl.uniform2f(uni.imgSize,renderWidth,renderHeight);gl.uniform4fv(uni.hitMark,hits);gl.uniform1i(uni.hitCount,hitMarkCount)}
+   if(isFaceProgram()){gl.uniform2f(uni.imgSize,renderWidth,renderHeight);gl.uniform4fv(uni.hitMark,hits);gl.uniform1i(uni.hitCount,hitMarkCount)}
    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,imageTex);
    gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,maskTex);
    gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,baseMaskTex);

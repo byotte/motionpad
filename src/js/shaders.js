@@ -102,11 +102,26 @@ float hitRed(vec2 uv){
  return red*(.8+.2*fNoise(px*.75));
 }
 #endif
+#ifdef FACE_TAIL
+int g_tailK=-1;vec2 g_tailFs=vec2(0.0);float g_tailRed=0.0;
+float tailCover(vec2 s,int k){
+ vec4 m=texture2D(u_tailMask,s);float ch=k==0?m.r:k==1?m.g:k==2?m.b:m.a;
+ return ch*step(0.0,s.x)*step(s.x,1.0)*step(0.0,s.y)*step(s.y,1.0);
+}
+#endif
 vec4 tailLayer(vec4 color,vec2 source,int k,float light){
- vec4 foreground=texture2D(u_tailOriginal,source);
  vec4 m=texture2D(u_tailMask,source);
  float ch=k==0?m.r:k==1?m.g:k==2?m.b:m.a;
  float inside=step(0.0,source.x)*step(source.x,1.0)*step(0.0,source.y)*step(source.y,1.0);
+#ifdef FACE_TAIL
+ // E2: 얹는 그림(빈자리 채우기 영역)에도 바탕과 같은 표정 휘기·붉은 기운. 맨 위에서 보이는 층 하나만(main에서 한 번 계산).
+ vec2 fs=source;float red=0.0;
+ if(k==g_tailK){fs=g_tailFs;red=g_tailRed;}
+ vec4 foreground=texture2D(u_tailOriginal,fs);
+ if(red>.001){float lum=dot(foreground.rgb,vec3(.3,.59,.11));foreground.rgb*=mix(vec3(1.0),vec3(1.0,.62,.64),min(red+red*red,2.2)*.6*smoothstep(.15,.55,lum));}
+#else
+ vec4 foreground=texture2D(u_tailOriginal,source);
+#endif
  float alpha=inside*ch*foreground.a;
  float outAlpha=alpha+color.a*(1.0-alpha);
  vec3 rgb=(foreground.rgb*light*alpha+color.rgb*color.a*(1.0-alpha))/max(outAlpha,.00001);
@@ -235,6 +250,19 @@ void main(){
    color=mix(background,color,alpha);
  }else color.rgb*=light;
  // 2-D: 분리 영역을 목록 순서대로 위에 겹친다(뒤 영역이 위)
+#ifdef FACE_TAIL
+ vec2 ts=vec2(0.0);
+ if(u_tailCutout.w>=0.0&&tailCover(v_uv-cs3,3)>0.0){g_tailK=3;ts=v_uv-cs3;}
+ else if(u_tailCutout.z>=0.0&&tailCover(v_uv-cs2,2)>0.0){g_tailK=2;ts=v_uv-cs2;}
+ else if(u_tailCutout.y>=0.0&&tailCover(v_uv-cs1,1)>0.0){g_tailK=1;ts=v_uv-cs1;}
+ else if(u_tailCutout.x>=0.0&&tailCover(v_uv-cs0,0)>0.0){g_tailK=0;ts=v_uv-cs0;}
+ if(g_tailK>=0){
+  g_tailFs=ts;
+  if(u_faceCount>0)g_tailFs=clamp(ts-faceShift(ts),vec2(.001),vec2(.999));
+  if(u_hitCount>0)g_tailRed+=hitRed(g_tailFs);
+  if(u_faceCount>0)g_tailRed+=faceRed(g_tailFs);
+ }
+#endif
  if(u_tailCutout.x>=0.0)color=tailLayer(color,v_uv-cs0,0,light);
  if(u_tailCutout.y>=0.0)color=tailLayer(color,v_uv-cs1,1,light);
  if(u_tailCutout.z>=0.0)color=tailLayer(color,v_uv-cs2,2,light);

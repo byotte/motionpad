@@ -10,6 +10,8 @@ const argv = process.argv.slice(2), TARGET = path.resolve(argv.find(a => a.endsW
 const ONLY = argv.filter(a => !a.endsWith('.html'));
 const rafs = (p, n) => p.evaluate(n => new Promise(r => { let k = 0; const f = () => ++k >= n ? r() : requestAnimationFrame(f); requestAnimationFrame(f); }), n);
 const dataURL = f => 'data:image/png;base64,' + fs.readFileSync(f).toString('base64');
+const FIXTURE = path.join(__dirname, 'fixtures', 'character.png');
+const ZONE = { name: '영역 1', kind: 'ellipse', x: .5, y: .45, rx: .15, ry: .12, strength: 26 };
 const QUAD = path.join(OUT, 'quad2600.png');
 if (!fs.existsSync(QUAD)) cp.execFileSync('python3', ['-I', '-c', `
 import sys
@@ -27,6 +29,7 @@ function project(image, zones, extra) {
 async function openProject(page, proj, name) {
   const f = path.join(OUT, name + '.motionpad.json'); fs.writeFileSync(f, JSON.stringify(proj));
   await page.setInputFiles('#backupFile', f); await page.waitForSelector('.workspace:not([hidden])'); await rafs(page, 6);
+  await page.evaluate(() => { for (const d of document.querySelectorAll('aside details')) d.open = true; }); await rafs(page, 2);
 }
 async function newPage(browser, vp) {
   const ctx = await browser.newContext({ viewport: vp || { width: 1200, height: 900 }, acceptDownloads: true }), page = await ctx.newPage(), errors = [];
@@ -37,6 +40,76 @@ async function newPage(browser, vp) {
 const results = [];
 const report = (id, ok, info) => { results.push({ id, ok }); console.log((ok ? '통과' : '실패'), id, info || ''); };
 const tests = {
+
+  // E2: 얼굴을 덮는 영역의 '빈자리 채우기'(tailCutout)를 켜도 표정·홍조가 보여야 한다(볼 자리 색이 표정 없음과 달라야 함)
+  async e2(browser) {
+    const P = (x, y) => ({ x: x / 800, y: y / 1000 });
+    const eye = (cx) => ({ points: [P(cx - 30, 400), P(cx + 30, 400), P(cx, 372), P(cx, 428)], protection: [], cover: 24, curve: 0 });
+    const faceExtra = face => ({ blink: { eyes: [eye(345), eye(450)], speed: 100, interval: 10 },
+      faces: { on: true, list: [{ mouth: { l: P(385, 465), r: P(415, 465), c: P(400, 472) }, brows: [[P(315, 358), P(350, 352), P(385, 355)], [P(415, 355), P(450, 352), P(485, 358)]] }] },
+      ambient: { enabled: true, breath: 0, sway: 0, face, faceAmt: 100 } });
+    const grab = page => page.evaluate(() => new Promise(r => requestAnimationFrame(() => { const v = document.getElementById('view'), c = document.createElement('canvas'); c.width = 200; c.height = 250; const g = c.getContext('2d'); g.drawImage(v, 0, 0, 200, 250);
+      r([...g.getImageData(76, 108, 14, 12).data]); })));// 볼(왼쪽 볼터치 자리)
+    const out = {};
+    for (const cut of [false, true]) for (const face of ['0:shy', '']) {
+      const page = await newPage(browser);
+      const zone = Object.assign({}, ZONE, { x: .5, y: .42, rx: .17, ry: .15, tailCutout: cut, strength: 0 });
+      await openProject(page, project(dataURL(FIXTURE), [zone], faceExtra(face)), 'e2'); await rafs(page, 20);
+      out[cut + face] = await grab(page);
+      if (page.errors.length) console.log('  오류', page.errors[0]);
+      await page.context().close();
+    }
+    const diff = (a, b) => { let d = 0; for (let i = 0; i < a.length; i += 4) d += Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]); return d / (a.length / 4); };
+    const plain = diff(out['false0:shy'], out['false']), cut = diff(out['true0:shy'], out['true']);
+    report('e2', plain > 4 && cut > 4, `볼 자리 평균 색 차이: 일반 ${plain.toFixed(1)} · 빈자리 채우기 ${cut.toFixed(1)} (정상 = 둘 다 4 넘음)`);
+  },
+
+  // E3: 입 찍기 중 되돌리기로 얼굴이 사라진 뒤 그림을 세 번 누르면 오류가 나는지
+  async e3(browser) {
+    const page = await newPage(browser);
+    await page.setInputFiles('#imageFile', FIXTURE); await page.waitForSelector('.workspace:not([hidden])'); await rafs(page, 3);
+    await page.evaluate(() => { const f = document.getElementById('faceOnInput'); if (!f.checked) f.click(); }); await rafs(page, 2);
+    await page.evaluate(() => document.getElementById('faceMouthMode').click()); await rafs(page, 2);
+    await page.locator('#undoBtn').click(); await rafs(page, 2);
+    const box = await page.locator('#view').boundingBox();
+    for (const [x, y] of [[.4, .5], [.6, .5], [.5, .55]]) { await page.mouse.click(box.x + box.width * x, box.y + box.height * y); await rafs(page, 2); }
+    report('e3', !page.errors.length, page.errors.length ? '오류 ' + page.errors[0] : '오류 0');
+  },
+  // E4: 세기를 바꾼 뒤 다른 막대에 초점만 줬다 빼면, 되돌리기 한 번에 세기가 돌아와야 한다
+  async e4(browser) {
+    const page = await newPage(browser);
+    await openProject(page, project(dataURL(FIXTURE), [ZONE], {}), 'e4');
+    await page.focus('#strengthInput');
+    await page.evaluate(() => { const e = document.getElementById('strengthInput'); e.value = 40; e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); });
+    await page.focus('#ambientBreath'); await page.evaluate(() => document.getElementById('ambientBreath').blur());
+    await page.locator('#undoBtn').click(); await rafs(page, 2);
+    const v = await page.evaluate(() => document.getElementById('strengthInput').value);
+    report('e4', v === '26', '되돌리기 한 번 뒤 세기 ' + v + ' (정상 = 26)');
+  },
+  // E5: 영역 세기를 바꾼 뒤 표정 창을 열면 창의 되돌리기는 꺼져 있어야 한다
+  async e5(browser) {
+    const page = await newPage(browser);
+    await openProject(page, project(dataURL(FIXTURE), [ZONE], {}), 'e5');
+    await page.focus('#strengthInput');
+    await page.evaluate(() => { const e = document.getElementById('strengthInput'); e.value = 55; e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); });
+    await page.evaluate(() => document.querySelector('#exprList .chip').click()); await rafs(page, 3);
+    const st = await page.evaluate(() => ({ open: document.getElementById('exprDialog').open, dis: document.getElementById('exprUndo').disabled }));
+    await page.evaluate(() => document.getElementById('exprUndo').click()); await rafs(page, 2);
+    const v = await page.evaluate(() => document.getElementById('strengthInput').value);
+    // 창 안에서 바꾼 것은 되돌려져야 한다
+    const inner = await page.evaluate(() => { const r = document.querySelector('#exprDialog .exprSettings input[type=range]'); const before = r.value; r.value = String(Number(r.min) + (Number(r.max) - Number(r.min)) * .8 | 0); r.dispatchEvent(new Event('input', { bubbles: true })); r.dispatchEvent(new Event('change', { bubbles: true }));
+      const on = !document.getElementById('exprUndo').disabled; document.getElementById('exprUndo').click(); return { on, back: r.value === before, before, after: r.value }; });
+    report('e5-창 안', inner.on && inner.back, JSON.stringify(inner));
+    report('e5', st.open && st.dis && v === '55', `창 열림 ${st.open} · 되돌리기 꺼짐 ${st.dis} · 누른 뒤 세기 ${v} (정상 = 55)`);
+  },
+  // E6: 새 그림을 열면 움직임 설정은 기본값, 소리 크기는 그대로
+  async e6(browser) {
+    const page = await newPage(browser);
+    await openProject(page, project(dataURL(FIXTURE), [ZONE], { ambient: { enabled: true, breath: 80, sway: 70, face: '', faceAmt: 50 }, base: { clip: true, exclude: true, edge: 6 }, sfxVolume: 60 }), 'e6');
+    await page.setInputFiles('#imageFile', FIXTURE); await rafs(page, 6);
+    const st = await page.evaluate(() => ({ breath: document.getElementById('ambientBreath').value, sway: document.getElementById('ambientSway').value, clip: document.getElementById('baseClipInput').checked, sfx: document.getElementById('sfxVolume').value }));
+    report('e6', st.breath === '35' && st.sway === '30' && !st.clip && st.sfx === '60', JSON.stringify(st) + ' (정상 = 35·30·false·60)');
+  },
   // E1: 원본 크기 녹화 중 깜빡임이 그림 왼쪽 위에 줄어든 그림을 덮는지
   async e1(browser) {
     const page = await newPage(browser);
