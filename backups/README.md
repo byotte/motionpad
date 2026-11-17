@@ -22,6 +22,7 @@
 | A-7·A-8·결정 5 | `3e737c4` | 영역 없을 때 감추기, 제목줄 켜기 스위치, 손댄 값만 보라색 | 〃 |
 | B | `1dec342` | 도움말 동그라미 → 안내줄 | `docs/progress/B.md` |
 | 결정 2 | `fb139c0` | 4-1 세기 / 4-2 반응 세기 나누기 | `docs/progress/D2-strength.md` |
+| C | `2cfa9e2` | 간단 카드·부위 칩·크기·저절로, level 속성, 귀 프리셋 | `docs/progress/C.md` |
 
 통째로 작업 전으로 돌리려면(배포본만): 위 백업 html을 `motionpad.html`로 복사해 올리면 된다. 소스까지 돌리려면 `git revert`를 위 표 아래에서 위 순서로.
 
