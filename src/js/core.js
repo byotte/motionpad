@@ -3,7 +3,7 @@ const touchData=(()=>{const el=document.getElementById('mpTouch');if(!el)return 
 const $=id=>document.getElementById(id);let view=$('view');const overlay=$('overlay'),ctx=overlay.getContext('2d'),surface=$('surface'),stage=$('stage'),loupe=$('loupe'),loupeCtx=loupe.getContext('2d');
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),newId=()=>Math.random().toString(36).slice(2,10);
 const LIMIT=12,TILE=384,COLS=4,ROWS=3;let zones=[],selected=null,mode='brush',imgBlob=null,bitmap=null,renderWidth=900,renderHeight=1100,ready=false,db=null,saveTimer=null,saveError=false;
-let gl=null,program=null,imageTex=null,maskTex=null,baseMaskTex=null,backgroundTex=null,uni={},draw2d=null,maskAtlas=document.createElement('canvas'),maskReady=false,maskDirty=true;
+let gl=null,program=null,programBase=null,programFace=null,uniBase=null,uniFace=null,faceSupported=true,imageTex=null,maskTex=null,baseMaskTex=null,backgroundTex=null,uni={},draw2d=null,maskAtlas=document.createElement('canvas'),maskReady=false,maskDirty=true;
 maskAtlas.width=TILE*COLS;maskAtlas.height=TILE*ROWS;let masks=[];
 let touchPreview=false,exportRender=null;// exportRender: 영상 녹화 중 그릴 크기(3-D)
 let baseClipEnabled=false,baseBackgroundExclude=true,baseEdge=1,baseMaskCanvas=null,backgroundPlate=null,lastBaseSignature='',lastBaseEdge=-1,baseForegroundSource=null;

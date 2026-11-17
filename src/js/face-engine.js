@@ -110,6 +110,8 @@ function faceBasis(g){
     const F=B[c.key];F[idx]+=w*hat*c.dir.x;F[idx+1]+=w*hat*c.dir.y}
   }}
  }
+ // 성김 형태로 바꿔 둔다(기준 지도마다 0이 아닌 칸만): 입술 떨림처럼 매 프레임 다시 합칠 때 빠르게
+ for(const key in B){const F=B[key],idx=[];for(let i=0;i<F.length;i+=2)if(F[i]||F[i+1])idx.push(i);const I=Uint32Array.from(idx),V=new Float32Array(I.length*2);I.forEach((i,j)=>{V[j*2]=F[i];V[j*2+1]=F[i+1]});B[key]={I,V}}
  g.basis=B;return B;
 }
 // ── 5단계 홍조: 지도의 B = 붉은 정도, A = 빗금이 들어갈 자리. 뺨은 외곽이 살짝 울퉁불퉁한 타원, 넓고 옅은 얼룩을 겹친다. ──
@@ -136,6 +138,8 @@ function faceRedBasis(g){
 }
 // 섞은 표정의 홍조 세기 → 지도 값(B 붉은 정도, A 빗금 자리). 홍조가 없으면 null.
 function faceRedValues(g,expr,amount){
+ const sig=`${Math.round((expr.bl||0)*amount*2)}|${Math.round((expr.earBl||0)*amount*2)}|${g.style}`;if(g.redSig===sig)return g.redVal;g.redSig=sig;return g.redVal=faceRedValuesRaw(g,expr,amount)}
+function faceRedValuesRaw(g,expr,amount){
  const bl=(expr.bl||0)/100*amount,eb=(expr.earBl||0)/100*amount;if(bl<=.001&&eb<=.001)return null;
  const B=faceRedBasis(g);if(!B)return null;
  const n=B.cheek.length,b=new Float32Array(n),h=new Float32Array(n);
@@ -158,8 +162,8 @@ function faceField(k,expr,amount,time){
   v=v*amount;
   if(key==='mm')v+=30*tr*shake;if(key.endsWith('.mc'))v+=15*tr*(key[0]==='L'?shake:shake2);
   if(!v)continue;
-  const a=g.amps[key],coef=clamp(v,-100,100)/100*(v>0?a.pos:a.neg),F=B[key];
-  for(let i=0;i<out.length;i++)if(F[i])out[i]+=coef*F[i];
+  const a=g.amps[key],coef=clamp(v,-100,100)/100*(v>0?a.pos:a.neg),{I,V}=B[key];
+  for(let j=0;j<I.length;j++){const i=I[j];out[i]+=coef*V[j*2];out[i+1]+=coef*V[j*2+1]}
  }
  return out;
 }
@@ -210,8 +214,9 @@ function faceActive(){
  faceLastActive=out;
  return out;
 }
-// render()가 부른다: 지도 텍스처를 (바뀌었을 때만) 올리고 셰이더 값을 넣는다.
-function faceUpload(){
+// render()가 부른다: facePrepare = 지도 텍스처를 (바뀌었을 때만) 올리고 보일 얼굴 수를 돌려준다(얼굴판을 쓸지 정함), faceUpload = 셰이더 값.
+function facePrepare(){
+ if(!faceSupported){faceActive();faceTexCount=0;return 0}// 얼굴판이 없는 기기: 땀·눈물·기호(반응 층)만 그린다
  const list=faceActive().filter(a=>faceGeometry(a.k).rect);
  const animated=list.some(a=>a.expr.tr>0);
  // 섞은 값이 그대로면(가만히 있는 표정) 지도를 다시 만들지 않는다
@@ -234,10 +239,13 @@ function faceUpload(){
   gl.activeTexture(gl.TEXTURE7);gl.bindTexture(gl.TEXTURE_2D,faceTex);
   gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,W,G,0,gl.RGBA,gl.UNSIGNED_BYTE,faceTexBytes);
  }
+ return faceTexCount;
+}
+function faceUpload(){
+ if(program!==programFace)return;
  gl.activeTexture(gl.TEXTURE7);gl.bindTexture(gl.TEXTURE_2D,faceTex);
  gl.uniform1i(uni.faceCount,faceTexCount);
  if(faceTexRects){gl.uniform4fv(uni.faceRect,faceTexRects);gl.uniform4fv(uni.faceStyle,faceTexStyles)}
- return animated;
 }
 // 표정 창 미리보기: 같은 지도로 그림을 CPU에서 휘어 얼굴만 크게 보여 준다.
 function drawExprPreview(){
@@ -283,13 +291,13 @@ let exprView=null;
 
 // ── 5단계 맞은 자리(4-2, 영역마다): 빨개짐 = 누른 자리에 붉은 기운이 번졌다 약 1초에 빠짐(연타하면 진해짐, 셰이더),
 // 갈라짐 = 누른 자리에서 갈라지는 선이 잠시 남았다 사라짐(여러 번 치면 늘어남, 상한 10개). 둘 다 그림과 함께 움직인다.
-let hitSpots=[],hitCracks=[],reactLayerUsed=false;
+let hitMarkCount=0,hitSpots=[],hitCracks=[],reactLayerUsed=false;
 const crackLayer=$('crackLayer'),crackCtx=crackLayer.getContext('2d');
 function hitSpotStrength(s){const age=elapsed-s.at;return s.s*(age<.15?1:Math.exp(-(age-.15)/.45))}
 function hitMarkUniform(){
  const out=new Float32Array(16);hitSpots=hitSpots.filter(s=>hitSpotStrength(s)>.01);
  hitSpots.slice(-4).forEach((s,i)=>out.set([s.x,s.y,s.r,hitSpotStrength(s)],i*4));
- return out;
+ hitMarkCount=Math.min(4,hitSpots.length);return out;
 }
 function markHit(z,p,power){
  if(!z?.hitMark||!p)return;
@@ -312,7 +320,10 @@ function markHit(z,p,power){
 }
 function drawCracks(){
  const dpr=Math.min(window.devicePixelRatio||1,2),W=Math.max(1,Math.round(surface.clientWidth*dpr)),H=Math.max(1,Math.round(surface.clientHeight*dpr));
+ if(!gl)faceActive();// 그래픽 가속이 없을 때: 땀·눈물·기호는 이 층에 그대로 그린다
  const fx=hasFaceFx();reactLayerUsed=fx||hitCracks.length>0;
+ // 쓰지 않을 때는 층을 숨긴다(빈 캔버스도 화면 전체에 겹쳐 그려져 프레임이 느려진다)
+ crackLayer.hidden=!reactLayerUsed;
  if(!reactLayerUsed){if(crackLayer.width>1){crackLayer.width=crackLayer.height=1}return}
  if(crackLayer.width!==W||crackLayer.height!==H){crackLayer.width=W;crackLayer.height=H}
  crackCtx.clearRect(0,0,W,H);

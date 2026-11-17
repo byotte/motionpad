@@ -24,11 +24,19 @@ function setupGL(){
     gl=view.getContext('webgl',{alpha:false,antialias:false,preserveDrawingBuffer:true,powerPreference:'default'});
     if(!gl)throw Error('WebGL을 사용할 수 없습니다.');
     view.addEventListener('webglcontextlost',e=>{e.preventDefault();if(!gl)return;gl=null;program=null;meshVBO=meshIBO=null;const fresh=document.createElement('canvas');fresh.id='view';view.replaceWith(fresh);view=fresh;draw2d=view.getContext('2d');fit();setStatus('그래픽 연결이 끊겨 기본 렌더링으로 전환했습니다.');},{once:true});
-    const vs=compile(gl,gl.VERTEX_SHADER,VERT),fs=compile(gl,gl.FRAGMENT_SHADER,FRAG);
-    program=gl.createProgram();gl.attachShader(program,vs);gl.attachShader(program,fs);gl.linkProgram(program);
-    if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error('Shader link: '+gl.getProgramInfoLog(program));
-    gl.useProgram(program);
-    uni={pull:gl.getUniformLocation(program,'u_pull[0]'),zone:gl.getUniformLocation(program,'u_zone[0]'),motion:gl.getUniformLocation(program,'u_motion[0]'),fx:gl.getUniformLocation(program,'u_fx[0]'),tap:gl.getUniformLocation(program,'u_tap[0]'),pivot:gl.getUniformLocation(program,'u_pivot[0]'),flow:gl.getUniformLocation(program,'u_flow[0]'),spine:gl.getUniformLocation(program,'u_spine[0]'),spinemotion:gl.getUniformLocation(program,'u_spinemotion[0]'),chainMid:gl.getUniformLocation(program,'u_chainMid[0]'),branchLine:gl.getUniformLocation(program,'u_branchLine[0]'),branchMotion:gl.getUniformLocation(program,'u_branchMotion[0]'),pivotExtra:gl.getUniformLocation(program,'u_pivotExtra[0]'),baseExclude:gl.getUniformLocation(program,'u_baseExclude'),tailCutout:gl.getUniformLocation(program,'u_tailCutout'),time:gl.getUniformLocation(program,'u_time'),count:gl.getUniformLocation(program,'u_count'),ambient:gl.getUniformLocation(program,'u_ambient'),bodyCenter:gl.getUniformLocation(program,'u_bodyCenter')};
+    // 셰이더 두 벌: 기본판(얼굴·맞은 자리 없음)과 얼굴판(FACE). 얼굴판은 쓰는 동안만 쓴다. 얼굴판만 실패하면 그 기능만 빠진다(faceSupported=false).
+    const vs=compile(gl,gl.VERTEX_SHADER,VERT);
+    const link=src=>{const fs=compile(gl,gl.FRAGMENT_SHADER,src),pr=gl.createProgram();gl.attachShader(pr,vs);gl.attachShader(pr,fs);gl.bindAttribLocation(pr,0,'a_pos');gl.bindAttribLocation(pr,1,'a_uv');gl.linkProgram(pr);
+     if(!gl.getProgramParameter(pr,gl.LINK_STATUS))throw Error('Shader link: '+gl.getProgramInfoLog(pr));return pr};
+    const locate=pr=>{const L=n=>gl.getUniformLocation(pr,n);gl.useProgram(pr);
+     const u={pull:L('u_pull[0]'),zone:L('u_zone[0]'),motion:L('u_motion[0]'),fx:L('u_fx[0]'),tap:L('u_tap[0]'),pivot:L('u_pivot[0]'),flow:L('u_flow[0]'),spine:L('u_spine[0]'),spinemotion:L('u_spinemotion[0]'),chainMid:L('u_chainMid[0]'),branchLine:L('u_branchLine[0]'),branchMotion:L('u_branchMotion[0]'),pivotExtra:L('u_pivotExtra[0]'),baseExclude:L('u_baseExclude'),tailCutout:L('u_tailCutout'),time:L('u_time'),count:L('u_count'),ambient:L('u_ambient'),bodyCenter:L('u_bodyCenter'),
+      faceRect:L('u_faceRect[0]'),faceStyle:L('u_faceStyle[0]'),hitMark:L('u_hitMark[0]'),imgSize:L('u_imgSize'),hitCount:L('u_hitCount'),faceCount:L('u_faceCount')};
+     for(const [n,unit] of [['u_tex',0],['u_mask',1],['u_baseMask',2],['u_background',3],['u_tailOriginal',4],['u_tailMask',5],['u_dist',6],['u_face',7]])gl.uniform1i(L(n),unit);
+     return u};
+    programBase=link(FRAG);uniBase=locate(programBase);
+    try{programFace=link('#define FACE\n'+FRAG);uniFace=locate(programFace);faceSupported=true}
+    catch(e){console.warn('얼굴판 셰이더 실패: 얼굴 표정·홍조·빨개짐을 끈다',e);programFace=uniFace=null;faceSupported=false}
+    program=programBase;uni=uniBase;gl.useProgram(program);
     rebuildMesh();
     function newTexture(unit){const tex=gl.createTexture();gl.activeTexture(unit);gl.bindTexture(gl.TEXTURE_2D,tex);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return tex}
     imageTex=newTexture(gl.TEXTURE0);maskTex=newTexture(gl.TEXTURE1);baseMaskTex=newTexture(gl.TEXTURE2);backgroundTex=newTexture(gl.TEXTURE3);
@@ -36,14 +44,9 @@ function setupGL(){
     gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,emptyBaseMask);
     tailMaskTex=newTexture(gl.TEXTURE5);
     gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,emptyBaseMask);
-    gl.uniform1i(gl.getUniformLocation(program,'u_tailOriginal'),4);
-    gl.uniform1i(gl.getUniformLocation(program,'u_tailMask'),5);
     distTex=newTexture(gl.TEXTURE6);lastDistLayout='';
     gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,emptyBaseMask);
-    gl.uniform1i(gl.getUniformLocation(program,'u_dist'),6);
     faceTex=newTexture(gl.TEXTURE7);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array([128,128,0,255]));faceChanged(false);
-    gl.uniform1i(gl.getUniformLocation(program,'u_face'),7);uni.faceRect=gl.getUniformLocation(program,'u_faceRect[0]');uni.faceStyle=gl.getUniformLocation(program,'u_faceStyle[0]');uni.hitMark=gl.getUniformLocation(program,'u_hitMark[0]');uni.imgSize=gl.getUniformLocation(program,'u_imgSize');uni.faceCount=gl.getUniformLocation(program,'u_faceCount');
-    gl.uniform1i(gl.getUniformLocation(program,'u_tex'),0);gl.uniform1i(gl.getUniformLocation(program,'u_mask'),1);gl.uniform1i(gl.getUniformLocation(program,'u_baseMask'),2);gl.uniform1i(gl.getUniformLocation(program,'u_background'),3);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
     return true;
   }catch(e){
@@ -145,13 +148,17 @@ function render(){
      bl.set([ba[0],ba[1],bb[0],bb[1]],i*4);bm.set([z.branchTip?.[0]||0,z.branchTip?.[1]||0,z.branch?.length>=2?1:0,0],i*4);
      const ep=z.extraPivots||[];pe.set([ep[0]?.[0]??-1,ep[0]?.[1]??-1,ep[1]?.[0]??-1,ep[1]?.[1]??-1],i*4);
    }
+   // 얼굴판은 얼굴 표정·홍조·빨개짐이 보일 때만(평소에는 기본판이 더 빠르다)
+   const faceN=facePrepare(),hits=hitMarkUniform(),want=faceSupported&&(faceN>0||hitMarkCount>0)?programFace:programBase;
+   if(program!==want){program=want;uni=want===programFace?uniFace:uniBase}
    gl.useProgram(program);
+   if(program===programFace){gl.uniform2f(uni.imgSize,renderWidth,renderHeight);gl.uniform4fv(uni.hitMark,hits);gl.uniform1i(uni.hitCount,hitMarkCount)}
    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,imageTex);
    gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,maskTex);
    gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,baseMaskTex);
    gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,backgroundTex);
    gl.activeTexture(gl.TEXTURE6);gl.bindTexture(gl.TEXTURE_2D,distTex);
-   faceUpload();gl.uniform2f(uni.imgSize,renderWidth,renderHeight);gl.uniform4fv(uni.hitMark,hitMarkUniform());
+   faceUpload();
    for(const [name,data] of [['zone',zp],['motion',mo],['fx',fx],['tap',tp],['pivot',pv],['flow',fl],['spine',sp],['spinemotion',sm],['chainMid',cm],['branchLine',bl],['branchMotion',bm],['pivotExtra',pe],['pull',pu]])if(uni[name])gl.uniform4fv(uni[name],data);
    const tl=tailPlate?tailCutoutZones().map(z=>zones.indexOf(z)):[];
    gl.uniform4f(uni.tailCutout,tl[0]??-1,tl[1]??-1,tl[2]??-1,tl[3]??-1);

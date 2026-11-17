@@ -47,6 +47,7 @@ function restoreFaces(d){
  while(list.length<need)list.push(blankFace());
  faces=list;faceOn=d&&typeof d==='object'?d.on===true&&faces.length>0:faces.length>0;
  faceSel=0;faceOpen=true;faceChanged();paintFaces();
+ if(faceOn||zones.some(z=>z.hitMark==='red'))setTimeout(faceSupportNotice,0);// 얼굴·빨개짐이 든 프로젝트를 열 때
 }
 // 되돌리기(zones.js stateSnapshot)에 얼굴과 눈 자리를 함께 담는다: 얼굴을 지우면 그 눈도 지워지므로.
 function faceHistory(){return {on:faceOn,list:faces,eyes:blinkEyes}}
@@ -264,3 +265,14 @@ function faceRefsAfterRemove(k){
  ambient.face=fix(ambient.face,()=>'');
  for(const z of zones){z.autoFace=fix(z.autoFace,()=>'');z.tapFace=fix(z.tapFace,id=>{z.tapFaceOn=false;return `0:${id}`});z.comboFace=fix(z.comboFace,id=>`0:${id}`)}
 }
+
+// 그래픽 기능이 모자라 얼굴판 셰이더를 못 쓰는 기기(또는 그래픽 가속이 없는 브라우저)에서는 휘기·홍조·빨개짐이 안 보인다.
+// 그 기능을 쓰려는 순간 한 번 알린다(설정은 그대로 저장되니 다른 기기에서는 보인다).
+let faceNoticeShown=false;
+function faceSupportNotice(){
+ if(faceNoticeShown||(gl&&faceSupported)||!ready)return;
+ faceNoticeShown=true;
+ showNotice('이 기기에서는 일부 효과가 보이지 않습니다',`이 ${gl?'기기':'브라우저'}의 그래픽 기능으로는 얼굴 표정(눈·눈썹·입 움직임), 홍조, 맞은 자리의 빨개짐을 그릴 수 없습니다. 눈 깜빡임, 땀방울·눈물·만화 기호, 갈라짐은 그대로 됩니다. 설정한 표정은 프로젝트에 저장되므로 다른 기기에서 열면 보입니다.`);
+}
+$('faceOnInput').addEventListener('change',()=>{if(faceOn)faceSupportNotice()});
+$('hitMarkInput').addEventListener('change',()=>{if($('hitMarkInput').value==='red')faceSupportNotice()});

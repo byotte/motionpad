@@ -26,10 +26,14 @@ uniform sampler2D u_mask;
 uniform sampler2D u_baseMask;
 uniform sampler2D u_background;
 uniform vec4 u_tailCutout;
-uniform sampler2D u_tailOriginal,u_tailMask,u_dist,u_face;
+uniform sampler2D u_tailOriginal,u_tailMask,u_dist;
+// 얼굴·맞은 자리(FACE 판): 쓰는 동안만 이 판으로 그린다. 꺼져 있어도 셰이더에 있는 것만으로 느려지고, 저사양 기기에서는 이 판만 실패할 수 있어서다.
+#ifdef FACE
+uniform sampler2D u_face;
 uniform vec4 u_faceRect[3],u_faceStyle[3],u_hitMark[4];
-uniform int u_faceCount;
+uniform int u_faceCount,u_hitCount;
 uniform vec2 u_imgSize;
+#endif
 uniform float u_baseExclude;
 uniform vec4 u_zone[12],u_motion[12],u_fx[12],u_tap[12],u_pivot[12],u_flow[12],u_spine[12],u_spinemotion[12];
 uniform vec4 u_chainMid[12],u_branchLine[12],u_branchMotion[12],u_pivotExtra[12],u_pull[12];
@@ -47,6 +51,7 @@ float pointToSegment(vec2 uv,vec2 a,vec2 b,out float t){
  vec2 v=b-a;t=clamp(dot(uv-a,v)/max(dot(v,v),0.00001),0.0,1.0);
  return length(uv-(a+t*v));
 }
+#ifdef FACE
 // 얼굴 표정(유동화): 얼굴 지도(얼굴 k = k번째 칸)의 이동량. 128 = 0, 1020분의 1 = 지도 범위의 비율
 vec2 faceShift(vec2 uv){
  vec2 s=vec2(0.0);
@@ -87,12 +92,14 @@ float faceRed(vec2 uv){
 float hitRed(vec2 uv){
  float red=0.0;vec2 px=uv*u_imgSize;
  for(int i=0;i<4;i++){
+  if(i>=u_hitCount)break;
   vec4 h=u_hitMark[i];if(h.w<=0.0)continue;
   vec2 d=px-h.xy*u_imgSize;float dist=length(d)/h.z*(.88+.24*fNoise(d/(h.z*.35)+float(i)*9.0));
   red+=h.w*pow(max(0.0,1.0-dist*dist),1.4);
  }
  return red*(.8+.2*fNoise(px*.75));
 }
+#endif
 vec4 tailLayer(vec4 color,vec2 source,int k,float light){
  vec4 foreground=texture2D(u_tailOriginal,source);
  vec4 m=texture2D(u_tailMask,source);
@@ -201,7 +208,9 @@ void main(){
  float edgePin=smoothstep(0.0,.045,min(min(v_uv.x,1.0-v_uv.x),min(v_uv.y,1.0-v_uv.y)));
  shift*=edgePin;cs0*=edgePin;cs1*=edgePin;cs2*=edgePin;cs3*=edgePin;
  vec2 uv=clamp(v_uv-clamp(shift,vec2(-.08),vec2(.08)),vec2(.001),vec2(.999));
+#ifdef FACE
  if(u_faceCount>0)uv=clamp(uv-faceShift(uv),vec2(.001),vec2(.999));
+#endif
  vec4 color;
  if(flowWeight>.0001){
    float phase=fract(u_time*.19),phase2=fract(phase+.5);
@@ -210,9 +219,12 @@ void main(){
    vec2 b=clamp(uv-flow*phase2,vec2(.001),vec2(.999));
    color=mix(texture2D(u_tex,a),texture2D(u_tex,b),abs(phase*2.0-1.0));
  }else color=texture2D(u_tex,uv);
+#ifdef FACE
  // 피부색에 붉은 기운을 곱하듯 물들인다: 밝은 피부만 붉어지고 선화·음영은 그대로
- float red=hitRed(uv);if(u_faceCount>0)red+=faceRed(uv);
+ // 쓰지 않을 때는 계산하지 않는다(그림 전체 픽셀마다 도는 곳)
+ float red=0.0;if(u_hitCount>0)red+=hitRed(uv);if(u_faceCount>0)red+=faceRed(uv);
  if(red>.001){float lum=dot(color.rgb,vec3(.3,.59,.11));color.rgb*=mix(vec3(1.0),vec3(1.0,.62,.64),min(red,1.25)*.62*smoothstep(.18,.55,lum));}
+#endif
  float light=1.0+u_ambient.w*(.026*sin(u_time*.98)+.009*sin(u_time*.49+1.0));
  if(u_baseExclude>.5){
    float alpha=texture2D(u_baseMask,uv).a;
