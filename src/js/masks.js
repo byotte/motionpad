@@ -187,7 +187,7 @@ let tailPlate=null,tailSource=null,tailMask=null,tailBasePlate=null,tailOriginal
 // 2-D: '외곽까지 흔들기' 영역 최대 4개. 영역 모양은 한 텍스처의 R·G·B·A 채널에 하나씩, 빈자리 배경판은 합친 모양으로 한 장.
 const TAIL_MAX=4;let tailChannels=null,tailSources=new Map(),tailLayers=new Map();
 function tailCutoutZones(){
- return zones.filter(z=>z.tailCutout&&!z.isBase).slice(0,TAIL_MAX);
+ return zones.filter(z=>z.tailCutout&&!z.isBase&&!z.hidden).slice(0,TAIL_MAX);
 }
 function tailCutoutZone(){return tailCutoutZones()[0]||null}
 

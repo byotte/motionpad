@@ -42,6 +42,35 @@ const results = [];
 const report = (id, ok, info) => { results.push({ id, ok }); console.log((ok ? '통과' : '실패'), id, info || ''); };
 const tests = {
 
+  // H-1 움직임 복사·붙여넣기, H-2 숫자 직접 입력·두 번 누르면 기준값, H-3 숨기기·순서
+  async h(browser) {
+    const page = await newPage(browser), log = [];
+    const A = Object.assign({}, ZONE, { id: 'za', name: '볼', x: .4, preset: 'jelly', strength: 30, spring: 17, damping: 55, ripple: 13, feather: 17, spread: 10, breath: 0 });
+    const B = Object.assign({}, ZONE, { id: 'zb', name: '꼬리', x: .7, preset: 'custom', strength: 26 });
+    await openProject(page, project(dataURL(FIXTURE), [A, B], {}), 'h');
+    const menu = async (name, btn) => { await page.locator('#zoneList .zoneItem', { hasText: name }).first().dispatchEvent('contextmenu'); await page.locator('#' + btn).click(); await rafs(page, 2); };
+    const zs = () => page.evaluate(() => window.MotionPadDebug.state().zones.map(z => z.name).join(','));
+    await menu('볼', 'zoneMenuCopy'); await menu('꼬리', 'zoneMenuPaste');
+    const b1 = await page.evaluate(() => [document.getElementById('strengthInput').value, document.getElementById('presetInput').value, document.querySelector('#zoneList .zoneItem.active')?.textContent].join('/'));
+    log.push('붙여넣기 ' + b1);
+    // H-2: 숫자 눌러 입력
+    await page.locator('#strengthValue').click(); await page.waitForTimeout(400);
+    const box = page.locator('.numEdit'); const had = await box.count();
+    await box.fill('50'); await box.press('Enter'); await rafs(page, 2);
+    const v1 = await page.evaluate(() => document.getElementById('strengthInput').value);
+    await page.locator('#strengthValue').dblclick(); await page.waitForTimeout(450); await rafs(page, 2);
+    const v2 = await page.evaluate(() => [document.getElementById('strengthInput').value, document.querySelectorAll('.numEdit').length].join('/'));
+    log.push(`입력 칸 ${had} · 50 → ${v1} · 두 번 → ${v2}`);
+    await page.locator('#undoBtn').click(); await rafs(page, 2);
+    const v3 = await page.evaluate(() => document.getElementById('strengthInput').value); log.push('되돌리기 ' + v3);
+    // H-3
+    await menu('꼬리', 'zoneMenuHide');
+    const hid = await page.evaluate(() => document.querySelector('#zoneList .zoneItem.zoneHidden')?.textContent || '');
+    const before = await zs(); await menu('볼', 'zoneMenuUp'); const after = await zs();
+    log.push(`숨김 '${hid}' · 순서 ${before} → ${after}`);
+    report('h', b1.startsWith('30/jelly/꼬리') && had === 1 && v1 === '50' && v2 === '30/0' && v3 === '50' && hid.includes('꼬리') && before === '볼,꼬리' && after === '꼬리,볼' && !page.errors.length, log.join(' · ') + (page.errors[0] || ''));
+  },
+
   // G-1: 쓰다듬기. 영역 위에서 왔다 갔다 0.6초 넘게 → 판정(작게 흔들림), 판정 전 짧은 끌기는 평소대로, 빠른 튕김과 겹치지 않음
   async g(browser) {
     const page = await newPage(browser), log = [];

@@ -140,6 +140,7 @@ function render(){
    const pu=new Float32Array(LIMIT*4);
    for(let i=0;i<zones.length;i++){
      const z=zones[i],dir=z.flowAngle*Math.PI/180;
+     if(z.hidden)continue;// H-3: 숨긴 영역은 움직임 값 0(없는 것처럼)
      zp.set([z.x,z.y,z.rx,z.ry],i*4);
      mo.set([z.motionX||0,z.motionY||0,z.motionScale||0,z.breathSpeed??1],i*4);
      const env=z.autoEnv??1;
@@ -221,7 +222,7 @@ function render(){
 
  for(let i=0;i<zones.length;i++){
    const z=zones[i];
-   if(z===base||cutouts.includes(z)||!hasLocalMotion(z))continue;
+   if(z===base||z.hidden||cutouts.includes(z)||!hasLocalMotion(z))continue;
    let f=fallbacks[i];if(!f||f.width!==w||f.height!==h){f=document.createElement('canvas');f.width=w;f.height=h;fallbacks[i]=f}
    const g=f.getContext('2d');g.clearRect(0,0,w,h);
    canvasWarpRegion(g,z,w,h,scene);

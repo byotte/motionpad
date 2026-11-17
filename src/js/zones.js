@@ -83,18 +83,18 @@ function zoneTags(z){const t=[],pc=v=>`${Math.round(v)}%`;
  if(z.ripple>0)t.push(['파동',`터치 파동 ${z.ripple}`]);
  if(!z.isBase&&z.strength>0&&z.pull>0)t.push(['당김',`잡아당김 ${pc(z.pull)} · 반응 세기 ${z.strength}`]);
  return t}
-function zoneItem(item){const b=document.createElement('button');b.type='button';b.className='chip zoneItem'+(item.id===selected?' active':'')+(item.isBase?' baseChip':'');b.setAttribute('role','option');b.setAttribute('aria-selected',String(item.id===selected));
+function zoneItem(item){const b=document.createElement('button');b.type='button';b.className='chip zoneItem'+(item.id===selected?' active':'')+(item.isBase?' baseChip':'')+(item.hidden?' zoneHidden':'');b.setAttribute('role','option');b.setAttribute('aria-selected',String(item.id===selected));
  const name=document.createElement('span');name.className='zoneName';name.textContent=item.name;if(item.isBase){const star=document.createElement('span');star.className='baseMark';star.textContent='★ ';star.setAttribute('aria-label','몸체');name.prepend(star)}
  const tags=document.createElement('span');tags.className='zoneTags';const list=zoneTags(item);for(const [label,tip] of list){const s=document.createElement('span');s.className='zoneTag';s.textContent=label;s.title=tip;tags.append(s)}
  b.title=[item.name,...list.map(t=>t[1]),...(item.locked?['잠금']:[])].join('\n');
- b.append(name,tags);if(item.locked){const lock=document.createElementNS('http://www.w3.org/2000/svg','svg');lock.setAttribute('class','ic zoneLock');lock.setAttribute('aria-label','잠금');const u=document.createElementNS('http://www.w3.org/2000/svg','use');u.setAttribute('href','#i-lock');lock.append(u);b.append(lock)}
+ b.append(name,tags);if(!item.isBase){const eye=document.createElement('span');eye.className='zoneEye';eye.setAttribute('role','button');eye.title=item.hidden?'보이기':'숨기기';eye.setAttribute('aria-label',`${item.name} ${eye.title}`);eye.textContent=item.hidden?'◌':'●';eye.onclick=e=>{e.stopPropagation();toggleZoneHidden(item)};eye.onpointerdown=e=>e.stopPropagation();b.append(eye)}if(item.locked){const lock=document.createElementNS('http://www.w3.org/2000/svg','svg');lock.setAttribute('class','ic zoneLock');lock.setAttribute('aria-label','잠금');const u=document.createElementNS('http://www.w3.org/2000/svg','use');u.setAttribute('href','#i-lock');lock.append(u);b.append(lock)}
  b.onclick=()=>{clearSelectionDrafts();selected=item.id;updateUI()};b.oncontextmenu=e=>{e.preventDefault();clearTimeout(pressTimer);selected=item.id;updateUI();showZoneMenu(item)};let pressTimer=null;b.addEventListener('pointerdown',()=>{clearTimeout(pressTimer);pressTimer=setTimeout(()=>{selected=item.id;updateUI();showZoneMenu(item)},620)});for(const ev of ['pointerup','pointercancel','pointerleave'])b.addEventListener(ev,()=>clearTimeout(pressTimer));return b}
 function updateUI(){const z=getSelected(),base=getBase();$('zoneCount').textContent=`${zones.length}개`;$('zoneList').replaceChildren(...zones.map(zoneItem));$('zoneList').hidden=!zones.length;
  refreshBaseUI();$('partsName').textContent=z?z.name:'';
  paintNoZoneGuide();$('noZone').hidden=!!z;$('editFields').hidden=$('zoneDetail').hidden=$('motionFields').hidden=!z;$('noZoneMotion').hidden=!!z;refreshBaseUI();renderCard();if(!z)return;for(const {key,ui} of ZONE_UI){const node=$(ui.input),val=ui.toInput?ui.toInput(z[key]):z[key];if(ui.check)node.checked=val;else node.value=val}updateValues()}
 // 0-2: prompt() 대신 앱 자체 메뉴
 let zoneMenuTarget=null;
-function showZoneMenu(z){if(!z||$('zoneMenuDialog').open)return;zoneMenuTarget=z.id;$('zoneMenuTitle').textContent=`‘${z.name}’ 영역`;$('zoneMenuLock').textContent=z.locked?'잠금 해제':'잠금';$('zoneMenuDialog').showModal()}
+function showZoneMenu(z){if(!z||$('zoneMenuDialog').open)return;zoneMenuTarget=z.id;$('zoneMenuTitle').textContent=`‘${z.name}’ 영역`;$('zoneMenuLock').textContent=z.locked?'잠금 해제':'잠금';$('zoneMenuPaste').disabled=!motionClip();paintZoneMenuOrder(z);$('zoneMenuDialog').showModal()}
 function zoneMenuAction(action){const z=zones.find(a=>a.id===zoneMenuTarget);$('zoneMenuDialog').close();zoneMenuTarget=null;if(!z)return;selected=z.id;if(action==='duplicate')duplicateZone();else if(action==='delete')deleteZone();else if(action==='lock'){remember();z.locked=!z.locked;updateUI();scheduleSave()}}
 $('zoneMenuDuplicate').onclick=()=>zoneMenuAction('duplicate');$('zoneMenuDelete').onclick=()=>zoneMenuAction('delete');$('zoneMenuLock').onclick=()=>zoneMenuAction('lock');
 $('effects').open=false;
@@ -195,3 +195,95 @@ function markOutput(out){
 }
 function refreshChangedMarks(){for(const o of document.querySelectorAll('output'))markOutput(o)}
 document.addEventListener('input',e=>{const o=e.target.closest?.('.field')?.querySelector('output');if(o)markOutput(o)});
+// H-1: 움직임 설정 복사·붙여넣기(영역 메뉴). 모양·위치·이름·몸체 여부·잠금·빈자리 채우기·축 위치·가이드 선을 뺀 움직임 값 전부(부위·크기 단계 포함).
+// 프로젝트를 넘어 붙일 수 있게 브라우저에 둔다. 붙여넣기는 되돌리기 지점 하나.
+const MOTION_COPY_SKIP=new Set(['id','name','kind','x','y','rx','ry','rot','scale','baseX','baseY','strokes','polygon','runs','isBase','locked','tailCutout','pivotX','pivotY','extraPivots','spine','branch']);
+function motionClip(){try{return JSON.parse(localStorage.getItem('motionpad-motion-clip')||'null')}catch(_){return null}}
+$('zoneMenuCopy').onclick=()=>{
+ const z=zones.find(a=>a.id===zoneMenuTarget);$('zoneMenuDialog').close();if(!z)return;
+ const c=Object.fromEntries(Object.entries(clean(z)).filter(([k])=>!MOTION_COPY_SKIP.has(k)));
+ try{localStorage.setItem('motionpad-motion-clip',JSON.stringify(c));setStatus(`‘${z.name}’의 움직임을 복사했습니다. 다른 영역의 메뉴에서 ‘움직임 붙여넣기’.`)}catch(_){setStatus('이 브라우저에서는 복사해 둘 수 없습니다.')}
+};
+$('zoneMenuPaste').onclick=()=>{
+ const z=zones.find(a=>a.id===zoneMenuTarget),c=motionClip();$('zoneMenuDialog').close();if(!z||!c)return;
+ remember();
+ const fixed=sanitize({...clean(z),...c},zones.indexOf(z));
+ for(const k of Object.keys(c))if(!MOTION_COPY_SKIP.has(k))z[k]=fixed[k];
+ selected=z.id;markMask();updateUI();scheduleSave();previewMotion();
+ setStatus(`‘${z.name}’에 움직임을 붙여 넣었습니다.`);
+};
+// H-2: 조절 막대 숫자를 누르면 그 자리에서 입력 칸(Enter·바깥 누르기 = 확정, Esc = 취소, 범위를 넘으면 끝 값으로).
+// 두 번 누르면(더블 클릭·더블 탭) 기준값으로(A-8 valueBaseline). 값은 그 막대의 input 이벤트로 넣어 지금 길(되돌리기·자동 저장)을 그대로 탄다.
+// 숫자는 화면에 보이는 단위로 받는다(예: 바람 세기는 %), 표시 함수로 배율을 재서 막대 값으로 바꾼다.
+function outputRange(out){return out.closest('.field')?.querySelector('input[type=range]')||null}
+function displayScale(input){
+ const f=ZONE_UI.find(f=>f.ui.input===input.id)?.ui.fmt;
+ if(!f)return 1;
+ const k=parseFloat(String(f(10000)).replace(/[^0-9.\-]/g,''))/10000;
+ return Number.isFinite(k)&&k>0?k:1;
+}
+function setRangeValue(input,raw){
+ const min=Number(input.min||0),max=Number(input.max||100),step=Number(input.step)||1;
+ const v=clamp(Math.round(raw/step)*step,min,max);
+ rememberOnChange(input);
+ input.value=String(+v.toFixed(4));
+ input.dispatchEvent(new Event('input',{bubbles:true}));
+ input.dispatchEvent(new Event('change',{bubbles:true}));
+}
+function editOutput(out){
+ const input=outputRange(out);
+ if(!input||input.disabled||out.dataset.editing)return;
+ const k=displayScale(input),shown=parseFloat(out.textContent.replace(/[^0-9.\-]/g,''));
+ const box=document.createElement('input');
+ box.type='text';box.inputMode='decimal';box.className='numEdit';box.setAttribute('aria-label',(out.closest('.field')?.querySelector('label')?.textContent||'값')+' 직접 입력');
+ box.value=Number.isFinite(shown)?String(shown):String(Number(input.value)*k);
+ out.dataset.editing='1';out.hidden=true;out.after(box);box.focus();box.select();
+ let done=false;
+ const finish=ok=>{
+  if(done)return;done=true;
+  const n=parseFloat(box.value.replace(',','.'));
+  box.remove();out.hidden=false;delete out.dataset.editing;
+  if(ok&&Number.isFinite(n))setRangeValue(input,n/k);
+ };
+ box.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();finish(true)}else if(e.key==='Escape'){e.preventDefault();finish(false)}};
+ box.onblur=()=>finish(true);
+}
+{let lastOut=null,lastAt=0,timer=0;
+ document.addEventListener('click',e=>{
+  const out=e.target.closest?.('.field output');
+  if(!out||!outputRange(out))return;
+  const now=performance.now();
+  if(out===lastOut&&now-lastAt<350){// 두 번 누름 → 기준값
+   clearTimeout(timer);lastOut=null;
+   const input=outputRange(out),base=valueBaseline(input);
+   if(base!=null&&base!==''&&!input.disabled){setRangeValue(input,Number(base));setStatus('기준값으로 돌렸습니다.')}
+   return;
+  }
+  lastOut=out;lastAt=now;clearTimeout(timer);
+  timer=setTimeout(()=>editOutput(out),260);
+ });
+}
+// H-3: 숨기기·순서. 순서의 뜻: 뒤가 위(겹친 곳에서 뒤 영역이 터치를 먼저 받고, 빈자리 채우기 영역은 뒤가 위에 그려진다). 몸체는 늘 맨 앞이라 못 옮긴다.
+// 순서를 바꾸면 영역 번호로 넘기던 것(맞은 자리 빨개짐 u_hitMark)이 어긋나므로 떠 있던 자국을 지우고 마스크를 다시 만든다.
+function toggleZoneHidden(z){
+ if(!z||z.isBase)return;
+ remember();z.hidden=!z.hidden;z.motionX=z.motionY=z.motionScale=0;
+ markMask();updateUI();scheduleSave();
+ setStatus(z.hidden?`‘${z.name}’을(를) 숨겼습니다. 움직이지 않고 터치에도 안 잡힙니다.`:`‘${z.name}’을(를) 다시 보이게 했습니다.`);
+}
+function moveZone(z,step){
+ const i=zones.indexOf(z),j=i+step;
+ if(!z||z.isBase||j<0||j>=zones.length||zones[j].isBase)return;
+ remember();
+ [zones[i],zones[j]]=[zones[j],zones[i]];
+ hitSpots=[];hitCracks=[];
+ markMask();updateUI();scheduleSave();
+ setStatus(step>0?`‘${z.name}’을(를) 위로 올렸습니다(뒤가 위).`:`‘${z.name}’을(를) 아래로 내렸습니다.`);
+}
+function paintZoneMenuOrder(z){
+ const i=zones.indexOf(z);
+ $('zoneMenuHide').textContent=z.hidden?'보이기':'숨기기';$('zoneMenuHide').disabled=!!z.isBase;
+ $('zoneMenuUp').disabled=z.isBase||i>=zones.length-1;
+ $('zoneMenuDown').disabled=z.isBase||i<=0||zones[i-1].isBase;
+}
+for(const [id,fn] of [['zoneMenuHide',z=>toggleZoneHidden(z)],['zoneMenuUp',z=>moveZone(z,1)],['zoneMenuDown',z=>moveZone(z,-1)]])$(id).onclick=()=>{const z=zones.find(a=>a.id===zoneMenuTarget);$('zoneMenuDialog').close();if(z)fn(z)};

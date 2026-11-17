@@ -227,7 +227,7 @@ function tick(now){
   if(document.hidden){visibleRAF=false;return}
   visibleRAF=true;
   const dt=Math.min((now-last)/1000,.035);last=now;elapsed+=dt;
-  for(const z of zones)MotionPhysics.step(z,dt,elapsed);
+  for(const z of zones){if(z.hidden){z.motionX=z.motionY=z.motionScale=0;continue}MotionPhysics.step(z,dt,elapsed)}
   if(gesture?.type==='play'&&gesture.id){
     const z=zones.find(v=>v.id===gesture.id);
     if(z&&!gesture.dragged&&(now-gesture.time)>400){

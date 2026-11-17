@@ -3,6 +3,7 @@ function hit(x,y){
  const px=clamp(Math.floor(x*TILE),0,TILE-1),py=clamp(Math.floor(y*TILE),0,TILE-1);
  const alpha=(py*TILE+px)*4+3;
  for(let i=zones.length-1;i>=0;i--){
+  if(zones[i].hidden)continue;
   if(rawMaskPixels[i]?.[alpha]>=128)return zones[i];
  }
  return null;

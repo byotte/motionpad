@@ -222,6 +222,7 @@ function faceActive(){
  const add=(ref,amt,kind)=>{const r=faceRefParse(ref);if(!r||!(amt>.002))return;if(!per.has(r.k))per.set(r.k,{base:new Map(),touch:new Map()});const m=per.get(r.k)[kind];m.set(r.id,(m.get(r.id)||0)+amt)};
  if(ambient.enabled&&ambient.face)add(ambient.face,ambient.faceAmt/100,'base');
  for(const z of zones){
+  if(z.hidden)continue;
   if(z.auto&&z.autoFace){const beat=Math.abs(MotionPhysics.wave(elapsed*1.18*(z.autoSpeed||1),z.phase));add(z.autoFace,z.autoFaceAmt/100*(z.autoEnv??1)*(.82+.18*beat),'base')}
   // G-1: 쓰다듬는 동안 표정이 0.5초에 걸쳐 올라와 머물고, 손을 떼면 1.5초에 풀린다(실행 중 값, 저장 안 함)
   if(z.strokeFace){

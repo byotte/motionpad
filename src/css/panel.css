@@ -155,3 +155,8 @@
 .cardFace{padding:var(--sp1) 0;min-height:0;flex:none}
 .field.dim{opacity:.45}
 .faceOffNote{margin:var(--sp1) 0 0;color:var(--warning)}
+.field output{cursor:text}
+.numEdit{width:5.5em;min-height:0;padding:0 var(--sp1);text-align:right;font-size:var(--fs-item);font-variant-numeric:tabular-nums}
+.zoneItem.zoneHidden .zoneName{opacity:.45;text-decoration:line-through}
+.zoneEye{flex:none;margin-left:auto;padding:0 var(--sp1);color:var(--help);font-size:var(--fs-help);cursor:pointer}
+.zoneItem .zoneEye+.zoneLock{margin-left:0}
