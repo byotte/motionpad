@@ -3,7 +3,7 @@
 // 이동량은 표정 값에 비례(기준 지도 × 값의 합)라, 값이 바뀌어도 기준 지도는 다시 만들지 않는다.
 const FACE_G=192;
 let faceLive=null;// 지금 보일 표정 {k,id,amount}. 2단계: 표정 창이 열린 동안만(영역에서 쓰는 것은 4단계)
-let faceTexStyles=null,faceTexSig='',faceGeomCache=[],faceTexDirty=true,faceTexBytes=null,faceTex=null,faceTexCount=0,faceTexRects=null,faceSrc=null;
+let faceLastActive=[],faceTexStyles=null,faceTexSig='',faceGeomCache=[],faceTexDirty=true,faceTexBytes=null,faceTex=null,faceTexCount=0,faceTexRects=null,faceSrc=null;
 function faceChanged(geometry=true){if(geometry)faceGeomCache=[];faceTexDirty=true}
 const fv={
  sub:(a,b)=>({x:a.x-b.x,y:a.y-b.y}),add:(a,b)=>({x:a.x+b.x,y:a.y+b.y}),mul:(a,k)=>({x:a.x*k,y:a.y*k}),
@@ -34,7 +34,7 @@ function faceGeometry(k){
  let hasBrow=false;
  for(const e of eyes){
   const s=e.side,sign=s==='L'?1:-1;// 앞(가운데 쪽) = L 눈은 u 방향, R 눈은 반대
-  const [inner,outer]=fv.dot(e.a,u)*sign>fv.dot(e.b,u)*sign?[e.a,e.b]:[e.b,e.a];
+  const [inner,outer]=fv.dot(e.a,u)*sign>fv.dot(e.b,u)*sign?[e.a,e.b]:[e.b,e.a];e.inner=inner;e.outer=outer;
   // 눈썹: 이 눈에 가장 가까운 선. 앞머리 = 가운데 쪽 끝
   let brow=null,best=Infinity;
   for(const line of brows){const mid=line[Math.floor(line.length/2)],d=fv.len(fv.sub(mid,e.c));if(d<best&&fv.dot(fv.sub(mid,e.c),n)>0){best=d;brow=line}}
@@ -180,9 +180,9 @@ function faceComboWeight(z){if(!z.comboOn||z.faceComboAt==null)return 0;return c
 // 지금 보일 표정(얼굴마다 섞은 값). 겹치는 규칙(설계 §6):
 // 기본 = 몸체 평소 표정 + 움직이는 영역의 표정. 터치 반응이 같은 표정이면 더하고(100%까지), 다른 표정이면 그만큼 기본 표정이 옅어진다.
 function faceActive(){
- if(!faceOn||!faces.length)return [];
- if(faceLive&&faces[faceLive.k]){const e=faces[faceLive.k].exprs[faceLive.id];return e?[{k:faceLive.k,expr:{...e,earBl:e.ear?e.bl:0},amount:faceLive.amount}]:[]}
- const per=new Map();
+ if(!faceOn||!faces.length)return faceLastActive=[];
+ if(faceLive&&faces[faceLive.k]){const e=faces[faceLive.k].exprs[faceLive.id];return faceLastActive=e?[{k:faceLive.k,expr:{...e,earBl:e.ear?e.bl:0},amount:faceLive.amount,mix:new Map([[faceLive.id,1]]),more:0}]:[]}
+ const per=new Map(),more=new Map();
  const add=(ref,amt,kind)=>{const r=faceRefParse(ref);if(!r||!(amt>.002))return;if(!per.has(r.k))per.set(r.k,{base:new Map(),touch:new Map()});const m=per.get(r.k)[kind];m.set(r.id,(m.get(r.id)||0)+amt)};
  if(ambient.enabled&&ambient.face)add(ambient.face,ambient.faceAmt/100,'base');
  for(const z of zones){
@@ -190,6 +190,7 @@ function faceActive(){
   if(z.tapFaceOn&&z.tapFace){
    const lv=faceReactLevel(z);if(!lv)continue;
    const amt=z.tapFaceAmt/100*Math.min(1,lv),cw=faceComboWeight(z);
+   if(cw&&z.comboMode!=='other'){const r=faceRefParse(z.tapFace);if(r)more.set(r.k,Math.max(more.get(r.k)||0,cw))}
    if(cw&&z.comboMode==='other'){add(z.comboFace,amt*cw,'touch');add(z.tapFace,amt*(1-cw),'touch')}
    else add(z.tapFace,Math.min(1,amt*(1+.15*cw)+(lv>1?.1*(lv-1):0)),'touch');// 더 진하게: +15%(그 이상의 효과는 6단계)
   }
@@ -204,8 +205,9 @@ function faceActive(){
   for(const [id,a] of mix){const x=faces[k].exprs[id];if(!x||a<=0)continue;for(const key of EXPR_SIDE_KEYS){e.L[key]+=a*x.L[key];e.R[key]+=a*x.R[key]}e.mm+=a*x.mm;e.tr+=a*x.tr;e.bl+=a*(x.bl||0);if(x.ear)e.earBl+=a*(x.bl||0)}
   for(const key of EXPR_SIDE_KEYS){e.L[key]=clamp(e.L[key],-100,100);e.R[key]=clamp(e.R[key],-100,100)}
   e.mm=clamp(e.mm,-100,100);e.tr=clamp(e.tr,0,100);e.bl=clamp(e.bl,0,100);e.earBl=clamp(e.earBl,0,100);
-  out.push({k,expr:e,amount:1});
+  out.push({k,expr:e,amount:1,mix,more:more.get(k)||0});
  }
+ faceLastActive=out;
  return out;
 }
 // render()가 부른다: 지도 텍스처를 (바뀌었을 때만) 올리고 셰이더 값을 넣는다.
@@ -274,11 +276,14 @@ function drawExprPreview(){
   if(Rv){const red=redAt(sx,sy);if(red>.001){const lum=(.3*out[o]+.59*out[o+1]+.11*out[o+2])/255,m=Math.min(red,1.25)*.62*smoothstep(.18,.55,lum);out[o+1]*=1-.38*m;out[o+2]*=1-.36*m}}
  }
  ctx.putImageData(img,0,0);
+ exprView={vx,vy,vw,vh,cw,ch};
+ if(!exprCompare&&ce)drawFaceFx(ctx,(x,y)=>[(x-vx)/vw*cw,(y-vy)/vh*ch],cw/vw,[{k,expr:ce,amount:1,mix:new Map([[exprId,1]]),more:0}],elapsed,false);
 }
+let exprView=null;
 
 // ── 5단계 맞은 자리(4-2, 영역마다): 빨개짐 = 누른 자리에 붉은 기운이 번졌다 약 1초에 빠짐(연타하면 진해짐, 셰이더),
 // 갈라짐 = 누른 자리에서 갈라지는 선이 잠시 남았다 사라짐(여러 번 치면 늘어남, 상한 10개). 둘 다 그림과 함께 움직인다.
-let hitSpots=[],hitCracks=[];
+let hitSpots=[],hitCracks=[],reactLayerUsed=false;
 const crackLayer=$('crackLayer'),crackCtx=crackLayer.getContext('2d');
 function hitSpotStrength(s){const age=elapsed-s.at;return s.s*(age<.15?1:Math.exp(-(age-.15)/.45))}
 function hitMarkUniform(){
@@ -307,7 +312,8 @@ function markHit(z,p,power){
 }
 function drawCracks(){
  const dpr=Math.min(window.devicePixelRatio||1,2),W=Math.max(1,Math.round(surface.clientWidth*dpr)),H=Math.max(1,Math.round(surface.clientHeight*dpr));
- if(!hitCracks.length){if(crackLayer.width>1){crackLayer.width=crackLayer.height=1}return}
+ const fx=hasFaceFx();reactLayerUsed=fx||hitCracks.length>0;
+ if(!reactLayerUsed){if(crackLayer.width>1){crackLayer.width=crackLayer.height=1}return}
  if(crackLayer.width!==W||crackLayer.height!==H){crackLayer.width=W;crackLayer.height=H}
  crackCtx.clearRect(0,0,W,H);
  hitCracks=hitCracks.filter(c=>elapsed-c.at<2.2);
@@ -318,4 +324,91 @@ function drawCracks(){
   for(const [x0,y0,x1,y1,w] of c.segs){crackCtx.lineWidth=Math.max(1.2,w*k);crackCtx.beginPath();crackCtx.moveTo((x0+dx)*W,(y0+dy)*H);crackCtx.lineTo((x1+dx)*W,(y1+dy)*H);crackCtx.stroke()}
   crackCtx.restore();
  }
+ if(fx)drawFaceFx(crackCtx,(x,y)=>[x*k,y*k],k,faceLastActive,elapsed);
+}
+
+// ── 6단계 땀방울·눈물·만화 기호(설계 §5). 그림을 휘지 않고 위에 그린다(반응 층 #crackLayer = 영상에도 늘 담김).
+// 모양은 코드로 그린 단순한 도형(이모지 아님: 기기마다 모양이 같다). 얼굴 점 기준으로 놓이고 그림 움직임을 따라간다.
+// '더 진하게'(연타) 추가 효과: 울먹임 = 눈물이 볼을 타고 흐름, 부끄러움·놀람 = 땀 하나 더, 화남 = 💢 커짐, 웃음 = 반짝이 하나 더.
+function faceSweatSpot(g,f,i){
+ const p=f.sweatAt?.[i];if(p)return fv.add(g.C,fv.add(fv.mul(g.u,p.a*g.S),fv.mul(g.n,p.b*g.S)));
+ const right=g.eyes.find(e=>e.side==='R')||g.eyes.at(-1),base=right?right.outer:g.C;// 관자놀이·이마 근처(화면 오른쪽)
+ return fv.add(base,fv.add(fv.mul(g.u,g.S*(.28+.1*(i%2))),fv.mul(g.n,g.S*(.45-.32*i))));
+}
+// 이 얼굴에 지금 그릴 효과(표정 섞은 무게로)
+function faceFxPlan(a){
+ const f=faces[a.k];if(!f)return null;const plan={sweat:0,sweatW:0,tear:0,flow:0,anger:0,angerBig:0,heart:0,sparkle:0,sparkleN:2};
+ for(const [id,w] of a.mix){const x=f.exprs[id];if(!x||w<.05)continue;const m=a.more;
+  const sw=x.sw+(m>.3&&(id==='shy'||id==='surprise')&&x.sw?1:0);if(sw&&w>plan.sweatW*.8){plan.sweat=Math.max(plan.sweat,Math.min(3,sw));plan.sweatW=Math.max(plan.sweatW,w)}
+  if(x.tear){plan.tear=Math.max(plan.tear,w);if(id==='cry')plan.flow=Math.max(plan.flow,m*w)}
+  if(x.sa){plan.anger=Math.max(plan.anger,w);if(id==='angry')plan.angerBig=Math.max(plan.angerBig,m)}
+  if(x.sh)plan.heart=Math.max(plan.heart,w);
+  if(x.ss){plan.sparkle=Math.max(plan.sparkle,w);if(id==='smile'&&m>.3)plan.sparkleN=3}
+ }
+ return plan;
+}
+function hasFaceFx(){return faceLastActive.some(a=>{const p=faceFxPlan(a);return p&&(p.sweat||p.tear||p.anger||p.heart||p.sparkle)})}
+// ctx에 그린다. at(px,py) = 그림 화소 → 캔버스 좌표, k = 그림 화소 1개의 캔버스 크기, follow = 그림 움직임 따라가기
+function drawFaceFx(ctx,at,k,list,t,follow=true){
+ const move=p=>{if(!follow)return p;const ux=p.x/renderWidth,uy=p.y/renderHeight,z=hit(ux,uy);if(!z)return p;const [dx,dy]=cpuDeformation(z,ux,uy);return {x:p.x+dx*renderWidth,y:p.y+dy*renderHeight}};
+ for(const a of list){
+  const g=faceGeometry(a.k),plan=faceFxPlan(a);if(!plan||!g.eyes.length)continue;
+  const S=g.S,up=Math.atan2(g.n.y,g.n.x),f=faces[a.k];
+  ctx.save();ctx.lineJoin=ctx.lineCap='round';
+  // 땀방울: 맺힘 → 살짝 부풂 → 짧게 흘러내리며 늘어짐 → 움직이는 도중에 옅어짐
+  for(let i=0;i<plan.sweat;i++){
+   const P=(t/2.4+i*.37)%1;if(P>.86)continue;
+   const grow=Math.min(1,P/.12),swell=P<.12?grow:P<.35?1+.12*(P-.12)/.23:1.12,slide=P<.35?0:(P-.35)/.5,alpha=plan.sweatW*(P<.6?1:1-(P-.6)/.26);
+   const base=move(fv.add(faceSweatSpot(g,f,i),fv.mul(g.n,-slide*S*.22))),c=at(base.x,base.y),r=S*.065*swell*k;
+   faceDrop(ctx,c[0],c[1],r,1+.45*slide,up,alpha);
+  }
+  // 눈물: 아랫꺼풀 곡선 위 바깥쪽 1/3에, 곡선 기울기를 따라 맺힌다. 진할 때는 볼을 타고 흘러내리고 끝에서 옅어진다.
+  if(plan.tear)for(const e of g.eyes){
+   const q=faceQuad(e.inner,e.lo,e.outer,20),i=15,p=q[i],nx=q[i+1],ang=Math.atan2(nx.y-p.y,nx.x-p.x),m=move(p),c=at(m.x,m.y);
+   const rx=e.w*.15*k,ry=e.w*.065*k,shine=.85+.15*Math.sin(t*3+e.c.x);
+   ctx.save();ctx.translate(c[0],c[1]);ctx.rotate(ang);ctx.globalAlpha=plan.tear*shine;
+   ctx.beginPath();ctx.ellipse(0,0,rx,ry,0,0,Math.PI*2);ctx.fillStyle='rgba(170,215,255,.55)';ctx.fill();ctx.lineWidth=Math.max(1,ry*.25);ctx.strokeStyle='rgba(70,130,200,.75)';ctx.stroke();
+   ctx.beginPath();ctx.ellipse(-rx*.35,-ry*.3,rx*.22,ry*.28,0,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,.9)';ctx.fill();ctx.restore();
+   if(plan.flow>.05){
+    const P=(t/1.8)%1,len=Math.min(1,P/.6)*e.h*1.6,fade=P<.6?1:1-(P-.6)/.4,steps=10;
+    ctx.save();ctx.globalAlpha=plan.flow*fade;ctx.strokeStyle='rgba(150,205,255,.7)';
+    for(let s=0;s<steps;s++){const a0=fv.add(p,fv.add(fv.mul(g.n,-len*s/steps),fv.mul(g.u,Math.sin(s*.9)*e.w*.02))),a1=fv.add(p,fv.add(fv.mul(g.n,-len*(s+1)/steps),fv.mul(g.u,Math.sin((s+1)*.9)*e.w*.02)));
+     const A=at(move(a0).x,move(a0).y),B=at(move(a1).x,move(a1).y);ctx.globalAlpha=plan.flow*fade*(1-s/steps*.8);ctx.lineWidth=Math.max(1,e.w*.07*k*(1-s/steps*.5));ctx.beginPath();ctx.moveTo(...A);ctx.lineTo(...B);ctx.stroke()}
+    ctx.restore();
+   }
+  }
+  // 💢: 머리 위 바깥쪽. 진할 때 커진다.
+  if(plan.anger){
+   const pos=move(fv.add(g.C,fv.add(fv.mul(g.n,S*1.05),fv.mul(g.u,S*.75)))),c=at(pos.x,pos.y),sz=S*.2*k*(1+.5*plan.angerBig)*(1+.08*Math.sin(t*7));
+   ctx.save();ctx.translate(c[0],c[1]);ctx.globalAlpha=plan.anger;ctx.lineWidth=Math.max(1.5,sz*.2);
+   for(let q=0;q<4;q++){ctx.save();ctx.rotate(q*Math.PI/2+.2);ctx.beginPath();ctx.moveTo(sz*.25,-sz*.95);ctx.quadraticCurveTo(sz*.3,-sz*.3,sz*.95,-sz*.25);
+    ctx.strokeStyle='rgba(60,10,10,.6)';ctx.lineWidth=Math.max(2,sz*.32);ctx.stroke();ctx.strokeStyle='#e8383d';ctx.lineWidth=Math.max(1.5,sz*.2);ctx.stroke();ctx.restore()}
+   ctx.restore();
+  }
+  // 하트: 뺨 바깥에서 떠오르며 옅어진다
+  if(plan.heart)for(let i=0;i<2;i++){
+   const P=(t/2.2+i*.5)%1,cheek=g.cheeks.find(c=>c.side==='R')||g.cheeks[0];if(!cheek)break;
+   const pos=move(fv.add(cheek.c,fv.add(fv.mul(g.u,cheek.rx*(1.1+.3*i)),fv.mul(g.n,S*(.1+.55*P))))),c=at(pos.x,pos.y),sz=S*.11*k*(.7+.4*Math.min(1,P*3));
+   ctx.save();ctx.translate(c[0],c[1]);ctx.globalAlpha=plan.heart*(P<.7?1:1-(P-.7)/.3);
+   ctx.beginPath();ctx.moveTo(0,sz*.9);ctx.bezierCurveTo(-sz*1.4,-sz*.1,-sz*.6,-sz*1.1,0,-sz*.35);ctx.bezierCurveTo(sz*.6,-sz*1.1,sz*1.4,-sz*.1,0,sz*.9);
+   ctx.fillStyle='#ff6b9a';ctx.fill();ctx.lineWidth=Math.max(1,sz*.14);ctx.strokeStyle='rgba(120,20,60,.7)';ctx.stroke();ctx.restore();
+  }
+  // 반짝이: 눈 바깥 위에서 반짝인다
+  if(plan.sparkle)for(let i=0;i<plan.sparkleN;i++){
+   const e=g.eyes[i%g.eyes.length],P=(t*1.3+i*.43)%1,tw=Math.sin(P*Math.PI);
+   const pos=move(fv.add(e.outer,fv.add(fv.mul(g.u,(e.side==='L'?-1:1)*S*(.12+.1*i)),fv.mul(g.n,S*(.25+.12*(i%2)))))),c=at(pos.x,pos.y),sz=S*.08*k*(.5+.6*tw);
+   ctx.save();ctx.translate(c[0],c[1]);ctx.globalAlpha=plan.sparkle*tw;ctx.beginPath();
+   for(let q=0;q<8;q++){const rr=q%2?sz*.28:sz,aa=q/8*Math.PI*2-Math.PI/2;ctx.lineTo(Math.cos(aa)*rr,Math.sin(aa)*rr)}ctx.closePath();
+   ctx.fillStyle='#fffbe0';ctx.fill();ctx.lineWidth=Math.max(1,sz*.12);ctx.strokeStyle='rgba(150,110,20,.75)';ctx.stroke();ctx.restore();
+  }
+  ctx.restore();
+ }
+}
+// 물방울(땀): 위가 뾰족하고 아래가 둥근 모양, 작은 반사광
+function faceDrop(ctx,x,y,r,stretch,up,alpha){
+ if(alpha<=0||r<=.3)return;
+ ctx.save();ctx.translate(x,y);ctx.rotate(up+Math.PI/2);ctx.globalAlpha=clamp(alpha,0,1);
+ const h=r*1.7*stretch;ctx.beginPath();ctx.moveTo(0,-h);ctx.bezierCurveTo(r*.55,-h*.45,r,-r*.1,r,r*.15);ctx.arc(0,r*.15,r,0,Math.PI);ctx.bezierCurveTo(-r,-r*.1,-r*.55,-h*.45,0,-h);ctx.closePath();
+ ctx.fillStyle='rgba(175,220,255,.6)';ctx.fill();ctx.lineWidth=Math.max(1,r*.16);ctx.strokeStyle='rgba(60,125,195,.85)';ctx.stroke();
+ ctx.beginPath();ctx.ellipse(-r*.35,-r*.05,r*.18,r*.3,-.3,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,.95)';ctx.fill();ctx.restore();
 }

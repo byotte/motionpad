@@ -8,21 +8,21 @@ const EXPRS=[['smile','웃음'],['shy','부끄러움'],['cry','울먹임'],['ang
 const EXPR_SIDE_KEYS=['bh','bm','bt','uf','um','ub','lf','lm','lb','mc','mn'];
 // 프리셋 출발값(설계 §4 표의 방향만 옮긴 것, 3단계에서 눈으로 맞춘다)
 const EXPR_PRESETS={
- smile:{s:{bh:30,bm:30,bt:20,uf:0,um:5,ub:-25,lf:50,lm:75,lb:40,mc:70,mn:0},mm:-10,tr:0,bl:25},
- shy:{s:{bh:35,bm:15,bt:-5,uf:0,um:-5,ub:-10,lf:30,lm:45,lb:25,mc:35,mn:30},mm:0,tr:0,bl:80},
- cry:{s:{bh:60,bm:20,bt:-40,uf:0,um:-40,ub:-45,lf:10,lm:15,lb:0,mc:-60,mn:10},mm:25,tr:50,bl:10},
- angry:{s:{bh:-90,bm:-40,bt:30,uf:-45,um:-25,ub:0,lf:25,lm:15,lb:0,mc:-50,mn:20},mm:5,tr:0,bl:45},
- surprise:{s:{bh:45,bm:75,bt:40,uf:5,um:15,ub:5,lf:0,lm:-10,lb:0,mc:0,mn:60},mm:0,tr:0,bl:0},
+ smile:{s:{bh:30,bm:30,bt:20,uf:0,um:5,ub:-25,lf:50,lm:75,lb:40,mc:70,mn:0},mm:-10,tr:0,bl:25,sw:0,tear:false,sa:false,sh:false,ss:true},
+ shy:{s:{bh:35,bm:15,bt:-5,uf:0,um:-5,ub:-10,lf:30,lm:45,lb:25,mc:35,mn:30},mm:0,tr:0,bl:80,sw:2,tear:false,sa:false,sh:false,ss:false},
+ cry:{s:{bh:60,bm:20,bt:-40,uf:0,um:-40,ub:-45,lf:10,lm:15,lb:0,mc:-60,mn:10},mm:25,tr:50,bl:10,sw:0,tear:true,sa:false,sh:false,ss:false},
+ angry:{s:{bh:-90,bm:-40,bt:30,uf:-45,um:-25,ub:0,lf:25,lm:15,lb:0,mc:-50,mn:20},mm:5,tr:0,bl:45,sw:0,tear:false,sa:true,sh:false,ss:false},
+ surprise:{s:{bh:45,bm:75,bt:40,uf:5,um:15,ub:5,lf:0,lm:-10,lb:0,mc:0,mn:60},mm:0,tr:0,bl:0,sw:1,tear:false,sa:false,sh:false,ss:false},
 };
-function presetExpr(id){const p=EXPR_PRESETS[id];return {sym:true,L:{...p.s},R:{...p.s},mm:p.mm,tr:p.tr,bl:p.bl,ear:false}}
+function presetExpr(id){const p=EXPR_PRESETS[id];return {sym:true,L:{...p.s},R:{...p.s},mm:p.mm,tr:p.tr,bl:p.bl,ear:false,sw:p.sw,tear:p.tear,sa:p.sa,sh:p.sh,ss:p.ss}}
 function sanitizeExpr(e,id){
  if(!e||typeof e!=='object')return presetExpr(id);
  const v=(x,lo=-100)=>Number.isFinite(x)?clamp(Math.round(x),lo,100):0;
  const side=s=>Object.fromEntries(EXPR_SIDE_KEYS.map(k=>[k,v(s?.[k])]));
- return {sym:e.sym!==false,L:side(e.L),R:side(e.sym!==false?e.L:e.R),mm:v(e.mm),tr:v(e.tr,0),bl:Number.isFinite(e.bl)?v(e.bl,0):EXPR_PRESETS[id].bl,ear:e.ear===true};
+ return {sym:e.sym!==false,L:side(e.L),R:side(e.sym!==false?e.L:e.R),mm:v(e.mm),tr:v(e.tr,0),bl:Number.isFinite(e.bl)?v(e.bl,0):EXPR_PRESETS[id].bl,ear:e.ear===true,sw:Number.isFinite(e.sw)?clamp(Math.round(e.sw),0,3):EXPR_PRESETS[id].sw,...Object.fromEntries(['tear','sa','sh','ss'].map(k=>[k,typeof e[k]==='boolean'?e[k]:EXPR_PRESETS[id][k]]))};
 }
 const BLUSH_STYLES=['auto','grad','fine','manga'];
-function blankFace(){return {mouth:null,brows:[],ears:[],blushStyle:'auto',exprs:Object.fromEntries(EXPRS.map(([id])=>[id,presetExpr(id)]))}}
+function blankFace(){return {mouth:null,brows:[],ears:[],blushStyle:'auto',sweatAt:[],exprs:Object.fromEntries(EXPRS.map(([id])=>[id,presetExpr(id)]))}}
 const faceUnit=p=>Number.isFinite(p?.x)&&Number.isFinite(p?.y)&&p.x>=0&&p.x<=1&&p.y>=0&&p.y<=1;
 function sanitizeFace(f){
  const out=blankFace();if(!f||typeof f!=='object')return out;
@@ -30,6 +30,7 @@ function sanitizeFace(f){
  if(Array.isArray(f.brows))out.brows=f.brows.slice(0,2).map(line=>Array.isArray(line)?line.slice(0,64).filter(faceUnit).map(({x,y})=>({x,y})):[]).filter(line=>line.length>=2);
  if(Array.isArray(f.ears))out.ears=f.ears.slice(0,2).map(line=>Array.isArray(line)?line.slice(0,64).filter(faceUnit).map(({x,y})=>({x,y})):[]).filter(line=>line.length>=2);
  if(BLUSH_STYLES.includes(f.blushStyle))out.blushStyle=f.blushStyle;
+ if(Array.isArray(f.sweatAt))out.sweatAt=f.sweatAt.slice(0,4).map(p=>Number.isFinite(p?.a)&&Number.isFinite(p?.b)?{a:clamp(p.a,-3,3),b:clamp(p.b,-3,3)}:null);
  for(const [id] of EXPRS)out.exprs[id]=sanitizeExpr(f.exprs?.[id],id);
  return out;
 }
@@ -167,7 +168,8 @@ function paintExprDialog(){
  for(const k of ['bh','bm','bt'])$('expr_'+k).disabled=!g.hasBrow;
  for(const k of ['uf','um','ub','lf','lm','lb'])$('expr_'+k).disabled=!g.eyes.length;
  for(const k of ['mc','mn','mm','tr'])$('expr_'+k).disabled=!f.mouth;
- $('expr_bl').disabled=!g.eyes.length;$('exprEar').checked=!!e.ear;$('exprBlushStyle').value=f.blushStyle;
+ $('expr_bl').disabled=!g.eyes.length;
+ $('exprSweat').value=String(e.sw);for(const [id,key] of [['exprTear','tear'],['exprSa','sa'],['exprSh','sh'],['exprSs','ss']]){$(id).checked=!!e[key];$(id).disabled=!g.eyes.length}$('exprSweat').disabled=!g.eyes.length;$('exprEar').checked=!!e.ear;$('exprBlushStyle').value=f.blushStyle;
  $('exprBlushStyle').options[0].textContent=`자동(${{grad:'그라데이션',fine:'그라데이션 + 섬세한 빗금',manga:'만화 빗금'}[g.autoStyle]})`;
  if(e.ear&&!f.ears.length)miss.push('귀');
  $('exprHint').textContent=miss.length?`${miss.join('·')} 자리를 찍지 않아 그 부분은 조절할 수 없습니다. ‘2. 얼굴 · 눈 깜빡임’에서 찍어 주세요.`:'막대를 움직이면 바로 반영됩니다. ‘원래 얼굴’을 누르고 있으면 바꾸기 전 모습을 봅니다.';
@@ -177,7 +179,7 @@ function openExprDialog(id){
  if(!ready||!faces[faceSel])return;
  exprId=id;exprSide='L';exprRemembered=false;exprCompare=false;
  exprDialog.showModal();paintExprDialog();
- cancelAnimationFrame(exprFrame);const loop=()=>{if(!exprDialog.open)return;if(currentExpr()?.tr>0)drawExprPreview();exprFrame=requestAnimationFrame(loop)};exprFrame=requestAnimationFrame(loop);
+ cancelAnimationFrame(exprFrame);const loop=()=>{if(!exprDialog.open)return;const e=currentExpr();if(e&&(e.tr>0||e.sw||e.tear||e.sa||e.sh||e.ss))drawExprPreview();exprFrame=requestAnimationFrame(loop)};exprFrame=requestAnimationFrame(loop);
 }
 function exprEdit(change){
  const e=currentExpr();if(!e)return;
@@ -186,6 +188,24 @@ function exprEdit(change){
  faceChanged(false);scheduleSave();paintExprDialog();
 }
 for(const [k] of EXPR_FIELDS)$('expr_'+k).addEventListener('input',ev=>{const v=Number(ev.target.value);exprEdit(e=>{if(EXPR_TOP.includes(k))e[k]=v;else (e.sym?e.L:e[exprSide])[k]=v})});
+for(const [id,key] of [['exprTear','tear'],['exprSa','sa'],['exprSh','sh'],['exprSs','ss']])$(id).onchange=()=>exprEdit(e=>{e[key]=$(id).checked});
+$('exprSweat').onchange=()=>exprEdit(e=>{e.sw=Number($('exprSweat').value)});
+// 땀방울은 미리보기에서 끌어 옮긴다(얼굴마다 자리 기억)
+{let drag=null;
+ exprPreview.addEventListener('pointerdown',ev=>{
+  const e=currentExpr(),f=faces[faceSel];if(!e?.sw||!exprView||!f)return;
+  const r=exprPreview.getBoundingClientRect(),V=exprView,x=V.vx+(ev.clientX-r.left)/r.width*V.vw,y=V.vy+(ev.clientY-r.top)/r.height*V.vh,g=faceGeometry(faceSel);
+  let best=-1,bd=g.S*.25;for(let i=0;i<Math.min(3,e.sw+1);i++){const p=faceSweatSpot(g,f,i),d=Math.hypot(p.x-x,p.y-y);if(d<bd){bd=d;best=i}}
+  if(best<0)return;drag={i:best,remembered:false};exprPreview.setPointerCapture?.(ev.pointerId);ev.preventDefault();
+ });
+ exprPreview.addEventListener('pointermove',ev=>{
+  if(!drag)return;const f=faces[faceSel],g=faceGeometry(faceSel),r=exprPreview.getBoundingClientRect(),V=exprView;
+  const x=V.vx+(ev.clientX-r.left)/r.width*V.vw,y=V.vy+(ev.clientY-r.top)/r.height*V.vh,d=fv.sub({x,y},g.C);
+  if(!drag.remembered){remember();drag.remembered=true}
+  f.sweatAt[drag.i]={a:clamp(fv.dot(d,g.u)/g.S,-3,3),b:clamp(fv.dot(d,g.n)/g.S,-3,3)};scheduleSave();drawExprPreview();
+ });
+ for(const t of ['pointerup','pointercancel'])exprPreview.addEventListener(t,()=>{drag=null});
+}
 $('exprEar').onchange=()=>{exprEdit(e=>{e.ear=$('exprEar').checked});paintFaces()};
 $('exprBlushStyle').onchange=()=>exprEdit(()=>{faces[faceSel].blushStyle=$('exprBlushStyle').value;faceChanged()});
 $('exprSym').onchange=()=>exprEdit(e=>{e.sym=$('exprSym').checked;if(e.sym)e.L={...e[exprSide]};exprSide='L'});
