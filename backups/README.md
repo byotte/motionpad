@@ -25,6 +25,7 @@
 | C | `2cfa9e2` | 간단 카드·부위 칩·크기·저절로, level 속성, 귀 프리셋 | `docs/progress/C.md` |
 | D | `7f906b2` | 세 걸음 띠 | `docs/progress/D.md` |
 | F | `d4b36e7` | 영역마다 효과음·폰 진동·가끔 짓는 표정 | `docs/progress/F.md` |
+| G | `6780af1` | 쓰다듬기, 반복 영상 이음매 샘플 | `docs/progress/G.md` |
 
 통째로 작업 전으로 돌리려면(배포본만): 위 백업 html을 `motionpad.html`로 복사해 올리면 된다. 소스까지 돌리려면 `git revert`를 위 표 아래에서 위 순서로.
 
