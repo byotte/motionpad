@@ -23,7 +23,7 @@ const R=require('path').resolve(__dirname,'../..');const FIX=R+'/tools/baseline/
   await p.evaluate(()=>{for(const d of document.querySelectorAll('aside details'))d.open=true});await p.waitForTimeout(200);await collect('.app');
   for(const tool of ['wandMode','lassoMode']){await p.click('#'+tool);await p.waitForTimeout(100);await collect('.stagebar, .brushbar, #wandbar, #lassobar')}
   for(const d of ['videoDialog','soundDialog','layoutSettings']){await p.evaluate(d=>{document.getElementById(d).showModal();document.getElementById(d).querySelectorAll('details').forEach(x=>x.open=true)},d);await p.waitForTimeout(150);await collect('#'+d);await p.evaluate(d=>document.getElementById(d).close(),d)}
-  await p.click('#eyeEntry');await p.waitForTimeout(300);await collect('#blinkDialog');await p.click('#blinkClose');
+  await p.evaluate(()=>{const f=document.getElementById('faceOnInput');if(f&&!f.checked)f.click()});await p.waitForTimeout(200);await p.click('#eyeEntry');await p.waitForTimeout(300);await collect('#blinkDialog');await p.click('#blinkClose');
   await p.evaluate(()=>document.querySelector('nav details').open=true);await collect('nav');
   await c.close()}
  const lines=[];for(const [k,vals] of Object.entries(agg)){const arr=Object.entries(vals).sort((a,b)=>b[1].n-a[1].n);lines.push(`## ${k} — ${arr.length}종`);for(const [v,e] of arr)lines.push(`${v}\t${e.n}\t${e.ex.join(' ')}`)}

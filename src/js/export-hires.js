@@ -2,6 +2,7 @@
 // 채움판(외곽 흔들기·배경 제외용으로 구멍을 메운 그림)은 1900 사본에서 만든 것이라, 원본 위에 '메운 자리'만 덮어 쓴다.
 // 그래서 몸체·배경·흔들리는 부위 모두 원본 화질이고, 움직일 때 잠깐 드러나는 채움 자리만 1900 기준이다.
 let sourceSize={w:0,h:0},hiResActive=false;
+let hiResSrc=null,hiResBlinkCanvas=null,hiResBlinkOriginal=null;// 원본을 올린 동안의 원본 그림들(눈 깜빡임을 원본 위에 다시 얹을 때 씀)
 function glLimits(){
  if(!gl)return {tex:0,view:0};
  const vp=gl.getParameter(gl.MAX_VIEWPORT_DIMS)||[4096,4096];
@@ -50,9 +51,43 @@ async function enterHiRes(needLong){
  if(backgroundTex){gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,backgroundTex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,back)}
  if(tp&&tailOriginalTex){gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D,tailOriginalTex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,hi)}
  gl.activeTexture(gl.TEXTURE0);
- hiResActive=true;return {w:hi.width,h:hi.height};
+ hiResActive=true;
+ hiResSrc={body,hi};
+ if(blinkLastStep>0)blinkLastStep=-1;// 깜빡이던 중이면 다음 프레임에 원본 위로 다시 얹는다
+ return {w:hi.width,h:hi.height};
 }
 function leaveHiRes(){
  if(!hiResActive)return;hiResActive=false;
+ hiResSrc=hiResBlinkCanvas=hiResBlinkOriginal=null;
  if(gl){if(baseMaskTex&&backgroundTex)syncBaseTexturesGL();else uploadImage()}
+}
+// E1: 원본을 올린 동안 눈 깜빡임. 편집용 크기 눈꺼풀 층을 원본 크기로 늘려 원본 위에 얹고 통째로 올린다.
+// (편집용 크기 그림을 그대로 올리면 큰 그림의 왼쪽 위 구석에만 덮인다)
+function hiResLayer(canvas,base,overlay){
+ const W=base.width,H=base.height;
+ if(!canvas||canvas.width!==W||canvas.height!==H){
+  canvas=document.createElement('canvas');
+  canvas.width=W;canvas.height=H;
+ }
+ const g=canvas.getContext('2d');
+ g.clearRect(0,0,W,H);
+ g.drawImage(base,0,0);
+ if(overlay)g.drawImage(overlay,0,0,W,H);
+ return canvas;
+}
+function uploadHiResLayer(unit,texture,source){
+ gl.activeTexture(unit);gl.bindTexture(gl.TEXTURE_2D,texture);
+ gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,source);
+ gl.activeTexture(gl.TEXTURE0);
+}
+function uploadHiResBlink(){
+ if(!hiResSrc)return;
+ const {body,hi}=hiResSrc,on=!!blinkScene;
+ gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
+ hiResBlinkCanvas=on?hiResLayer(hiResBlinkCanvas,body,blinkOverlay):hiResBlinkCanvas;
+ uploadHiResLayer(gl.TEXTURE0,imageTex,on?hiResBlinkCanvas:body);
+ if(tailPlate&&tailOriginalTex){
+  hiResBlinkOriginal=on?hiResLayer(hiResBlinkOriginal,hi,blinkOverlayFull||blinkOverlay):hiResBlinkOriginal;
+  uploadHiResLayer(gl.TEXTURE4,tailOriginalTex,on?hiResBlinkOriginal:hi);
+ }
 }

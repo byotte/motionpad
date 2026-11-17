@@ -120,7 +120,8 @@ function canvasWarpRegion(g,z,w,h,source=bitmap){
 function render(){
  if(!ready||!bitmap)return;
  const blinkChanged=updateBlinkScene();
- if(gl&&blinkChanged){
+ if(gl&&blinkChanged&&hiResActive)uploadHiResBlink();
+ else if(gl&&blinkChanged){
   uploadBlinkTexture(gl.TEXTURE0,imageTex,blinkScene||tailPlate||bitmap);
   if(tailPlate)uploadBlinkTexture(gl.TEXTURE4,tailOriginalTex,blinkOriginal||bitmap);
  }

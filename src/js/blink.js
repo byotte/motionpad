@@ -9,7 +9,7 @@ let blinkProtection=[],blinkProtecting=false,blinkStroke=null;
 const BLINK_MAX_EYES=6;
 let blinkEyes=Array(BLINK_MAX_EYES).fill(null),blinkPatches=Array(BLINK_MAX_EYES).fill(null),blinkSpeed=100,blinkInterval=4.5,blinkEpoch=0;
 let blinkLastStep=-1,blinkLastTail=null,blinkScene=null,blinkOriginal=null;
-let blinkComposite=null,blinkTailComposite=null,blinkOverlay=null;
+let blinkComposite=null,blinkTailComposite=null,blinkOverlay=null,blinkOverlayFull=null;
 function restoreBlink(settings){
  const number=(v,fallback,min,max)=>Number.isFinite(v)?clamp(v,min,max):fallback;
  blinkSpeed=number(settings?.speed,100,50,160);
@@ -27,7 +27,7 @@ function restoreBlink(settings){
  });
  blinkPatches=blinkEyes.map(eye=>eye?makeBlinkPatch(eye.points.map(p=>({x:p.x*renderWidth,y:p.y*renderHeight})),eye.cover,eye.protection):null);
  blinkEpoch=elapsed;blinkLastTail=null;
- blinkScene=blinkOriginal=blinkComposite=blinkTailComposite=blinkOverlay=null;
+ blinkScene=blinkOriginal=blinkComposite=blinkTailComposite=blinkOverlay=blinkOverlayFull=null;
  paintEyeEntryState();
 }
 // 얼굴 설계 1단계: 눈 표시는 '2. 얼굴 · 눈 깜빡임'(face.js)이 그린다.
@@ -84,6 +84,13 @@ function updateBlinkScene(){
  original.drawImage(bitmap,0,0);original.drawImage(blinkOverlay,0,0);
  blinkOriginal=blinkScene=blinkComposite;
  if(tailPlate){
+  // 원본 크기 녹화 중에는 잘라 내기 전 눈꺼풀 층도 들고 있는다(원본 위에 다시 얹을 때 씀, export-hires.js)
+  if(hiResActive){
+   blinkOverlayFull??=blinkCanvas(renderWidth,renderHeight);
+   const full=blinkOverlayFull.getContext('2d');
+   full.clearRect(0,0,renderWidth,renderHeight);
+   full.drawImage(blinkOverlay,0,0);
+  }
   layer.globalCompositeOperation='destination-out';
   layer.drawImage(tailMask,0,0,renderWidth,renderHeight);
   layer.globalCompositeOperation='source-over';
