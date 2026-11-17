@@ -148,3 +148,5 @@ button[data-help]:hover::before{color:var(--ink)}
 .cropBar{position:absolute;left:50%;bottom:var(--sp2);z-index:8;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:var(--sp2);max-width:calc(100% - 16px);padding:var(--sp1) var(--sp2);border:1px solid var(--line);border-radius:var(--r-box);background:var(--glass);box-shadow:var(--shadow);transform:translateX(-50%)}
 .cropBar .seg button.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);color:var(--ink)}
 .cropSize{color:var(--help);font-size:var(--fs-help);font-variant-numeric:tabular-nums}
+.fdLayer{position:absolute;inset:0;z-index:9;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.fdLayer[hidden]{display:none}
