@@ -74,6 +74,8 @@ const ZONE_FIELDS=[
  {key:'autoFace',save:z=>z.autoFace||'',read:z=>faceRefOk(z.autoFace)?z.autoFace:'',ui:{input:'autoFaceInput',fromInput:x=>x}},
  num('autoFaceAmt',60,0,100,{input:'autoFaceAmt',output:'autoFaceAmtValue',fmt:pct}),
  flag('tapFaceOn',{input:'tapFaceOn',check:true}),
+ // G-1: 쓰다듬는 동안 짓는 표정('' = 없음)
+ {key:'strokeFace',save:z=>z.strokeFace,read:z=>faceRefOk(z.strokeFace)?z.strokeFace:'',ui:{input:'strokeFaceInput',fromInput:x=>x}},
  {key:'tapFace',save:z=>z.tapFace,read:z=>faceRefOk(z.tapFace)?z.tapFace:'0:surprise',ui:{input:'tapFaceInput',fromInput:x=>x}},
  num('tapFaceAmt',70,0,100,{input:'tapFaceAmt',output:'tapFaceAmtValue',fmt:pct}),
  flag('comboOn',{input:'comboOn',check:true}),

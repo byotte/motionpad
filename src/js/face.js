@@ -182,7 +182,7 @@ function faceOptionList(withNone){
 function paintFaceOptions(){
  const show=faceOn&&faces.length>0;
  for(const el of document.querySelectorAll('.faceOnly'))el.hidden=!show;
- for(const [id,none] of [['idleFaceInput',true],['ambientFaceInput',true],['autoFaceInput',true],['tapFaceInput',false],['comboFaceInput',false]]){
+ for(const [id,none] of [['strokeFaceInput',true],['idleFaceInput',true],['ambientFaceInput',true],['autoFaceInput',true],['tapFaceInput',false],['comboFaceInput',false]]){
   const sel=$(id),keep=sel.value;
   sel.replaceChildren(...faceOptionList(none).map(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;return o}));
   sel.value=keep;

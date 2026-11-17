@@ -4,13 +4,13 @@
 // 그리기는 renderCard 한 곳(updateUI·updateValues가 부른다). 매 프레임 그리지 않는다.
 var cardReady=false;// renderCard가 이 파일보다 먼저 불릴 수 있어 var(초기화 전 접근 오류를 피한다)
 const PARTS=[
- {label:'볼',preset:'jelly',name:'볼'},
- {label:'가슴·배',preset:'breathing',name:'가슴'},
- {label:'머리카락',preset:'wind',name:'머리카락',stroke:true},
- {label:'꼬리',preset:'tail',name:'꼬리',stroke:true},
- {label:'귀',preset:'ear',name:'귀'},
- {label:'옷자락',preset:'scarf',name:'옷자락',stroke:true},
- {label:'기타',preset:'soft',name:''},
+ {label:'볼',preset:'jelly',name:'볼',sfx:'skin-soft'},
+ {label:'가슴·배',preset:'breathing',name:'가슴',sfx:'boing'},
+ {label:'머리카락',preset:'wind',name:'머리카락',stroke:true,sfx:'cloth-flap'},
+ {label:'꼬리',preset:'tail',name:'꼬리',stroke:true,sfx:'ttoing'},
+ {label:'귀',preset:'ear',name:'귀',sfx:'skin-rub'},
+ {label:'옷자락',preset:'scarf',name:'옷자락',stroke:true,sfx:'cloth-flap'},
+ {label:'기타',preset:'soft',name:'',sfx:''},
 ];
 const EXTRA_PARTS={flow:'흐름·물결',custom:'직접 설정'};// 카드 칩에는 없지만 값이 그것이면 칩 하나를 더 보인다
 const LEVEL_F={s:.6,m:1,l:1.5},SPEED_F={slow:.6,mid:1,fast:1.6};

@@ -42,6 +42,28 @@ const results = [];
 const report = (id, ok, info) => { results.push({ id, ok }); console.log((ok ? '통과' : '실패'), id, info || ''); };
 const tests = {
 
+  // G-1: 쓰다듬기. 영역 위에서 왔다 갔다 0.6초 넘게 → 판정(작게 흔들림), 판정 전 짧은 끌기는 평소대로, 빠른 튕김과 겹치지 않음
+  async g(browser) {
+    const page = await newPage(browser), log = [];
+    await openProject(page, project(dataURL(FIXTURE), [Object.assign({}, ZONE, { x: .5, y: .45, rx: .2, ry: .15, strokeFace: '0:shy' })], {}), 'g');
+    await page.evaluate(() => document.getElementById('viewerBtn').click()); await rafs(page, 6);
+    const box = await page.locator('#viewerStage canvas, #view').first().boundingBox();
+    const P = (x, y) => [box.x + box.width * x, box.y + box.height * y];
+    const zstate = () => page.evaluate(() => { const z = window.MotionPadDebug.state().zones?.[0]; return z ? { stroking: !!z.stroking, x: +(z.motionX || 0).toFixed(4) } : null; });
+    // 빠른 튕김(한 번 짧게 끌고 놓음): 쓰다듬기로 판정되면 안 된다
+    await page.mouse.move(...P(.5, .45)); await page.mouse.down(); await page.mouse.move(...P(.6, .45), { steps: 3 }); await page.mouse.up();
+    const flick = await zstate(); log.push('튕김 쓰다듬기 ' + flick?.stroking);
+    await page.waitForTimeout(600);
+    // 쓰다듬기: 좌우로 5번 오감, 1초
+    await page.mouse.move(...P(.47, .45)); await page.mouse.down();
+    let during = null;
+    for (let i = 0; i < 6; i++) { await page.mouse.move(...P(i % 2 ? .47 : .55, .45), { steps: 6 }); await page.waitForTimeout(110); if (i === 5) during = await zstate(); }
+    await page.mouse.up(); await rafs(page, 2);
+    const after = await zstate();
+    log.push(`쓰다듬는 중 판정 ${during?.stroking} · 놓은 뒤 ${after?.stroking}`);
+    report('g', flick && !flick.stroking && during?.stroking && !after?.stroking && !page.errors.length, log.join(' · ') + (page.errors[0] || ''));
+  },
+
   // F-1: 영역 효과음이 저장·표시되고 터치 파일에 쓰인 효과음이 모두 들어간다. F-3: 가끔 짓는 표정이 저절로 지어졌다 풀린다
   async f(browser) {
     const page = await newPage(browser), log = [];

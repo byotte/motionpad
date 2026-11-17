@@ -132,6 +132,7 @@
 <div id="tapFaceRows"><div class="field"><div class="faceSelRow"><select id="tapFaceInput" aria-label="터치했을 때 표정"></select><button type="button" class="btn faceTune" data-for="tapFaceInput">세부 설정</button></div></div>
 <div class="field"><div class="fieldhead"><label for="tapFaceAmt">표정 세기</label><i class="helpMark" hidden data-help-short="세게·여러 번 칠수록 진해지고 곧 돌아옵니다." data-help="세게 칠수록, 여러 번 칠수록 진해지고 1~2초에 걸쳐 원래 표정으로 돌아옵니다. 평소 표정과 같으면 더해지고, 다르면 잠깐 이 표정이 앞섭니다."></i><output id="tapFaceAmtValue">70%</output></div><input id="tapFaceAmt" type="range" min="0" max="100"></div>
 <label class="toggle"><input type="checkbox" id="comboOn">연타 반응<i class="helpMark" hidden data-help-short="3초 안에 5번 넘게 치면 반응이 바뀝니다." data-help="3초 안에 5번 넘게 치면 반응이 바뀝니다. 연타가 멈추면 천천히 원래 표정으로 돌아옵니다."></i></label>
+<div class="field" id="strokeFaceRow"><div class="fieldhead"><label for="strokeFaceInput">쓰다듬을 때</label><i class="helpMark" hidden data-help-short="손가락을 떼지 않고 왔다 갔다 문지르는 동안 짓는 표정."></i></div><select id="strokeFaceInput"></select></div>
 <div id="comboRows"><div class="field"><select id="comboMode" aria-label="연타 반응 방식"><option value="more">더 진하게</option><option value="other">다른 표정으로</option></select></div>
 <div class="field" id="comboFaceRow"><div class="faceSelRow"><select id="comboFaceInput" aria-label="연타했을 때 표정"></select><button type="button" class="btn faceTune" data-for="comboFaceInput">세부 설정</button></div></div></div></div></details>
 <details id="hitMarkPanel" open><summary>맞은 자리</summary>

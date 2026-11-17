@@ -208,7 +208,8 @@ overlay.addEventListener('pointermove',e=>{
       const mult=Math.min(max*reachUp,dist*.14)*gain;
       const [vx,vy]=projectMotion(z.axis,dx/Math.max(.0001,dist)*mult,dy/Math.max(.0001,dist)*mult);
       if(z.axis==='pulse')z.desiredScale=-Math.min(.009,dist*.05)*gain;
-      z.desiredX=clamp(vx,-.025*reachUp,.025*reachUp);z.desiredY=clamp(vy,-.025*reachUp,.025*reachUp);
+      const soft=strokeCheck(g,z,p);// G-1: 쓰다듬기로 판정되면 작게 따라 흔들린다(판정 전은 평소 끌기 그대로)
+      z.desiredX=clamp(vx*soft,-.025*reachUp,.025*reachUp);z.desiredY=clamp(vy*soft,-.025*reachUp,.025*reachUp);
       z.hitX=p.x;z.hitY=p.y;
     }return;
   }
@@ -227,7 +228,8 @@ function finishPointer(e,cancelled=false){
       const z=zones.find(v=>v.id===g.id);
       if(z){
         const age=(performance.now()-g.time)/1000;
-        if(g.dragged){
+        if(g.stroking){stopPlay(z);z.stroking=false}// 쓰다듬기: 놓을 때 튕김·소리 없음(빠른 튕김과 겹치지 않게)
+        else if(g.dragged){
           const dx=p.x-g.start.x,dy=p.y-g.start.y;
           const len=Math.max(.0001,Math.hypot(dx,dy));
           if(age<.28&&len>.03){
@@ -314,3 +316,22 @@ overlay.addEventListener('lostpointercapture',e=>{if(pointers.has(e.pointerId))f
 overlay.addEventListener('contextmenu',stopEvent);
 stage.addEventListener('wheel',e=>{if(viewerOpen)return;e.preventDefault();setZoom(zoomLevel+(e.deltaY<0?.15:-.15))},{passive:false});
 
+// G-1 쓰다듬기: 한 영역 위에서 손가락을 떼지 않고 방향을 두 번 넘게 뒤집으며(왔다 갔다) 0.6초 넘게 움직이고,
+// 처음 누른 자리에서 영역 크기의 절반 넘게 벗어나지 않으면. 판정된 순간 튀지 않게 0.2초에 걸쳐 끌기 변위의 0.35배로 넘어간다.
+// 돌려주는 값 = 끌기 변위에 곱할 배율(판정 전 1).
+function strokeCheck(g,z,p){
+ const now=performance.now();
+ if(!g.stroking){
+  const seg=g.strokePrev?[p.x-g.strokePrev.x,p.y-g.strokePrev.y]:null;
+  if(seg&&Math.hypot(seg[0],seg[1])>.004){
+   if(g.strokeDir&&seg[0]*g.strokeDir[0]+seg[1]*g.strokeDir[1]<0)g.strokeFlips=(g.strokeFlips||0)+1;
+   g.strokeDir=seg;g.strokePrev=p;
+  }else if(!g.strokePrev)g.strokePrev=p;
+  const far=Math.hypot(p.x-g.start.x,p.y-g.start.y)>Math.max(z.rx,z.ry);// 영역 크기(지름)의 절반 = 반지름
+  if(far)g.strokeFlips=-99;
+  if((g.strokeFlips||0)>2&&now-g.time>600){g.stroking=true;g.strokeAt=now;z.stroking=true}
+  if(!g.stroking)return 1;
+ }
+ if(!g.strokeSfxAt||now-g.strokeSfxAt>500){g.strokeSfxAt=now;playSfx(.45,{sfx:'skin-rub'})}
+ return 1-.65*Math.min(1,(now-g.strokeAt)/200);
+}

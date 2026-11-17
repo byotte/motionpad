@@ -223,22 +223,28 @@ function faceActive(){
  if(ambient.enabled&&ambient.face)add(ambient.face,ambient.faceAmt/100,'base');
  for(const z of zones){
   if(z.auto&&z.autoFace){const beat=Math.abs(MotionPhysics.wave(elapsed*1.18*(z.autoSpeed||1),z.phase));add(z.autoFace,z.autoFaceAmt/100*(z.autoEnv??1)*(.82+.18*beat),'base')}
+  // G-1: 쓰다듬는 동안 표정이 0.5초에 걸쳐 올라와 머물고, 손을 떼면 1.5초에 풀린다(실행 중 값, 저장 안 함)
+  if(z.strokeFace){
+   const dt=Math.max(0,elapsed-(z.strokeT??elapsed));z.strokeT=elapsed;
+   z.strokeAmt=clamp((z.strokeAmt||0)+(z.stroking?dt/.5:-dt/1.5),0,1);
+   if(z.strokeAmt>0){add(z.strokeFace,z.strokeAmt,'touch');idleFace.lastTouch=elapsed}
+  }
   if(z.tapFaceOn&&z.tapFace){
    const lv=faceReactLevel(z);if(!lv)continue;
+   idleFace.lastTouch=elapsed;
    const amt=z.tapFaceAmt/100*Math.min(1,lv),cw=faceComboWeight(z);
    if(cw&&z.comboMode!=='other'){const r=faceRefParse(z.tapFace);if(r)more.set(r.k,Math.max(more.get(r.k)||0,cw))}
    if(cw&&z.comboMode==='other'){add(z.comboFace,amt*cw,'touch');add(z.tapFace,amt*(1-cw),'touch')}
    else add(z.tapFace,Math.min(1,amt*(1+.15*cw)+(lv>1?.1*(lv-1):0)),'touch');// 더 진하게: +15%(그 이상의 효과는 6단계)
   }
  }
-   idleFace.lastTouch=elapsed;
+ if(ambient.enabled&&ambient.idleFace)add(ambient.idleFace,idleFaceAmount(),'base');
  const out=[];
  for(const [k,{base,touch}] of per){
   const mix=new Map(base);let lead=0;
   for(const [id,a] of touch){if(base.has(id))mix.set(id,Math.min(1,base.get(id)+a));else{mix.set(id,Math.min(1,(mix.get(id)||0)+a));lead=Math.max(lead,Math.min(1,a))}}
   for(const id of base.keys())if(!touch.has(id))mix.set(id,mix.get(id)*(1-lead));
   const e={L:{},R:{},mm:0,tr:0,bl:0,earBl:0};
- if(ambient.enabled&&ambient.idleFace)add(ambient.idleFace,idleFaceAmount(),'base');
   for(const key of EXPR_SIDE_KEYS)e.L[key]=e.R[key]=0;
   let baW=0,baS=0;for(const [id,a] of mix){const x=faces[k].exprs[id];if(!x||a<=0)continue;for(const key of EXPR_SIDE_KEYS){e.L[key]+=a*x.L[key];e.R[key]+=a*x.R[key]}e.mm+=a*x.mm;e.tr+=a*x.tr;e.bl+=a*(x.bl||0);baW+=a*(x.bl||0);baS+=a*(x.bl||0)*(x.ba??50);if(x.ear)e.earBl+=a*(x.bl||0)}
   for(const key of EXPR_SIDE_KEYS){e.L[key]=clamp(e.L[key],-100,100);e.R[key]=clamp(e.R[key],-100,100)}
