@@ -41,6 +41,31 @@ const results = [];
 const report = (id, ok, info) => { results.push({ id, ok }); console.log((ok ? '통과' : '실패'), id, info || ''); };
 const tests = {
 
+  // A-6: 스위치 표시와 도구 표시가 어느 상태에서나 맞는지(만져 보기 ⇔ 켜진 도구 표시 없음), 켜진 도구를 다시 눌러도 그대로인지
+  async a6(browser) {
+    const page = await newPage(browser);
+    await openProject(page, project(dataURL(FIXTURE), [ZONE], {}), 'a6');
+    const st = () => page.evaluate(() => { const on = document.getElementById('touchTestBtn').getAttribute('aria-pressed') === 'true';
+      const shown = [...document.querySelectorAll('.mode.active')].filter(b => b.offsetParent && getComputedStyle(b).boxShadow !== 'none').map(b => b.id);
+      return { on, shown, mode: window.MotionPadDebug?.state?.().mode }; });
+    const ok = r => r.on ? r.shown.length === 0 : r.shown.length === 1;
+    const log = [];
+    const step = async (name, fn) => { if (fn) await fn(); await rafs(page, 2); const r = await st(); log.push(name + ':' + (r.on ? '만져 보기' : '편집') + '/' + (r.shown.join(',') || '-')); return ok(r); };
+    let all = await step('연 뒤');
+    all = await step('올가미', () => page.click('#lassoMode')) && all;
+    all = await step('올가미 다시', () => page.click('#lassoMode')) && all;
+    const stillLasso = (await st()).shown[0] === 'lassoMode';
+    all = await step('스위치', () => page.click('#touchTestBtn')) && all;
+    all = await step('스위치 다시', () => page.click('#touchTestBtn')) && all;
+    all = await step('옵션 조작', () => page.evaluate(() => { const e = document.getElementById('strengthInput'); e.value = 50; e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); })) && all;
+    all = await step('도구로', () => page.click('#wandMode')) && all;
+    all = await step('플레이 갔다 옴', async () => { await page.click('#viewerBtn'); await rafs(page, 4); await page.click('#exitViewer'); }) && all;
+    all = await step('스위치(편집으로)', () => page.click('#touchTestBtn')) && all;
+    all = await step('축 지정 중', () => page.evaluate(() => document.getElementById('pivotMode').click())) && all;
+    all = await step('화면 이동', () => page.evaluate(() => { document.getElementById('panMode').click(); })) && all;
+    report('a6', all && stillLasso && !page.errors.length, log.join(' · ') + (stillLasso ? '' : ' · 켜진 도구를 다시 누르자 꺼짐') + (page.errors[0] || ''));
+  },
+
   // L7: 내보내기 창의 버튼이 자기 상자 안에
   async l7(browser) {
     const page = await newPage(browser);

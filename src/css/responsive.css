@@ -75,7 +75,11 @@
   .stagebottom input[type=checkbox]{margin:0 3px 0 0}
   .quick .precisionSwitch{gap:2px;padding:0 2px}
   .tog{padding:0 4px;font-size:var(--fs-help)}
-  .viewToggles{gap:2px}
+  .viewToggles{gap:var(--sp2)}
+  /* A-4·A-6 좁은 폰: 화면 이동은 두 손가락으로 하므로 버튼은 감추고, 스위치 칸 여백을 줄여 아래 줄을 한 줄로 */
+  #panMode{display:none}
+  .touchSwitch{font-size:var(--fs-help)}
+  .touchSwitch>span{padding:0 var(--sp1)}
   .guideLine{padding-inline:8px}
   .loupe{top:6px;right:6px;width:104px;height:104px}
   #lassobar{gap:4px;padding-inline:4px}

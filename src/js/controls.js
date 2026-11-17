@@ -8,8 +8,8 @@ function setZoom(next){zoomLevel=clamp(next,1,4);if(zoomLevel===1){panX=panY=0}a
 $('zoomInBtn').onclick=()=>setZoom(zoomLevel+.25);
 $('zoomOutBtn').onclick=()=>setZoom(zoomLevel-.25);
 $('zoomResetBtn').onclick=()=>setZoom(1);
-// 3-M: 쓰던 도구를 그대로 둔다(그리는 도구가 아닐 때만 붓으로)
-$('newRegionBtn').onclick=()=>{clearSelectionDrafts();selected=null;setSelectOp('new');updateUI();if(touchPreview||!['brush','wand','lasso','ellipse'].includes(mode))setMode(['wand','lasso','ellipse'].includes(mode)?mode:'brush');setStatus('새 영역을 그려 주세요. 기존 영역에 더하려면 영역을 다시 선택하세요.')};
+// 3-M: 쓰던 도구를 그대로 둔다. A-5: 그리는 도구가 아니면 올가미(대충 둘러 그려도 윤곽에 맞는다)
+$('newRegionBtn').onclick=()=>{clearSelectionDrafts();selected=null;setSelectOp('new');updateUI();if(touchPreview||!['brush','wand','lasso','ellipse'].includes(mode))setMode(['wand','lasso','ellipse'].includes(mode)?mode:'lasso');setStatus('새 영역: 올가미로 대략 둘러 그리거나 마술봉으로 누르세요. 기존 영역에 더하려면 영역을 다시 선택하세요.')};
 function updateRendererBadge(){
   const badge=$('engineBadge');if(!badge)return;
   const renderer=gl?'WebGL':'Canvas';const quality=qualityMode==='auto'?'자동':qualityMode==='balanced'?'가볍게':'선명하게';
@@ -32,12 +32,24 @@ function setTouchPreview(on){
  if(touchPreview===on)return;
  touchPreview=on;
  document.querySelector('.workspace')?.classList.toggle('touchPreview',on);
- if(on)setStatus('터치 on: 그림을 눌러 반응을 확인하세요. 도구를 누르면 하던 작업으로 돌아갑니다.');
+ if(on)setStatus('만져 보기: 그림을 눌러 반응을 확인하세요. 도구를 누르면 편집으로 돌아갑니다.');
  paintTouchTest();
 }
 // 3-M: 터치 테스트 버튼(안내줄 오른쪽). 도구를 쓰던 중에도 눌러서 움직임을 확인하고, 다시 누르면 하던 도구로 돌아간다.
-function paintTouchTest(){const b=$('touchTestBtn'),on=touchPreview||mode==='play';b.setAttribute('aria-pressed',String(on));b.classList.toggle('active',on);b.textContent=on?'터치 on':'터치 off'}
-$('touchTestBtn').onclick=()=>{if(mode==='play'){setStatus('지금 터치 on입니다. 그림을 눌러 보세요. 편집하려면 위의 도구를 고르세요.');return}setTouchPreview(!touchPreview);if(!touchPreview)setStatus('하던 작업으로 돌아왔습니다.')};
+// A-6: 그림을 만져 보는 상태로 가는 겉의 길은 이 스위치(편집 | 만져 보기)와 '플레이' 둘뿐. 안쪽 값 두 개(mode==='play', touchPreview) 중 하나라도 켜지면 '만져 보기'.
+let lastEditTool='lasso';// 만져 보기에서 '편집'으로 돌아갈 때 잡을 도구(그림을 막 열었으면 올가미)
+function touchOn(){return touchPreview||mode==='play'}
+function paintTouchTest(){
+ const b=$('touchTestBtn'),on=touchOn();
+ b.setAttribute('aria-pressed',String(on));
+ b.classList.toggle('on',on);
+ document.querySelector('.workspace')?.classList.toggle('touchOn',on);
+}
+$('touchTestBtn').onclick=()=>{
+ if(mode==='play'){setMode(lastEditTool);setStatus('편집으로 돌아왔습니다.');return}
+ setTouchPreview(!touchPreview);
+ if(!touchPreview)setStatus('하던 작업으로 돌아왔습니다.');
+};
 function previewMotion(){
  if(!viewerOpen&&mode!=='play')setTouchPreview(true);
 }
@@ -141,13 +153,12 @@ $('maskOpacityInput').oninput=e=>{
 };
 $('imageFile').addEventListener('change',()=>{setZoom(1) });
 let editCheckpoint=null,placeReturn='play';// placeReturn: 축·가이드 선 지정을 마치면 돌아갈 도구
-document.querySelector('.stagebar .modegroup').addEventListener('click',event=>{
+// A-6: 만져 보는 중 도구를 누르면 스위치가 꺼지고 그 도구로. 켜진 도구를 다시 눌러도 아무 일도 없다(도구가 꺼지며 터치로 가던 길 없앰).
+for(const group of [document.querySelector('.stagebar .modegroup'),document.querySelector('.stagebottom .quick')])group.addEventListener('click',event=>{
  const tool=event.target.closest('[data-mode]');
  if(!tool)return;
  if(touchPreview){setTouchPreview(false);if(tool.dataset.mode===mode){event.stopImmediatePropagation();setStatus('하던 작업으로 돌아왔습니다.');}return;}
- if(tool.dataset.mode!==mode)return;
- event.stopImmediatePropagation();
- setMode('play');
+ if(tool.dataset.mode===mode)event.stopImmediatePropagation();
 },true);
 const PLACE_MODES=['pivot','extraPivot','spine','branch','faceMouth','faceBrow','faceEar'];// 그림에서 지정하는 도구: 안내줄의 순서 안내를 다른 알림이 덮지 않게
 function setMode(m){
@@ -162,6 +173,7 @@ function setMode(m){
     editCheckpoint={state:stateSnapshot(),undo:[...undoStack],redo:[...redoStack],last:lastHistoryJSON};
   }
   mode=m;
+  if(['brush','erase','wand','lasso','ellipse','edit','pan'].includes(m))lastEditTool=m;
   const editing=m!=='play';
   const workspace=document.querySelector('.workspace');
   workspace.classList.toggle('editing',editing);
