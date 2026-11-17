@@ -146,8 +146,8 @@
 #exprCompare{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none}
 #exprHint{margin:0;font-size:var(--fs-item);color:var(--item)}
 /* 이펙트 탭(포토샵 패널 탭처럼): 고른 탭은 아래 내용과 이어지고, 켠 이펙트는 이름 앞에 점 */
-.exprTabs{display:flex;gap:0;margin:0 calc(-1*var(--sp2));padding:0 var(--sp2);border-bottom:1px solid var(--line);overflow-x:auto}
-.exprTab{flex:none;min-height:var(--ctl-h);margin-bottom:-1px;padding:0 9px;border:1px solid transparent;border-bottom:0;border-radius:var(--r-ctl) var(--r-ctl) 0 0;background:transparent;color:var(--help);font:inherit;font-size:var(--fs-item);cursor:pointer;white-space:nowrap}
+.exprTabs{display:flex;gap:0;border-bottom:1px solid var(--line)}/* 탭이 칸을 나눠 써서 넘치지 않는다(작은 가로 스크롤이 생기던 것) */
+.exprTab{flex:1 1 auto;min-width:0;min-height:var(--ctl-h);margin-bottom:-1px;padding:0 4px;text-align:center;overflow:hidden;text-overflow:ellipsis;border:1px solid transparent;border-bottom:0;border-radius:var(--r-ctl) var(--r-ctl) 0 0;background:transparent;color:var(--help);font:inherit;font-size:var(--fs-item);cursor:pointer;white-space:nowrap}
 .exprTab[aria-selected=true]{border-color:var(--line);background:var(--panel);color:var(--ink)}
 .exprTab.on::before{content:"";display:inline-block;width:5px;height:5px;margin-right:5px;border-radius:var(--r-round);background:var(--accent);vertical-align:middle}
 .exprTabBody{padding-top:var(--sp2)}

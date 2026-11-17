@@ -125,7 +125,7 @@ function faceRedBasis(g,area=50){
  // 귀 덩어리 미리 계산: 귀 방향(u·n) 범위, 띠 두께 = 귀 너비의 35%, 얼굴 쪽(toward: u 방향에서 얼굴 가운데가 어느 쪽인지)
  const earShapes=g.ears.map(pts=>{const U=pts.map(p=>p.x*g.u.x+p.y*g.u.y),N=pts.map(p=>p.x*g.n.x+p.y*g.n.y),u0=Math.min(...U),u1=Math.max(...U)+1e-3,n0=Math.min(...N),n1=Math.max(...N)+1e-3;
   return {pts,u0,u1,n0,n1,depth:Math.max(2,.35*Math.min(u1-u0,n1-n0)),toward:(g.C.x*g.u.x+g.C.y*g.u.y)<(u0+u1)/2?-1:1}});
- const G=FACE_G,{rect}=g,cheek=new Float32Array(G*G),hatch=new Float32Array(G*G),ear=new Float32Array(G*G),ang=Math.atan2(g.u.y,g.u.x);
+ const G=FACE_G,{rect}=g,cheek=new Float32Array(G*G),hatch=new Float32Array(G*G),ear=new Float32Array(G*G),earAll=new Float32Array(G*G),ang=Math.atan2(g.u.y,g.u.x);
  for(let j=0;j<G;j++){const py=rect.y+(j+.5)/G*rect.h;for(let i=0;i<G;i++){const px=rect.x+(i+.5)/G*rect.w,idx=j*G+i;
   for(const ch of g.cheeks){
    const dx=px-ch.c.x,dy=py-ch.c.y,lx=dx*g.u.x+dy*g.u.y,ly=-(dx*g.n.x+dy*g.n.y),d=Math.hypot(lx/(ch.rx*sc),ly/(ch.ry*sc));
@@ -137,26 +137,26 @@ function faceRedBasis(g,area=50){
    hatch[idx]=Math.max(hatch[idx],Math.pow(Math.max(0,1-z*z),.8));
   }
   for(const E of earShapes){
-   // 귀(사용자가 그린 테두리를 닫은 덩어리): 테두리 안쪽 35% 띠와 위쪽 40%는 확실히, 얼굴과 붙은 쪽 아래는 덜 붉게
-   const pts=E.pts;let best=Infinity,inside=false;
-   for(let s=0,m=pts.length;s<m;s++){const a=pts[s],b=pts[(s+1)%m],vx=b.x-a.x,vy=b.y-a.y,l2=vx*vx+vy*vy||1e-6,h=clamp(((px-a.x)*vx+(py-a.y)*vy)/l2,0,1);best=Math.min(best,Math.hypot(px-a.x-vx*h,py-a.y-vy*h));
-    if((a.y>py)!==(b.y>py)&&px<(b.x-a.x)*(py-a.y)/(b.y-a.y)+a.x)inside=!inside}
-   const pu=px*g.u.x+py*g.u.y,pn=px*g.n.x+py*g.n.y,up=(pn-E.n0)/(E.n1-E.n0),side=E.toward<0?(pu-E.u0)/(E.u1-E.u0):(E.u1-pu)/(E.u1-E.u0);
-   let w;
-   if(inside){const band=best<E.depth?1:.5+.5*Math.max(0,1-(best-E.depth)/E.depth);w=up>.6?1:band*(side<.3?.55+.45*side/.3:1)}
-   else w=best<g.earW*.7?.85*Math.pow(1-best/(g.earW*.7),1.2):0;
-   ear[idx]=Math.max(ear[idx],w)}
+   // 귀 = 그은 선(귓바퀴·귓불)과 선 양 끝을 잇는 선(얼굴과 붙은 쪽)으로 닫은 덩어리.
+   // 그은 선 쪽은 충분히 붉고, 붙은 쪽(트라거스·귓구멍)으로 갈수록 옅어져 얼굴 피부와 이어진다. earAll = 귀 전체(연타 '더 진하게')
+   const pts=E.pts,m=pts.length;let dc=Infinity,inside=false;
+   const seg=(a,b)=>{const vx=b.x-a.x,vy=b.y-a.y,l2=vx*vx+vy*vy||1e-6,h=clamp(((px-a.x)*vx+(py-a.y)*vy)/l2,0,1);return Math.hypot(px-a.x-vx*h,py-a.y-vy*h)};
+   for(let s=0;s<m;s++){const a=pts[s],b=pts[(s+1)%m];if(s<m-1)dc=Math.min(dc,seg(a,b));if((a.y>py)!==(b.y>py)&&px<(b.x-a.x)*(py-a.y)/(b.y-a.y)+a.x)inside=!inside}
+   const dk=seg(pts[m-1],pts[0]),t=dc/(dc+dk+1e-6);
+   const edge=inside?1-.72*smoothstep(.3,.9,t):dc<g.earW*.7?.85*Math.pow(1-dc/(g.earW*.7),1.2):0;
+   const all=inside?1:edge;
+   ear[idx]=Math.max(ear[idx],edge);earAll[idx]=Math.max(earAll[idx],all)}
  }}
- g.red={cheek,hatch,ear};return g.red;
+ g.red={cheek,hatch,ear,earAll};return g.red;
 }
 // 섞은 표정의 홍조 세기 → 지도 값(B 붉은 정도, A 빗금 자리). 홍조가 없으면 null.
 function faceRedValues(g,expr,amount){
- const sig=`${Math.round((expr.bl||0)*amount*2)}|${Math.round((expr.ba??50)/5)}|${Math.round((expr.earBl||0)*amount*2)}|${g.style}`;if(g.redSig===sig)return g.redVal;g.redSig=sig;return g.redVal=faceRedValuesRaw(g,expr,amount)}
+ const sig=`${Math.round((expr.bl||0)*amount*2)}|${Math.round((expr.ba??50)/5)}|${Math.round((expr.earMore||0)*10)}|${Math.round((expr.earBl||0)*amount*2)}|${g.style}`;if(g.redSig===sig)return g.redVal;g.redSig=sig;return g.redVal=faceRedValuesRaw(g,expr,amount)}
 function faceRedValuesRaw(g,expr,amount){
  const bl=(expr.bl||0)/100*amount,eb=(expr.earBl||0)/100*amount;if(bl<=.001&&eb<=.001)return null;
  const B=faceRedBasis(g,expr.ba??50);if(!B)return null;
- const n=B.cheek.length,b=new Float32Array(n),h=new Float32Array(n);
- for(let i=0;i<n;i++){b[i]=Math.min(1,1.7*bl*B.cheek[i]+2*eb*B.ear[i]);h[i]=g.style==='grad'||bl<.01?0:B.hatch[i]}// 빗금 자리는 진하기와 상관없이(진하기는 선의 짙기에만)
+ const n=B.cheek.length,b=new Float32Array(n),h=new Float32Array(n),em=clamp(expr.earMore||0,0,1);
+ for(let i=0;i<n;i++){b[i]=Math.min(1,1.7*bl*B.cheek[i]+2*eb*(B.ear[i]+(B.earAll[i]-B.ear[i])*em));h[i]=g.style==='grad'||bl<.01?0:B.hatch[i]}// 빗금 자리는 진하기와 상관없이(진하기는 선의 짙기에만)
  return {b,h};
 }
 // 셰이더 값: x 스타일(0 그라데이션·1 섬세한 빗금·2 만화 빗금), y 빗금의 가로지르는 방향(각도), z 빗금 간격(그림 화소), w 얼룩 크기(그림 화소)
@@ -222,6 +222,7 @@ function faceActive(){
   let baW=0,baS=0;for(const [id,a] of mix){const x=faces[k].exprs[id];if(!x||a<=0)continue;for(const key of EXPR_SIDE_KEYS){e.L[key]+=a*x.L[key];e.R[key]+=a*x.R[key]}e.mm+=a*x.mm;e.tr+=a*x.tr;e.bl+=a*(x.bl||0);baW+=a*(x.bl||0);baS+=a*(x.bl||0)*(x.ba??50);if(x.ear)e.earBl+=a*(x.bl||0)}
   for(const key of EXPR_SIDE_KEYS){e.L[key]=clamp(e.L[key],-100,100);e.R[key]=clamp(e.R[key],-100,100)}
   e.mm=clamp(e.mm,-100,100);e.tr=clamp(e.tr,0,100);e.bl=clamp(e.bl,0,100);e.ba=baW?baS/baW:50;e.earBl=clamp(e.earBl,0,100);
+  e.earMore=more.get(k)||0;// 연타 '더 진하게'면 귀 전체가 붉어진다
   out.push({k,expr:e,amount:1,mix,more:more.get(k)||0});
  }
  faceLastActive=out;

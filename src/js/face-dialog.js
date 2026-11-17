@@ -34,7 +34,8 @@ function paintExprDialog(){
  const mode=fxIsOn(e,which)?fxStyleOf(e,which,g):'off';
  for(const r of document.querySelectorAll('input[name="exprFxMode"]')){r.checked=r.value===mode;r.disabled=!g.eyes.length}
  $('exprFxSet').hidden=mode==='off';$('exprSweatRow').hidden=which!=='sweat';$('exprSweat').value=String(Math.max(1,e.sw));
- const o=e.fxo[which];for(const k of ['sp','fr','op']){$('expr_fx_'+k).value=o[k];$('expr_fx_'+k+'V').textContent=o[k]+'%';$('expr_fx_'+k).closest('.exprSlider').hidden=which==='tear'&&k!=='op'}
+ const o=e.fxo[which];for(const k of ['sp','fr','op','sz']){$('expr_fx_'+k).value=o[k]??100;$('expr_fx_'+k+'V').textContent=(o[k]??100)+'%';$('expr_fx_'+k).closest('.exprSlider').hidden=which==='tear'&&k!=='op'}
+ $('exprTearAmtRow').hidden=which!=='tear';for(const r of document.querySelectorAll('input[name="exprTearAmt"]'))r.checked=Number(r.value)===(e.ta||0);
  $('exprFxHome').hidden=!(which==='sweat'?f.sweatAt.some(Boolean):f.fxAt[which]);
  if(e.ear&&!f.ears.length)miss.push('귀');
  $('exprHint').textContent=miss.length?`${miss.join('·')} 자리를 찍지 않아 그 부분은 조절할 수 없습니다. ‘2. 얼굴 · 눈 깜빡임’에서 찍어 주세요.`:'막대를 움직이면 바로 반영됩니다. 이펙트는 미리보기에서 끌어 옮길 수 있습니다.';
@@ -61,7 +62,8 @@ for(const r of document.querySelectorAll('input[name="exprFxMode"]'))r.onchange=
  if(m!=='off')(e.fxs??={})[k]=m;
 });
 $('exprSweat').onchange=()=>exprEdit(e=>{e.sw=Number($('exprSweat').value)});
-for(const k of ['sp','fr','op'])$('expr_fx_'+k).addEventListener('input',ev=>exprEdit(e=>{e.fxo[exprFxWhich()][k]=Number(ev.target.value)}));
+for(const r of document.querySelectorAll('input[name="exprTearAmt"]'))r.onchange=()=>exprEdit(e=>{e.ta=Number(r.value)});
+for(const k of ['sp','fr','op','sz'])$('expr_fx_'+k).addEventListener('input',ev=>exprEdit(e=>{e.fxo[exprFxWhich()][k]=Number(ev.target.value)}));
 $('exprFxHome').onclick=()=>exprEdit(()=>{const f=faces[faceSel],w=exprFxWhich();if(w==='sweat')f.sweatAt=[];else delete f.fxAt[w]});
 $('exprEar').onchange=()=>{exprEdit(e=>{e.ear=$('exprEar').checked});paintFaces()};
 $('exprBlushStyle').onchange=()=>exprEdit(()=>{faces[faceSel].blushStyle=$('exprBlushStyle').value;faceChanged()});
