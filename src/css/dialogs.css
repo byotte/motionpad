@@ -22,12 +22,12 @@
 .saveDialog .field input[type=range]{width:100%}
 .saveDialog .settingActions .btn{flex:0 1 auto}
 .layoutDialog{width:min(500px,94vw);max-height:85dvh;overflow:auto}
-.themeOptions,.qualityOptions{border-color:var(--groupLine)}
+.themeOptions,.qualityOptions{border:0;border-radius:var(--r-box);background:var(--groupBg)}
 .themeOptions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .themeOptions label{display:grid;justify-items:center;gap:5px}
 .themeSample{display:grid;place-items:center;width:min(100%,76px);aspect-ratio:1;background:var(--bg);border:1px solid var(--line);box-shadow:inset 0 13px var(--panel)}
 .themeSample i{width:35%;height:12%;background:var(--accent)}
-.qualityOptions{display:flex;flex-wrap:wrap;gap:var(--sp1) var(--sp3);margin:var(--sp2) 0;padding:var(--sp2);border:1px solid var(--groupLine);border-radius:var(--r-box)}
+.qualityOptions{display:flex;flex-wrap:wrap;gap:var(--sp1) var(--sp3);margin:var(--sp2) 0;padding:var(--sp2);border:0;border-radius:var(--r-box);background:var(--groupBg)}
 .qualityOptions label{display:inline-flex;align-items:center;gap:4px}
 .qualityOptions input{width:auto;padding:0;accent-color:var(--accent)}
 .qualityOptions p{flex-basis:100%;margin:2px 0;color:var(--help)}
@@ -56,7 +56,7 @@
 #blinkUndo .ic,#blinkRedo .ic{width:18px;height:18px}
 /* 왼쪽 그림 · 오른쪽 옵션 */
 .blinkMain{display:grid;grid-template-columns:minmax(0,1fr) 272px;min-height:0}
-.blinkStage{height:min(72dvh,760px);min-height:100px;overflow:hidden;background:repeating-conic-gradient(var(--panel) 0 25%,var(--stageInk) 0 50%) 0/16px 16px}
+.blinkStage{height:min(72dvh,760px);min-height:100px;overflow:hidden;background:var(--stageInk)}
 #blinkPreview{display:block;width:100%;height:100%;cursor:crosshair}
 /* 윗줄: 보기(눈 주변 확대 · 전체 보기) 둘이 반씩, 아랫줄: 한 번 깜빡이기 */
 .blinkRow{display:flex;gap:var(--sp1)}
@@ -77,7 +77,7 @@
 #videoDialog select{width:fit-content}
 .videoEstimate{margin:var(--sp2) 0;padding:var(--sp2);border:1px solid var(--groupLine);border-radius:var(--r-box);background:var(--tint);font-size:var(--fs-item)}
 .videoEstimate b{color:var(--accent);font-variant-numeric:tabular-nums}
-#videoDialog details{margin:var(--sp2) 0;padding:0 var(--sp2) var(--sp1);border:1px solid var(--groupLine);border-radius:var(--r-box)}
+#videoDialog details{margin:var(--sp2) 0;padding:0 var(--sp2) var(--sp1);border:0;border-radius:var(--r-box);background:var(--groupBg)}
 #videoDialog details>summary{padding:6px 0;font-size:var(--fs-item);font-weight:var(--fw-item);color:var(--ink);cursor:pointer}
 .qualityScale{display:flex;justify-content:space-between;margin-top:2px;font-size:var(--fs-help);color:var(--help)}
 .videoCustom{display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-width:0}
@@ -91,7 +91,7 @@
 .aboutList dd{margin:2px 0 0}
 /* 내보내기 두 가지 방법: 자동 저장 / 직접 터치하며 녹화 */
 .exportWays{display:grid;gap:var(--sp2);margin-top:var(--sp2)}
-.exportWay{padding:var(--sp2);border:1px solid var(--groupLine);border-radius:var(--r-box)}
+.exportWay{padding:var(--sp2);border:0;border-radius:var(--r-box);background:var(--groupBg)}
 .exportWay b{font-size:var(--fs-item);font-weight:var(--fw-title);color:var(--ink)}
 .exportWay .mini{margin-top:2px}
 /* L7: 녹화 방법마다 자기 상자 안에 자기 버튼 */
@@ -120,7 +120,7 @@
 .exprSettings{display:flex;flex-direction:column;gap:var(--sp2);min-width:0;height:100%;padding:var(--sp2);overflow-x:hidden;overflow-y:auto;background:var(--panel);border-left:1px solid var(--line)}
 .exprTop{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp1) var(--sp2)}
 .exprTop .toggle{margin:0}
-.exprBox{padding:var(--sp1) var(--sp2) var(--sp2);border:1px solid var(--groupLine);border-radius:var(--r-box)}
+.exprBox{padding:var(--sp1) var(--sp2) var(--sp2);border:0;border-radius:var(--r-box);background:var(--groupBg)}
 .exprBox h3{display:flex;align-items:center;gap:var(--sp1);margin:0 0 var(--sp1);font-size:var(--fs-item);font-weight:var(--fw-title);color:var(--ink)}
 .exprBox h3.exprSub{margin:var(--sp1) 0 0}
 .exprBox h3.exprSub:first-child{margin-top:0}

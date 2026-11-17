@@ -20,9 +20,11 @@
   --line:#ffffff24; --groupLine:rgba(0,0,0,.38);
   --warning:#f2a2b9; --mark:#f0c060; --stageInk:#19191c; --glass:rgba(25,22,45,.95);
   /* 바탕에서 파생: 제목줄 · 마우스 올림 · 안내 바탕 · 슬라이더 길 */
+  /* A-1 묶음 바탕: 묶음 상자는 테두리 대신 패널보다 한 단계 다른 바탕으로 나눈다 */
+  --groupBg:color-mix(in srgb,var(--ink) 4%,var(--panel));
   --head:color-mix(in srgb,var(--ink) 7%,var(--panel)); --hover:color-mix(in srgb,var(--ink) 13%,var(--panel));
   --veil:color-mix(in srgb,var(--ink) 8%,transparent); --tint:color-mix(in srgb,var(--accent) 7%,var(--panel));
-  --track:color-mix(in srgb,var(--ink) 23%,var(--panel)); --checker:color-mix(in srgb,var(--accent) 4%,transparent);
+  --track:color-mix(in srgb,var(--ink) 23%,var(--panel));
   --glow:color-mix(in srgb,var(--accent) 9%,transparent);
   --fieldShadow:inset 0 1px 2px rgba(0,0,0,.25);
   --shadow:0 10px 30px #0007; --shadowStage:0 2px 25px #0008; --backdrop:#0008;
