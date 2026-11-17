@@ -94,6 +94,9 @@
 .exportWay{padding:var(--sp2);border:1px solid var(--groupLine);border-radius:var(--r-box)}
 .exportWay b{font-size:var(--fs-item);font-weight:var(--fw-title);color:var(--ink)}
 .exportWay .mini{margin-top:2px}
+/* L7: 녹화 방법마다 자기 상자 안에 자기 버튼 */
+.wayActions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;margin-top:var(--sp2)}
+.wayActions .btn{min-width:72px}
 .fxRow{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp2);margin-top:var(--sp2)}
 /* 프로그램 정보: 묶음 셋(정보 · Tip · 단축키) */
 .aboutBody .optGroup{margin:0 0 var(--sp2)}

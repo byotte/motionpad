@@ -41,6 +41,40 @@ const results = [];
 const report = (id, ok, info) => { results.push({ id, ok }); console.log((ok ? '통과' : '실패'), id, info || ''); };
 const tests = {
 
+  // L7: 내보내기 창의 버튼이 자기 상자 안에
+  async l7(browser) {
+    const page = await newPage(browser);
+    await page.setInputFiles('#imageFile', FIXTURE); await page.waitForSelector('.workspace:not([hidden])');
+    const r = await page.evaluate(() => { const ways = [...document.querySelectorAll('#videoDialog .exportWay')]; return { save: ways[0]?.contains(document.getElementById('exportVideoBtn')), live: ways[1]?.contains(document.getElementById('liveRecBtn')), cancel: ways[0]?.contains(document.getElementById('cancelVideoBtn')) }; });
+    report('l7', r.save && r.live && r.cancel, JSON.stringify(r));
+  },
+  // L8: 도구를 바꿔도 그림 자리가 그대로(PC·폰)
+  async l8(browser) {
+    for (const vp of [{ width: 1440, height: 900 }, { width: 390, height: 844, isMobile: true, hasTouch: true }]) {
+      const page = await newPage(browser, vp);
+      await page.setInputFiles('#imageFile', FIXTURE); await page.waitForSelector('.workspace:not([hidden])'); await rafs(page, 3);
+      const rects = [];
+      for (const id of ['moveMode', 'wandMode', 'panMode', 'lassoMode', 'brushMode', 'touchTestBtn']) {
+        await page.evaluate(id => document.getElementById(id)?.click(), id); await rafs(page, 3);
+        rects.push(await page.evaluate(() => { const b = document.getElementById('stage').getBoundingClientRect(); return [Math.round(b.top), Math.round(b.height)].join(','); }));
+      }
+      report('l8-' + vp.width, new Set(rects).size === 1, rects.join(' / '));
+      await page.context().close();
+    }
+  },
+  // L10·L11: 폰 아래 빈 띠 없음, 되돌리기·다시 실행·확대·축소 가로 44px 이상·되돌리기와 다시 실행 사이 6px 이상
+  async l10(browser) {
+    for (const vp of [{ width: 390, height: 844 }, { width: 344, height: 882 }]) {
+      const page = await newPage(browser, Object.assign({ isMobile: true, hasTouch: true }, vp));
+      await page.setInputFiles('#imageFile', FIXTURE); await page.waitForSelector('.workspace:not([hidden])'); await rafs(page, 3);
+      const r = await page.evaluate(() => { const q = id => document.getElementById(id).getBoundingClientRect(), side = document.querySelector('.side').getBoundingClientRect();
+        return { gap: Math.round(innerHeight - side.bottom), scroll: document.documentElement.scrollHeight - innerHeight, w: ['undoBtn', 'redoBtn', 'zoomOutBtn', 'zoomInBtn'].map(i => Math.round(q(i).width)), between: Math.round(q('redoBtn').left - q('undoBtn').right), rows: Math.round(document.querySelector('.stagebottom').getBoundingClientRect().height) }; });
+      report('l10-' + vp.width, r.gap === 0 && r.scroll === 0, `아래 빈 띠 ${r.gap}px · 화면 넘침 ${r.scroll}px`);
+      report('l11-' + vp.width, r.w.every(w => w >= 44) && r.between >= 6, `버튼 너비 ${r.w.join('·')} · 되돌리기~다시 실행 ${r.between}px · 아래 줄 높이 ${r.rows}px`);
+      await page.context().close();
+    }
+  },
+
   // E2: 얼굴을 덮는 영역의 '빈자리 채우기'(tailCutout)를 켜도 표정·홍조가 보여야 한다(볼 자리 색이 표정 없음과 달라야 함)
   async e2(browser) {
     const P = (x, y) => ({ x: x / 800, y: y / 1000 });
