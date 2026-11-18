@@ -29,6 +29,7 @@
 | H-1~H-3 | `664f1d2` | 움직임 복사·숫자 직접 입력·숨기기·순서 | `docs/progress/H.md` |
 | H-4 | `4689892` | 그림 자르기 | `docs/progress/H.md` |
 | I(시험판) | 가지 `face-draft` `a0ef914` | 얼굴 자동 초안. 본판에는 없음, main에는 `motionpad-face-draft.html`만 | `docs/progress/I.md` |
+| 터치 재작업 | `a1db6bf` | 터치 방향 없앰·눌림/뾰잉, 갸웃·계속 돌기, 편집 중 멈춤, 빈자리 채우기 기본 켬 (직전 = `897ae83`) | `docs/progress/touch-rework.md` |
 
 통째로 작업 전으로 돌리려면(배포본만): 위 백업 html을 `motionpad.html`로 복사해 올리면 된다. 소스까지 돌리려면 `git revert`를 위 표 아래에서 위 순서로.
 
