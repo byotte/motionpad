@@ -38,7 +38,7 @@ function setupGL(){
     const link=src=>{const fs=compile(gl,gl.FRAGMENT_SHADER,src),pr=gl.createProgram();gl.attachShader(pr,vs);gl.attachShader(pr,fs);gl.bindAttribLocation(pr,0,'a_pos');gl.bindAttribLocation(pr,1,'a_uv');gl.linkProgram(pr);
      if(!gl.getProgramParameter(pr,gl.LINK_STATUS))throw Error('Shader link: '+gl.getProgramInfoLog(pr));return pr};
     const locate=pr=>{const L=n=>gl.getUniformLocation(pr,n);gl.useProgram(pr);
-     const u={pull:L('u_pull[0]'),zone:L('u_zone[0]'),motion:L('u_motion[0]'),fx:L('u_fx[0]'),tap:L('u_tap[0]'),pivot:L('u_pivot[0]'),flow:L('u_flow[0]'),spine:L('u_spine[0]'),spinemotion:L('u_spinemotion[0]'),chainMid:L('u_chainMid[0]'),branchLine:L('u_branchLine[0]'),branchMotion:L('u_branchMotion[0]'),pivotExtra:L('u_pivotExtra[0]'),baseExclude:L('u_baseExclude'),tailCutout:L('u_tailCutout'),time:L('u_time'),count:L('u_count'),ambient:L('u_ambient'),bodyCenter:L('u_bodyCenter'),
+     const u={aspect:L('u_aspect'),pull:L('u_pull[0]'),zone:L('u_zone[0]'),motion:L('u_motion[0]'),fx:L('u_fx[0]'),tap:L('u_tap[0]'),pivot:L('u_pivot[0]'),flow:L('u_flow[0]'),spine:L('u_spine[0]'),spinemotion:L('u_spinemotion[0]'),chainMid:L('u_chainMid[0]'),branchLine:L('u_branchLine[0]'),branchMotion:L('u_branchMotion[0]'),pivotExtra:L('u_pivotExtra[0]'),baseExclude:L('u_baseExclude'),tailCutout:L('u_tailCutout'),time:L('u_time'),count:L('u_count'),ambient:L('u_ambient'),bodyCenter:L('u_bodyCenter'),
       faceRect:L('u_faceRect[0]'),faceStyle:L('u_faceStyle[0]'),hitMark:L('u_hitMark[0]'),imgSize:L('u_imgSize'),hitCount:L('u_hitCount'),faceCount:L('u_faceCount')};
      for(const [n,unit] of [['u_tex',0],['u_mask',1],['u_baseMask',2],['u_background',3],['u_tailOriginal',4],['u_tailMask',5],['u_dist',6],['u_face',7]])gl.uniform1i(L(n),unit);
      return u};
@@ -146,7 +146,8 @@ function render(){
      const env=z.autoEnv??1;
      fx.set([z.breath/40*env,z.wave/40*env,z.twist/35*env,z.ripple/40],i*4);
      tp.set([z.hitX,z.hitY,elapsed-z.hitAt,z.hitPower],i*4);
-     pv.set([z.pivotX??z.x,z.pivotY??z.y,z.pivotEnabled?1:0,(z.pivotStrength??60)/100],i*4);
+     const turnC=z.rotAngle&&!z.pivotEnabled?(z.autoAxis==='tilt'?[z.x,z.y+z.ry*.85]:[z.x,z.y]):null;// 축을 안 찍은 회전의 중심
+     pv.set([turnC?turnC[0]:z.pivotX??z.x,turnC?turnC[1]:z.pivotY??z.y,z.pivotEnabled?1:0,(z.pivotStrength??60)/100],i*4);
      fl.set([(z.flow||0)/40*.014*env,Math.cos(dir),Math.sin(dir),z.phase],i*4);
      const a=z.spine?.[0]||[z.x,z.y],b=z.spine?.[z.spine.length-1]||[z.x,z.y];
      sp.set([a[0],a[1],b[0],b[1]],i*4);
@@ -154,7 +155,7 @@ function render(){
      const safe=Math.max(1,Math.round(Math.max(0,z.feather||0)*.63)*2.5)/TILE,reachR=Math.hypot(z.rx,z.ry)+.19;
      const bound=Math.hypot(z.motionX||0,z.motionY||0)+2*Math.hypot(z.physX||0,z.physY||0)+Math.abs(z.motionScale||0)*reachR+(.0105*z.breath/40+.006*z.wave/40+.023*z.twist/35*reachR)*env+.0036*z.ripple/40*(z.hitPower||0)+Math.hypot(z.spineTip?.[0]||0,z.spineTip?.[1]||0)+Math.hypot(z.spineMid?.[0]||0,z.spineMid?.[1]||0)+Math.hypot(z.branchTip?.[0]||0,z.branchTip?.[1]||0);
      sm.set([z.spineTip?.[0]||0,z.spineTip?.[1]||0,z.spine?.length>=2?1:0,bound>.5*safe?safe:0],i*4);
-     cm.set([z.spineMid?.[0]||0,z.spineMid?.[1]||0,(z.pull??50)/100,0],i*4);
+     cm.set([z.spineMid?.[0]||0,z.spineMid?.[1]||0,(z.pull??50)/100,z.rotAngle||0],i*4);
      pu.set([z.grabX??z.x,z.grabY??z.y,z.physX||0,z.physY||0],i*4);
      const ba=z.branch?.[0]||[z.x,z.y],bb=z.branch?.[z.branch.length-1]||[z.x,z.y];
      bl.set([ba[0],ba[1],bb[0],bb[1]],i*4);bm.set([z.branchTip?.[0]||0,z.branchTip?.[1]||0,z.branch?.length>=2?1:0,0],i*4);
@@ -178,7 +179,8 @@ function render(){
    gl.uniform4f(uni.tailCutout,tl[0]??-1,tl[1]??-1,tl[2]??-1,tl[3]??-1);
    gl.uniform1f(uni.baseExclude,baseBackgroundExclude&&backgroundPlate?1:0);
    {const b=getBase();gl.uniform2f(uni.bodyCenter,b?b.x:.5,b?clamp(b.y-b.ry*.25,.1,.9):.45)}// 호흡의 중심 = 몸체의 가슴께(없으면 그림 가운데 조금 위)
-   gl.uniform4f(uni.ambient,ambient.enabled?1:0,ambient.enabled?ambient.breath/100:0,ambient.enabled?ambient.sway/100:0,ambient.enabled?ambient.light/100:0);
+   gl.uniform4f(uni.ambient,ambient.enabled?1:0,ambient.enabled?ambient.breath/100*motionCalm:0,ambient.enabled?ambient.sway/100*motionCalm:0,ambient.enabled?ambient.light/100:0);
+   if(uni.aspect)gl.uniform1f(uni.aspect,renderWidth/Math.max(1,renderHeight));
    gl.uniform1f(uni.time,elapsed);gl.uniform1i(uni.count,zones.length);
    gl.drawElements(gl.TRIANGLES,meshIndexCount,gl.UNSIGNED_SHORT,0);
    return;
@@ -188,7 +190,7 @@ function render(){
  draw2d.clearRect(0,0,w,h);
  const cutouts=tailPlate?tailCutoutZones():[];
  const scene=blinkScene||tailPlate||bitmap;
- const b=ambient.enabled?ambient.breath/100:0,s=ambient.enabled?ambient.sway/100:0;
+ const b=ambient.enabled?ambient.breath/100*motionCalm:0,s=ambient.enabled?ambient.sway/100*motionCalm:0;
  const scale=1+MotionPhysics.wave(elapsed*1.40,-.30)*b*.0073;
  const separated=baseBackgroundExclude&&baseMaskCanvas&&backgroundPlate;
  const base=separated?getBase():null;

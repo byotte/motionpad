@@ -127,7 +127,7 @@ function addShape(shape){
   markMask();updateUI();scheduleSave();replacedNotice(z);return true}
  if(z||op==='subtract'){const temp=sanitize(shape,zones.length);return applySelectionBits(rasterize(temp))}
  if(zones.length>=LIMIT){setStatus(`영역 최대 ${LIMIT}개`);return false}
- remember();const n=sanitize({id:newId(),name:nextZoneName(),...shape},zones.length);zones.push(n);selected=n.id;markMask();updateUI();scheduleSave();return true}
+ remember();const n=sanitize({...newZoneDefaults(),id:newId(),name:nextZoneName(),...shape},zones.length);zones.push(n);selected=n.id;markMask();updateUI();scheduleSave();return true}
 function addEllipse(x,y,rx=.12,ry=.12){return addShape({kind:'ellipse',x,y,rx,ry})}
 function bitsToRuns(bits){const runs=[];let i=0;while(i<bits.length){if(!bits[i]){i++;continue}let st=i;while(i<bits.length&&bits[i])i++;runs.push([st,i-st])}return runs}
 function runsToBits(runs){const bits=new Uint8Array(TILE*TILE);for(const [st,len] of runs||[])bits.fill(1,clamp(st,0,bits.length),clamp(st+len,0,bits.length));return bits}
@@ -136,7 +136,7 @@ function rasterize(z){if(z.kind==='raster'){if(Math.abs((z.x||0)-(z.baseX??z.x))
 function paintBits(bits,points,r,subtract){const c=document.createElement('canvas');c.width=c.height=TILE;const g=c.getContext('2d',{willReadFrequently:true});g.fillStyle='white';g.strokeStyle='white';strokePath(g,{points,r},TILE,TILE);const a=g.getImageData(0,0,TILE,TILE).data;for(let i=0;i<bits.length;i++)if(a[i*4+3]>75)bits[i]=subtract?0:1}
 function recalcRaster(z){const bits=runsToBits(z.runs);let minX=TILE,minY=TILE,maxX=0,maxY=0,hit=false;for(let i=0;i<bits.length;i++)if(bits[i]){const x=i%TILE,y=(i/TILE)|0;minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y);hit=true}if(hit){z.x=(minX+maxX)/(2*TILE);z.y=(minY+maxY)/(2*TILE);z.rx=Math.max(.009,(maxX-minX)/(2*TILE));z.ry=Math.max(.009,(maxY-minY)/(2*TILE));z.baseX=z.x;z.baseY=z.y;z.rot=0;z.scale=1}}
 function addBrush(points,r){const sel=getSelected(),append=sel&&!sel.locked;// 붓은 선택 방식과 무관하게 선택한 영역에 더한다(빼기는 지우개)
-if(!append&&zones.length>=LIMIT){setStatus(`영역은 최대 ${LIMIT}개까지입니다.`);return}remember();if(append){{const bits=rasterize(sel);paintBits(bits,points,r,false);sel.runs=bitsToRuns(bits);recalcRaster(sel)}}else{const z=sanitize({id:newId(),name:nextZoneName(),kind:'brush',strokes:[{points,r}]},zones.length);zones.push(z);selected=z.id}markMask();updateUI();scheduleSave()}
+if(!append&&zones.length>=LIMIT){setStatus(`영역은 최대 ${LIMIT}개까지입니다.`);return}remember();if(append){{const bits=rasterize(sel);paintBits(bits,points,r,false);sel.runs=bitsToRuns(bits);recalcRaster(sel)}}else{const z=sanitize({...newZoneDefaults(),id:newId(),name:nextZoneName(),kind:'brush',strokes:[{points,r}]},zones.length);zones.push(z);selected=z.id}markMask();updateUI();scheduleSave()}
 function eraseBrush(points,r){const z=getSelected();if(!z){setStatus('먼저 지울 영역을 선택해 주세요.');return}if(z.locked){setStatus('잠긴 영역은 편집할 수 없습니다.');return}remember();const bits=rasterize(z);paintBits(bits,points,r,true);z.runs=bitsToRuns(bits);recalcRaster(z);markMask();updateUI();scheduleSave()}
 function applySelectionBits(bits){const name=nextZoneName();
  const z=editableSelected(),op=selectOp();
@@ -151,7 +151,7 @@ function applySelectionBits(bits){const name=nextZoneName();
  }else{
   if(op==='subtract'){setStatus('뺄 영역을 먼저 선택해 주세요.');return false}
   if(zones.length>=LIMIT){setStatus('영역 개수 제한입니다.');return false}
-  remember();const n=sanitize({id:newId(),kind:'raster',name,x:.5,y:.5,rx:.25,ry:.25,runs:bitsToRuns(bits)},zones.length);recalcRaster(n);zones.push(n);selected=n.id;
+  remember();const n=sanitize({...newZoneDefaults(),id:newId(),kind:'raster',name,x:.5,y:.5,rx:.25,ry:.25,runs:bitsToRuns(bits)},zones.length);recalcRaster(n);zones.push(n);selected=n.id;
  }
  markMask();updateUI();scheduleSave();return true}
 // A-7: 영역이 하나도 없으면 패널에는 안내 한 줄과 '3. 몸체 움직이기'만(1·4와 꺼진 얼굴 칸은 영역이 생기면 나타난다). 보이기만 바꾼다.
@@ -287,3 +287,5 @@ function paintZoneMenuOrder(z){
  $('zoneMenuDown').disabled=z.isBase||i<=0||zones[i-1].isBase;
 }
 for(const [id,fn] of [['zoneMenuHide',z=>toggleZoneHidden(z)],['zoneMenuUp',z=>moveZone(z,1)],['zoneMenuDown',z=>moveZone(z,-1)]])$(id).onclick=()=>{const z=zones.find(a=>a.id===zoneMenuTarget);$('zoneMenuDialog').close();if(z)fn(z)};
+// 새 영역은 '빈자리 채우기'를 켠 채로 만든다(한 그림에 4개까지라 넘치면 끈 채로). 크게 움직이거나 돌 때 뒤 빈자리가 자연스럽다.
+function newZoneDefaults(){return {tailCutout:tailCutoutZones().length<TAIL_MAX}}

@@ -61,15 +61,20 @@ const MotionPhysics=Object.freeze({
       const lim=pos==='physScale'?.030:.030*(1+1.5*(z.pull??50)/100);
       z[pos]=clamp((z[pos]||0)+z[vel]*dt,-lim,lim);
     }
-    const env=this.restEnvelope(z,t);z.autoEnv=env;
+    const env=this.restEnvelope(z,t)*motionCalm;z.autoEnv=env;// motionCalm: 영역을 그리는 도구를 쓰는 동안 저절로 움직임을 잦아들게(controls.js)
     const wind=this.wind(z,t).map(v=>v*env);
     const strength=clamp(z.autoStrength??z.strength??0,0,80)/80;// 연속 움직임 세기(4-1), 터치 반응 세기(strength)와 따로
     const idle=z.auto?this.wave(t*1.18*(z.autoSpeed||1),z.phase)*strength*env:0;
     const autoAxis=z.autoAxis||z.axis,[axisX,axisY]=TAP_DIRECTIONS[autoAxis]||[0,-1];
     // 양쪽 위로·아래로: 왼쪽 위(아래)로 한 번, 오른쪽 위(아래)로 한 번 번갈아 편다. 가운데를 지날 때 제자리로 내려온다.
     const arc=autoAxis==='arcUp'?-1:autoAxis==='arcDown'?1:0,sw=arc?this.wave(t*1.18*(z.autoSpeed||1),z.phase):0;
-    const idleX=autoAxis==='pulse'?0:arc?idle*.022*.85:idle*.022*axisX;
-    const idleY=autoAxis==='pulse'?0:arc?arc*sw*sw*strength*env*.022*.75:idle*.022*axisY;
+    const turn=autoAxis==='tilt'||autoAxis==='spin';
+    const idleX=autoAxis==='pulse'||turn?0:arc?idle*.022*.85:idle*.022*axisX;
+    const idleY=autoAxis==='pulse'||turn?0:arc?arc*sw*sw*strength*env*.022*.75:idle*.022*axisY;
+    // 회전: 갸웃 = 한쪽으로 기울어 잠깐 멈추고 반대쪽으로 기울어 멈춤(sin을 잘라 양 끝에 머문다), 계속 돌기 = 한 방향으로 계속(4초에 한 바퀴 × 빠르기)
+    if(z.auto&&autoAxis==='tilt'){const s=clamp(1.7*Math.sin(t*1.3*(z.autoSpeed||1)+z.phase),-1,1);z.rotAngle=s*(.25+.75*strength)*.32*env}
+    else if(z.auto&&autoAxis==='spin'){z.spinAngle=((z.spinAngle||0)+dt*(z.autoSpeed||1)*Math.PI*.5*env)%(Math.PI*2);z.rotAngle=z.spinAngle}
+    else z.rotAngle=0;
     const idleScale=autoAxis==='pulse'?idle*.065:0;
     // Distinct wind force; a region may move without a hand-drawn spine.
     const w=wind;
@@ -105,13 +110,12 @@ function impact(z,intensity=1,p=null,dir=null,quiet=false){// quiet: 소리·표
  const f=clamp(intensity,0,2.2),gain=dir?1:(z.tapGain??100)/100;
  const max=.004+z.strength/80*.015;
  const velocity=f*gain*max*(z.spring||14)*.68;
- const [x,y]=dir?projectMotion(z.axis,dir.x,dir.y):(TAP_DIRECTIONS[z.axis]||[0,-1]);
- if(z.axis==='pulse'){
-  z.physSV=clamp((z.physSV||0)+velocity*.65,-.20,.20);
- }else{
-  z.physVX=clamp((z.physVX||0)+x*velocity,-.28,.28);
-  z.physVY=clamp((z.physVY||0)+y*velocity,-.28,.28);
- }
+ // 터치 방향은 정하지 않는다: 튕기면 튕긴 쪽, 톡 치면 누른 자리에서 안쪽으로(누른 쪽이 눌리고 반대쪽은 살짝 부푼다). 누른 자리 둘레에 모이는 정도는 '잡아당김'(pull).
+ const [x,y]=dir?[dir.x,dir.y]:pressDirection(z,p);
+ if(p){z.grabX=p.x;z.grabY=p.y}
+ z.physVX=clamp((z.physVX||0)+x*velocity,-.28,.28);
+ z.physVY=clamp((z.physVY||0)+y*velocity,-.28,.28);
+ z.physSV=clamp((z.physSV||0)-velocity*.18,-.20,.20);// 눌리면서 살짝 납작
  z.hitX=p?.x??z.x;z.hitY=p?.y??z.y;z.hitAt=elapsed;z.hitPower=f*gain;
  if(quiet)return;
  faceHit(z,f*gain);markHit(z,p||{x:z.x,y:z.y},f*gain);
@@ -149,3 +153,10 @@ function dilateMask(source,radius){
   const out=document.createElement('canvas');out.width=w;out.height=h;out.getContext('2d').putImageData(base,0,0);return out;
 }
 
+// 누른 자리에서 영역 안쪽(가운데)으로. 가운데를 누르면 아래로(위에서 누른 것처럼).
+function pressDirection(z,p){
+ if(!p)return [0,1];
+ const dx=z.x-p.x,dy=z.y-p.y,len=Math.hypot(dx,dy*renderHeight/renderWidth);
+ if(len<Math.min(z.rx,z.ry)*.25)return [0,1];
+ const l=Math.hypot(dx,dy);return [dx/l,dy/l];
+}

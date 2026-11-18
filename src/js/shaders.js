@@ -34,6 +34,7 @@ uniform vec4 u_faceRect[3],u_faceStyle[3],u_hitMark[4];
 uniform int u_faceCount,u_hitCount;
 uniform vec2 u_imgSize;
 #endif
+uniform float u_aspect;// 그림 가로/세로(회전을 화소 기준으로)
 uniform float u_baseExclude;
 uniform vec4 u_zone[12],u_motion[12],u_fx[12],u_tap[12],u_pivot[12],u_flow[12],u_spine[12],u_spinemotion[12];
 uniform vec4 u_chainMid[12],u_branchLine[12],u_branchMotion[12],u_pivotExtra[12],u_pull[12];
@@ -128,13 +129,15 @@ vec4 tailLayer(vec4 color,vec2 source,int k,float light){
  return vec4(rgb,outAlpha);
 }
 void main(){
- vec2 shift=vec2(0.0),flowVector=vec2(0.0);
+ vec2 shift=vec2(0.0),flowVector=vec2(0.0),turnShift=vec2(0.0);
  float flowWeight=0.0;
- vec2 cs0=vec2(0.0),cs1=vec2(0.0),cs2=vec2(0.0),cs3=vec2(0.0);
+ vec2 cs0=vec2(0.0),cs1=vec2(0.0),cs2=vec2(0.0),cs3=vec2(0.0),rt0=vec2(0.0),rt1=vec2(0.0),rt2=vec2(0.0),rt3=vec2(0.0);// rt: 떼어 낸 층의 회전(테두리 붙잡기에서 뺀다, 회전은 통째로)
  for(int i=0;i<12;i++){
    if(i>=u_count)break;
    vec4 z=u_zone[i];
-   if(abs(v_uv.x-z.x)>z.z+.19 || abs(v_uv.y-z.y)>z.w+.19)continue;
+   float turnA=u_chainMid[i].w;
+   vec2 ext=abs(turnA)>.00001?vec2(max(z.z,z.w)*1.5):z.zw;// 도는 영역은 돌면서 닿는 범위까지
+   if(abs(v_uv.x-z.x)>ext.x+.19 || abs(v_uv.y-z.y)>ext.y+.19)continue;
    float fi=float(i);
    vec2 tile=vec2(mod(fi,4.0),floor(fi/4.0));
    float mask=texture2D(u_mask,(tile+v_uv)/vec2(4.0,3.0)).a;
@@ -188,10 +191,16 @@ void main(){
      float ripple=sin(radius*75.0-age*23.0)*exp(-age*3.0)*(1.0-smoothstep(0.0,1.6,age));
      local+=normalize(rel+vec2(.0001))*ripple*fx.w*.0036*tap.w*pivotWeight;
    }
+   // 회전(갸웃·계속 돌기): 축(piv.xy)을 중심으로 화소 기준으로 돌린다. 크게 움직이므로 아래 크기 제한(.055·.08) 밖에서 더한다.
+   vec2 rot=vec2(0.0);
+   if(abs(turnA)>.00001){
+     vec2 d=(v_uv-piv.xy)*vec2(u_aspect,1.0);float cs=cos(turnA),sn=sin(turnA);
+     rot=(d-vec2(cs*d.x+sn*d.y,-sn*d.x+cs*d.y))/vec2(u_aspect,1.0);
+   }
    // Effect safety: bounded distortion without changing the user's sliders.
    if(cutout){
      vec2 c=clamp(local,vec2(-.055),vec2(.055));
-     if(abs(fi2-u_tailCutout.x)<.5)cs0=c;else if(abs(fi2-u_tailCutout.y)<.5)cs1=c;else if(abs(fi2-u_tailCutout.z)<.5)cs2=c;else cs3=c;
+     if(abs(fi2-u_tailCutout.x)<.5){cs0=c;rt0=rot;}else if(abs(fi2-u_tailCutout.y)<.5){cs1=c;rt1=rot;}else if(abs(fi2-u_tailCutout.z)<.5){cs2=c;rt2=rot;}else{cs3=c;rt3=rot;}
      continue;
    }
    vec2 moved=clamp(local,vec2(-.055),vec2(.055));
@@ -205,6 +214,7 @@ void main(){
      }
    }
    shift+=moved*weight;
+   turnShift+=rot*mask;
    flowVector+=vec2(fl.y,fl.z)*fl.x*mask;
    flowWeight+=fl.x*mask;
  }
@@ -223,8 +233,9 @@ void main(){
  // 3-N 가장자리 붙잡기: 그림 테두리의 픽셀은 움직이지 않고 안쪽으로 갈수록(약 4.5%) 원래대로 움직인다.
  // 테두리에 닿아 잘린 부위를 당겨도 그림 밖(없는 곳)이 드러나지 않고 그 부위가 늘어나며 따라온다.
  float edgePin=smoothstep(0.0,.045,min(min(v_uv.x,1.0-v_uv.x),min(v_uv.y,1.0-v_uv.y)));
- shift*=edgePin;cs0*=edgePin;cs1*=edgePin;cs2*=edgePin;cs3*=edgePin;
- vec2 uv=clamp(v_uv-clamp(shift,vec2(-.08),vec2(.08)),vec2(.001),vec2(.999));
+ shift*=edgePin;turnShift*=edgePin;cs0*=edgePin;cs1*=edgePin;cs2*=edgePin;cs3*=edgePin;
+ cs0+=rt0;cs1+=rt1;cs2+=rt2;cs3+=rt3;
+ vec2 uv=clamp(v_uv-clamp(shift,vec2(-.08),vec2(.08))-turnShift,vec2(.001),vec2(.999));
 #ifdef FACE
  if(u_faceCount>0)uv=clamp(uv-faceShift(uv),vec2(.001),vec2(.999));
 #endif

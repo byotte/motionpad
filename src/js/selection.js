@@ -291,7 +291,7 @@ function extendLasso(gesture,p,minDistance=Math.max(4,Math.min(renderWidth,rende
 }
 function addPolygon(pts){if(pts.length<3)return;
  if(editableSelected()||selectOp()==='subtract'){const temp=sanitize({kind:'polygon',polygon:pts},zones.length);return applySelectionBits(rasterize(temp),'올가미 '+(zones.length+1))}
- if(zones.length>=LIMIT){setStatus('영역 개수 제한입니다.');return false}remember();const z=sanitize({id:newId(),name:nextZoneName(),kind:'polygon',polygon:pts},zones.length);zones.push(z);selected=z.id;markMask();updateUI();scheduleSave()}
+ if(zones.length>=LIMIT){setStatus('영역 개수 제한입니다.');return false}remember();const z=sanitize({...newZoneDefaults(),id:newId(),name:nextZoneName(),kind:'polygon',polygon:pts},zones.length);zones.push(z);selected=z.id;markMask();updateUI();scheduleSave()}
 
 // 3-M: 교체·더하기·빼기를 바꾸면 방금 선택은 끝난 것으로 본다(이미 반영돼 있다). 다음 선택이 새 방식으로 들어간다.
 for(const r of document.querySelectorAll('input[name="selectOp"]'))r.addEventListener('change',()=>clearSelectionDrafts());

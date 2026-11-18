@@ -207,8 +207,7 @@ overlay.addEventListener('pointermove',e=>{
         dx=p.x-g.start.x,dy=p.y-g.start.y,dist=Math.hypot(dx,dy);
       const reachUp=1+1.5*(z.pull??50)/100;// 2-B: 잡아당길수록 손가락을 멀리 끌 때 더 따라온다
       const mult=Math.min(max*reachUp,dist*.14)*gain;
-      const [vx,vy]=projectMotion(z.axis,dx/Math.max(.0001,dist)*mult,dy/Math.max(.0001,dist)*mult);
-      if(z.axis==='pulse')z.desiredScale=-Math.min(.009,dist*.05)*gain;
+      const vx=dx/Math.max(.0001,dist)*mult,vy=dy/Math.max(.0001,dist)*mult;// 늘 손가락 쪽으로(터치 방향 설정 없음)
       const soft=strokeCheck(g,z,p);// G-1: 쓰다듬기로 판정되면 작게 따라 흔들린다(판정 전은 평소 끌기 그대로)
       z.desiredX=clamp(vx*soft,-.025*reachUp,.025*reachUp);z.desiredY=clamp(vy*soft,-.025*reachUp,.025*reachUp);
       z.hitX=p.x;z.hitY=p.y;
@@ -239,7 +238,10 @@ function finishPointer(e,cancelled=false){
             stopPlay(z);impact(z,v,p,{x:dx/len,y:dy/len});
           }else{stopPlay(z);playSfx(clamp(len/.15,.3,1.2),z);haptic(clamp(len/.15,.3,1.2))}// 천천히 끌다 놓을 때: 당긴 거리만큼 소리
         }else if(age<.36){stopPlay(z);impact(z,.65,p)}
-        else{stopPlay(z);playSfx(.5,z);haptic(.5)}// 길게 눌렀다 뗄 때
+        else{// 길게 눌렀다 뗄 때: 눌린 만큼 반대로 튀어 오르며 돌아온다(뾰잉)
+          const d=z.pressDepth||0,[nx,ny]=pressDirection(z,g.start);stopPlay(z);
+          z.physVX=clamp((z.physVX||0)-nx*d*(z.spring||14)*1.1,-.28,.28);z.physVY=clamp((z.physVY||0)-ny*d*(z.spring||14)*1.1,-.28,.28);z.pressDepth=0;
+          playSfx(.5+Math.min(.7,d*40),z);haptic(.5)}
       }gesture=null;
     }return;
   }

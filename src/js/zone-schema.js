@@ -9,7 +9,7 @@ const num=(key,def,min,max,ui)=>({key,save:z=>z[key],read:z=>clamp(zNum(z[key],d
 const flag=(key,ui)=>({key,save:z=>z[key],read:z=>!!z[key],ui});
 const pct=v=>`${v}%`,deg=v=>`${Math.round(v)}°`;
 const faceRefOk=v=>typeof v==='string'&&/^[0-2]:(smile|shy|cry|angry|surprise)$/.test(v);
-const AUTO_AXES=['x','y','diag','diagBack','arcUp','arcDown','pulse'];
+const AUTO_AXES=['x','y','diag','diagBack','arcUp','arcDown','pulse','tilt','spin'];
 const ZONE_FIELDS=[
  {key:'tailCutout',save:z=>!!z.tailCutout,read:z=>z.tailCutout===true},
  {key:'preset',save:z=>z.preset,read:z=>Object.hasOwn(MOTION_PRESETS,z.preset)?z.preset:"custom"},
@@ -35,7 +35,7 @@ const ZONE_FIELDS=[
  {key:'strokes',save:z=>z.kind==='brush'?z.strokes.map(s=>({r:s.r,points:s.points.map(p=>[p[0],p[1]])})):[],read:(z,c)=>c.strokes,snap:z=>z.strokes.map(s=>({r:s.r,points:s.points.map(p=>[...p])}))},
  {key:'polygon',save:z=>z.kind==='polygon'?z.polygon.map(p=>[p[0],p[1]]):[],read:(z,c)=>c.polygon,snap:z=>z.polygon.map(p=>[...p])},
  {key:'runs',save:z=>z.kind==='raster'?z.runs.map(a=>[...a]):[],read:(z,c)=>c.runs},
- {key:'axis',save:z=>z.axis,read:z=>['x','y','diag','diagBack','pulse','follow'].includes(z.axis)?z.axis:'follow',ui:{input:'axisInput',fromInput:x=>x}},
+ {key:'axis',save:z=>z.axis,read:z=>['x','y','diag','diagBack','pulse','follow'].includes(z.axis)?z.axis:'follow'},// 터치 방향: 옛 파일 값만 그대로 둔다(쓰지 않음, 터치는 늘 손가락을 따른다)
  num('strength',26,0,80,{input:'strengthInput',output:'strengthValue'}),
  num('spring',14,3,30,{input:'springInput',output:'springValue'}),
  num('damping',62,0,100,{input:'dampingInput',output:'dampingValue',fmt:pct}),

@@ -42,6 +42,38 @@ const results = [];
 const report = (id, ok, info) => { results.push({ id, ok }); console.log((ok ? '통과' : '실패'), id, info || ''); };
 const tests = {
 
+  // 터치 재작업: 톡 치면 누른 쪽이 안쪽으로 · 길게 누르면 더 깊이 · 떼면 반대로 튀며 돌아옴 · 갸웃은 양 끝에서 머묾 · 계속 돌기는 계속 늚 · 영역 그리는 동안 저절로 움직임 멈춤 · 새 영역은 빈자리 채우기 켬
+  async t(browser) {
+    const page = await newPage(browser), log = [];
+    await openProject(page, project(dataURL(FIXTURE), [Object.assign({}, ZONE, { id: 'a', x: .5, y: .45, rx: .15, ry: .12, strength: 40, auto: false })], { ambient: { enabled: true, breath: 0, sway: 0, face: '', faceAmt: 50 } }), 't');
+    await page.evaluate(() => document.getElementById('viewerBtn').click()); await rafs(page, 6);
+    const box = await page.locator('#viewerStage canvas, #view').first().boundingBox(), P = (x, y) => [box.x + box.width * x, box.y + box.height * y];
+    const z = () => page.evaluate(() => window.MotionPadDebug.state().zones[0]);
+    await page.mouse.click(...P(.38, .45)); await rafs(page, 3);
+    const tap = await z(); log.push('왼쪽을 톡 → x ' + tap.mx);
+    await page.waitForTimeout(1500);
+    await page.mouse.move(...P(.5, .35)); await page.mouse.down(); await page.waitForTimeout(700); const h1 = await z(); await page.waitForTimeout(800); const h2 = await z();
+    await page.mouse.up(); let minY = 0; for (let i = 0; i < 12; i++) { await rafs(page, 2); minY = Math.min(minY, (await z()).my); }
+    log.push(`위를 길게 → y ${h1.my} → ${h2.my}, 뗀 뒤 가장 위 ${minY}`);
+    await page.locator('#exitViewer').click(); await rafs(page, 3);
+    await page.evaluate(() => { document.getElementById('autoInput').checked || document.getElementById('autoInput').click(); const q = document.getElementById('quickDirection'); q.value = 'tilt'; q.dispatchEvent(new Event('change', { bubbles: true })); q.dispatchEvent(new Event('input', { bubbles: true })); });
+    const touchOnNow = () => page.evaluate(() => { const b = document.getElementById('touchTestBtn'); if (b.getAttribute('aria-pressed') !== 'true') b.click(); });
+    await touchOnNow(); const rs = [];
+    for (let i = 0; i < 60; i++) { await page.waitForTimeout(100); rs.push((await z()).rot); }
+    const ends = rs.filter(r => Math.abs(Math.abs(r) - Math.max(...rs.map(Math.abs))) < 1e-3).length;
+    log.push(`갸웃 각도 ${Math.min(...rs).toFixed(3)}~${Math.max(...rs).toFixed(3)} · 끝에 머문 표본 ${ends}`);
+    await page.evaluate(() => { const q = document.getElementById('quickDirection'); q.value = 'spin'; q.dispatchEvent(new Event('change', { bubbles: true })); q.dispatchEvent(new Event('input', { bubbles: true })); });
+    const s1 = (await z()).rot; await page.waitForTimeout(600); const s2 = (await z()).rot; log.push(`돌기 ${s1} → ${s2}`);
+    await page.locator('#lassoMode').click(); await page.waitForTimeout(900); const calm = await z(); log.push(`올가미 중 env ${calm.env}`);
+    await touchOnNow(); await page.waitForTimeout(900); const back = await z(); log.push(`만져 보기 env ${back.env}`);
+    await page.locator('#ellipseMode').click(); await page.locator('#newRegionBtn').click(); await page.locator('#ellipseMode').click();
+    const vb = await page.locator('#view').boundingBox(), V = (x, y) => [vb.x + vb.width * x, vb.y + vb.height * y];
+    await page.mouse.move(...V(.7, .6)); await page.mouse.down(); await page.mouse.move(...V(.85, .75), { steps: 5 }); await page.mouse.up(); await rafs(page, 3);
+    const zs = await page.evaluate(() => window.MotionPadDebug.state().zones.map(z => z.cut)); log.push('새 영역 빈자리 채우기 ' + zs[zs.length - 1]);
+    const ok = tap.mx > 0 && h2.my > h1.my && h1.my > 0 && minY < -0.0005 && Math.max(...rs) > .05 && Math.min(...rs) < -.05 && ends >= 3 && s2 > s1 && calm.env < .05 && back.env > .9 && zs[zs.length - 1] === true && !page.errors.length;
+    report('t', ok, log.join(' · ') + (page.errors[0] || ''));
+  },
+
   // H-4: 자르기 전후에 같은 지점이 같은 그림 화소를 가리키는지(영역 가운데·눈 점), 틀 밖 영역은 지워지는지
   async h4(browser) {
     const page = await newPage(browser), log = [];

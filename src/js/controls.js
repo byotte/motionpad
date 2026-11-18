@@ -1,4 +1,7 @@
 // Ambient and audio UI are deliberately independent of the selected region.
+// 영역을 그리거나 고치는 도구를 쓰는 동안은 그림이 저절로 움직이지 않게(움직이면 어디를 그리는지 헷갈린다). 터치 반응은 그대로.
+let motionCalm=1;
+const CALM_MODES=['brush','erase','wand','lasso','ellipse','edit','pivot','extraPivot','spine','branch','faceMouth','faceBrow','faceEar'];
 const AMBIENT_DEFAULT={enabled:true,breath:35,sway:30,light:0,face:'',faceAmt:50,idleFace:'',idleEvery:'mid'};// F-3 idleFace·idleEvery: 가끔 짓는 표정
 const ambient={...AMBIENT_DEFAULT};// 3-M: 조명 숨쉬기는 체감되지 않아 뺐다(늘 0)
 let playerVisible=true, sfxType=SFX_DEFAULT, zoomLevel=1,panX=0,panY=0;
@@ -227,12 +230,15 @@ function tick(now){
   if(document.hidden){visibleRAF=false;return}
   visibleRAF=true;
   const dt=Math.min((now-last)/1000,.035);last=now;elapsed+=dt;
+  const calmTarget=!viewerOpen&&!touchPreview&&CALM_MODES.includes(mode)?0:1;motionCalm+=(calmTarget-motionCalm)*Math.min(1,dt*6);
   for(const z of zones){if(z.hidden){z.motionX=z.motionY=z.motionScale=0;continue}MotionPhysics.step(z,dt,elapsed)}
   if(gesture?.type==='play'&&gesture.id){
     const z=zones.find(v=>v.id===gesture.id);
     if(z&&!gesture.dragged&&(now-gesture.time)>400){
-      const max=.003+(z.strength/80)*.012;
-      z.dragging=true;z.desiredX=0;z.desiredY=0;z.desiredScale=-max*.65*(z.holdGain??60)/100;
+      // 길게 누르기: 누른 쪽이 0.4초부터 1.4초까지 점점 더 깊이 눌린다(떼면 pointer.js에서 뾰잉 하고 돌아온다)
+      const max=.004+(z.strength/80)*.016,deep=Math.min(1,((now-gesture.time)-400)/1000),[nx,ny]=pressDirection(z,gesture.start);
+      const depth=max*(.45+.55*deep)*(z.holdGain??60)/60;
+      z.dragging=true;z.desiredX=nx*depth;z.desiredY=ny*depth;z.desiredScale=-depth*.35;z.pressDepth=depth;
     }
   }
   try{updateMasks();render();drawOverlay();drawTouchFx();drawCracks()}catch(e){console.error('모션 렌더 오류',e)}
@@ -257,7 +263,7 @@ document.addEventListener('visibilitychange',()=>{
 applyPlayerVisibility();
 window.MotionPadDebug=Object.freeze({
   dev:{addEllipse:(x,y,rx,ry)=>addEllipse(x,y,rx,ry),crop:(x,y,w,h)=>applyCrop({x,y,w,h}),sampleBackground:(x,y)=>{if(!backgroundPlate)return null;const c=backgroundPlate,g=c.getContext('2d');return [...g.getImageData(Math.max(0,Math.min(c.width-1,Math.round(x*c.width))),Math.max(0,Math.min(c.height-1,Math.round(y*c.height))),1,1).data]},sfxLoaded:()=>[...builtinSfxBuffers.values()].filter(v=>v&&v.duration>0).length,baseMaskAlpha:(x,y)=>{if(!baseMaskCanvas)return null;const c=baseMaskCanvas;return c.getContext('2d').getImageData(Math.round(x*383),Math.round(y*383),1,1).data[3]}},
-  maskStats(){return zones.map(z=>{const c=rawMaskCanvas(z),d=c.getContext('2d').getImageData(0,0,TILE,TILE).data;let count=0,cx=0,cy=0;for(let i=0;i<TILE*TILE;i++){if(d[i*4+3]>100){count++;cx+=i%TILE;cy+=Math.floor(i/TILE)}}return {id:z.id,name:z.name,kind:z.kind,count,centroid:count?[cx/count/TILE,cy/count/TILE]:null}})},state(){return {base:{name:getBase()?.name||null,clip:baseClipEnabled,exclude:baseBackgroundExclude,edge:baseEdge,backgroundReady:!!backgroundPlate},renderer:gl?'webgl':'canvas',fps,theme:document.documentElement.dataset.theme||'violet',image:[renderWidth,renderHeight],zones:zones.map(z=>({stroking:!!z.stroking,name:z.name,kind:z.kind,pivot:[z.pivotX,z.pivotY],motion:[z.motionX,z.motionY,z.motionScale],gesture:[z.tapGain,z.dragGain,z.holdGain,z.flickGain]})),ambient:{...ambient},chains:zones.map(z=>({spineTip:z.spineTip,spineMid:z.spineMid,branchTip:z.branchTip,wind:[z.windX,z.windY],extraPivots:z.extraPivots?.length||0}))}}
+  maskStats(){return zones.map(z=>{const c=rawMaskCanvas(z),d=c.getContext('2d').getImageData(0,0,TILE,TILE).data;let count=0,cx=0,cy=0;for(let i=0;i<TILE*TILE;i++){if(d[i*4+3]>100){count++;cx+=i%TILE;cy+=Math.floor(i/TILE)}}return {id:z.id,name:z.name,kind:z.kind,count,centroid:count?[cx/count/TILE,cy/count/TILE]:null}})},state(){return {base:{name:getBase()?.name||null,clip:baseClipEnabled,exclude:baseBackgroundExclude,edge:baseEdge,backgroundReady:!!backgroundPlate},renderer:gl?'webgl':'canvas',fps,theme:document.documentElement.dataset.theme||'violet',image:[renderWidth,renderHeight],zones:zones.map(z=>({stroking:!!z.stroking,mx:+(z.motionX||0).toFixed(5),my:+(z.motionY||0).toFixed(5),rot:+(z.rotAngle||0).toFixed(4),env:+(z.autoEnv??1).toFixed(3),cut:!!z.tailCutout,name:z.name,kind:z.kind,pivot:[z.pivotX,z.pivotY],motion:[z.motionX,z.motionY,z.motionScale],gesture:[z.tapGain,z.dragGain,z.holdGain,z.flickGain]})),ambient:{...ambient},chains:zones.map(z=>({spineTip:z.spineTip,spineMid:z.spineMid,branchTip:z.branchTip,wind:[z.windX,z.windY],extraPivots:z.extraPivots?.length||0}))}}
 });
 // 3-M 방향 다이얼: 바람·흐름 방향을 끌어서 돌린다. 값은 숨은 input(각도, 오른쪽 0° · 아래 90°)에 담겨 기존 연결을 그대로 쓴다.
 for(const dial of document.querySelectorAll('.dirDial')){
@@ -276,8 +282,10 @@ for(const dial of document.querySelectorAll('.dirDial')){
 document.addEventListener('click',e=>{
  const sw=e.target.closest('summary .headSwitch');
  if(!sw)return;
- e.preventDefault();
  const input=sw.querySelector('input');
+ // 스위치(입력 칸) 자체를 누르면 브라우저가 알아서 켜고 끈다(제목줄은 접히지 않는다). 글자를 누른 경우만 직접 바꾼다.
+ if(e.target===input){rememberOnChange(input);return}
+ e.preventDefault();
  if(!input||input.disabled)return;
  rememberOnChange(input);
  input.checked=!input.checked;
@@ -296,3 +304,4 @@ function haptic(power=1){
  if(liveRecording||videoRecorder&&videoRecorder.state!=='inactive')return;
  try{navigator.vibrate(Math.round(clamp(6+power*8,8,20)))}catch(_){}
 }
+$('quickDirection').addEventListener('change',e=>{const z=getSelected();if(z&&e.target.value==='spin'&&!z.tailCutout)setStatus('계속 돌기는 ‘빈자리 채우기’를 켠 영역에서 자연스럽습니다(1. 영역 ▸ 경계).')});

@@ -89,7 +89,7 @@
 </details>
 <details id="autoPanel"><summary>4-1. 연속 움직임<label class="headSwitch"><input type="checkbox" id="autoInput" aria-label="연속 움직임 켜기(자동으로 움직이기)">켜기</label></summary>
 <div id="quickMotion">
-<div class="field" id="quickDirectionRow"><div class="fieldhead"><label for="quickDirection">방향</label></div><select id="quickDirection"><option value="y">위아래</option><option value="x">좌우</option><option value="diag">↘↖ 대각선</option><option value="diagBack">↙↗ 대각선</option><option value="arcUp">↖↗ 양쪽 위로</option><option value="arcDown">↙↘ 양쪽 아래로</option><option value="pulse">확대·축소</option></select></div>
+<div class="field" id="quickDirectionRow"><div class="fieldhead"><label for="quickDirection">방향</label><i class="helpMark" hidden data-help-short="갸웃·계속 돌기는 축을 중심으로 돕니다." data-help="갸웃: 한쪽으로 기울어 잠깐 멈췄다가 반대쪽으로 기울어 멈춥니다. 계속 돌기: 한 방향으로 계속 돕니다. 둘 다 축을 찍으면 그 점을 중심으로, 축이 없으면 갸웃은 영역 아래쪽 가운데, 계속 돌기는 영역 가운데를 중심으로 돕니다. 계속 돌기는 빈자리 채우기를 켠 영역에서 자연스럽습니다(끄면 영역 둘레가 비틀려 보입니다)."></i></div><select id="quickDirection"><option value="y">위아래</option><option value="x">좌우</option><option value="diag">↘↖ 대각선</option><option value="diagBack">↙↗ 대각선</option><option value="arcUp">↖↗ 양쪽 위로</option><option value="arcDown">↙↘ 양쪽 아래로</option><option value="pulse">확대·축소</option><option value="tilt">갸웃(좌우로 기울기)</option><option value="spin">계속 돌기</option></select></div>
 <div class="field"><div class="fieldhead"><label for="quickStrength">세기</label><output id="quickStrengthValue"></output></div><input id="quickStrength" type="range" min="0" max="80" step="1" value="26"></div>
 <div class="field" id="quickSpeedRow"><div class="fieldhead"><label for="quickSpeed">속도</label><output id="quickSpeedValue"></output></div><input id="quickSpeed" type="range"></div>
 
@@ -115,7 +115,7 @@
 </details>
 <details id="advanced"><summary>4-2. 터치 움직임</summary>
 <div class="field"><div class="fieldhead"><label for="zoneSfxInput">효과음</label><i class="helpMark" hidden data-help-short="이 영역을 칠 때 나는 소리. 비우면 소리 창 설정을 따릅니다."></i></div><select id="zoneSfxInput"><option value="">전체 설정을 따름</option></select></div>
-<div class="field"><div class="fieldhead"><label for="axisInput">방향</label></div><select id="axisInput"><option value="follow">끄는 쪽으로</option><option value="y">고정: 위아래</option><option value="x">고정: 좌우</option><option value="diag">고정: ↘↖ 대각선</option><option value="diagBack">고정: ↙↗ 대각선</option><option value="pulse">고정: 확대·축소</option></select></div>
+
 <div class="field"><div class="fieldhead"><label for="strengthInput">반응 세기</label><output id="strengthValue">26</output></div><input id="strengthInput" type="range" min="0" max="80" step="1"></div>
 <div class="field"><div class="fieldhead"><label for="springInput">반발 속도</label><output id="springValue">14</output></div><input id="springInput" type="range" min="3" max="30" step="1"></div>
 <div class="field"><div class="fieldhead"><label for="dampingInput">잔진동 길이</label><output id="dampingValue">62%</output></div><input id="dampingInput" type="range" min="0" max="100" step="1"></div>
