@@ -1,5 +1,5 @@
 # MotionPad 작업 규칙 (세션 시작 시 이 파일과 docs/BLUEPRINT.md만 먼저 읽는다)
-- **현재 위치: 작업지시서(docs/review/work-order.md) 진행 중. 완료: 오류 묶음 1~4, A·B·C·D·F·G-1·H, 결정 1·2·4·5 반영. 대기: E(샘플 프로젝트를 사용자가 줌), G-2 2단계(이음매 샘플 판단), I 시험판 채택 여부(가지 face-draft, main엔 motionpad-face-draft.html만), 사용자 실사용 판단(A·C 등). 단계별 되돌리기 표 backups/README.md. 그 뒤: 폰 검수 → (맨 마지막) 영상 배경음악.** 디자인 값은 src/css/tokens.css 이름표만 쓴다(docs/DESIGN-RULES.md, 검사 `node tools/design/token_check.js`). 이어받는 세션은 docs/progress/README.md(진행 현황·개발 방법·검증 도구)를 함께 읽는다. 재현·기능 시험 `node tools/baseline/fix_check.js [항목]`(옛 도구는 tools/baseline/detail_mode.js로 '자세히' 화면에서 돈다).
+- **현재 위치: 새 세션은 docs/progress/HANDOFF.md(이어받기 문서)부터 읽는다. 작업지시서 A·B·C·D·F·G-1·H와 터치 재작업까지 완료, 간단 카드(C)는 사용자가 다시 설계 예정, 겹치는 기능 정리·몸체/연속 움직임 합병은 사용자 검토 중(실행 금지). 단계별 되돌리기 표 backups/README.md.** 디자인 값은 src/css/tokens.css 이름표만 쓴다(docs/DESIGN-RULES.md, 검사 `node tools/design/token_check.js`). 진행 표·개발 방법은 docs/progress/README.md. 재현·기능 시험 `node tools/baseline/fix_check.js [항목]`.
 - 최우선 기준: docs/BLUEPRINT.md. 우선순위 = 조작 난이도 > 결과물 완성도 > 경량화.
 - 검토 근거·개발안 상세: docs/REVIEW.md (필요할 때만 읽는다).
 - 배포본은 단일 HTML. 서버 전송 금지. 무거운 AI 모델 금지(별도 허락 시 실험만).
